@@ -477,8 +477,8 @@ function getMonthWeeks(year, month) {
 // CALENDAR — EVENT LISTENERS
 // =============================================
 function attachCalendarEvents(enabledCars) {
-  // Klik på aktiv booking → detaljevisning
-  document.querySelectorAll('.booking-block:not(.completed)').forEach(block => {
+  // Klik på booking (aktiv eller afleveret) → detaljevisning
+  document.querySelectorAll('.booking-block').forEach(block => {
     block.addEventListener('click', e => {
       e.stopPropagation();
       openDetailModal(block.dataset.bookingId);
@@ -604,13 +604,18 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 
 
 document.getElementById('bm-start').addEventListener('change', function () {
-  const start    = new Date(this.value);
+  const snapped = roundTo15(new Date(this.value));
+  this.value = toLocal(snapped);
   const endInput = document.getElementById('bm-end');
-  if (isNaN(new Date(endInput.value)) || new Date(endInput.value) <= start) {
-    const newEnd = new Date(start);
+  if (isNaN(new Date(endInput.value)) || new Date(endInput.value) <= snapped) {
+    const newEnd = new Date(snapped);
     newEnd.setHours(newEnd.getHours() + 1);
     endInput.value = toLocal(newEnd);
   }
+});
+
+document.getElementById('bm-end').addEventListener('change', function () {
+  this.value = toLocal(roundTo15(new Date(this.value)));
 });
 
 function closeBookingModal() {
@@ -695,6 +700,20 @@ async function openDetailModal(bookingId) {
   if (!b) return;
   const car = b.cars || state.cars.find(c => c.id === b.car_id);
 
+  const isActive = b.status === 'active';
+  let deliveryHtml = '';
+  if (!isActive) {
+    const { data: del } = await db.from('deliveries').select('*').eq('booking_id', bookingId).maybeSingle();
+    if (del) {
+      deliveryHtml = `
+        <div class="dm-row"><label>Afleveret</label><span>${fmtDateTime(del.delivered_at)}</span></div>
+        <div class="dm-row"><label>Km kørt</label><span>${del.km_driven?.toLocaleString('da-DK')} km</span></div>
+        <div class="dm-row"><label>Km-stand ved aflevering</label><span>${del.end_km?.toLocaleString('da-DK')} km</span></div>
+        ${del.comments ? `<div class="dm-row"><label>Kommentar</label><span>${del.comments}</span></div>` : ''}
+      `;
+    }
+  }
+
   document.getElementById('dm-content').innerHTML = `
     <div style="margin-bottom:14px">
       <span class="car-badge" style="background:${car?.color}">${car?.name}</span>
@@ -702,9 +721,8 @@ async function openDetailModal(bookingId) {
     <div class="dm-row"><label>Booket af</label><span>${b.user_name}</span></div>
     <div class="dm-row"><label>Telefon</label><span>${b.phone}</span></div>
     <div class="dm-row"><label>Periode</label><span>${fmtDateTime(b.start_time)} → ${fmtDateTime(b.end_time)}</span></div>
-    <div class="dm-row"><label>Start km (ved booking)</label><span>${b.start_km?.toLocaleString('da-DK')} km</span></div>
-    <div class="dm-row"><label>Aktuel km-stand</label><span>${(state.cars.find(c=>c.id===b.car_id)?.current_km ?? b.start_km)?.toLocaleString('da-DK')} km</span></div>
     <div class="dm-row"><label>Forventet km</label><span>${b.expected_km} km</span></div>
+    ${deliveryHtml}
     ${b.notes ? `<div class="dm-row"><label>Bemærkninger</label><span>${b.notes}</span></div>` : ''}
     <div class="dm-row"><label>Oprettet</label><span>${fmtDateTime(b.created_at)}</span></div>
   `;
@@ -713,7 +731,6 @@ async function openDetailModal(bookingId) {
   document.getElementById('dm-cancel-booking').dataset.bookingId = bookingId;
   document.getElementById('dm-deliver-btn').dataset.bookingId = bookingId;
 
-  const isActive = b.status === 'active';
   const now        = new Date();
   const hasStarted = now >= new Date(b.start_time);
   const hasExpired = now > new Date(b.end_time);
@@ -724,7 +741,7 @@ async function openDetailModal(bookingId) {
   const cancelBtn  = document.getElementById('dm-cancel-booking');
 
   deliverBtn.classList.toggle('hidden', !isActive);
-  editBtn.classList.toggle('hidden', !isActive);
+  editBtn.classList.remove('hidden');
   cancelBtn.classList.toggle('hidden', !isActive);
 
   deliverBtn.disabled = !canDeliver;
@@ -804,6 +821,10 @@ function openDeliveryModal(bookingId) {
   document.getElementById('delivery-modal').classList.remove('hidden');
   document.getElementById('dlm-end-km').focus();
 }
+
+document.getElementById('dlm-end-time').addEventListener('change', function () {
+  this.value = toLocal(roundTo15(new Date(this.value)));
+});
 
 document.getElementById('dlm-end-km').addEventListener('input', function () {
   const startKm = parseInt(document.getElementById('dlm-start-km').value, 10);

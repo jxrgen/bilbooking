@@ -267,9 +267,8 @@ body {
 }
 .booking-block.completed {
   background: #94A3B8 !important;
-  opacity: 0.55;
-  cursor: default;
-  pointer-events: none;
+  opacity: 0.65;
+  cursor: pointer;
 }
 .bb-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bb-time { font-size: 10px; opacity: .9; white-space: nowrap; }
