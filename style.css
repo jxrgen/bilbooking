@@ -270,6 +270,17 @@ body {
   opacity: 0.65;
   cursor: pointer;
 }
+.booking-block.span-open {
+  border-bottom: 2px dashed rgba(255,255,255,.55);
+  border-radius: 4px 4px 0 0;
+}
+.booking-block.span-closed {
+  border-top: 2px dashed rgba(255,255,255,.55);
+  border-radius: 0 0 4px 4px;
+}
+.booking-block.span-open.span-closed {
+  border-radius: 0;
+}
 .bb-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bb-time { font-size: 10px; opacity: .9; white-space: nowrap; }
 .bb-car  { font-size: 10px; opacity: .8; font-style: italic; white-space: nowrap; }

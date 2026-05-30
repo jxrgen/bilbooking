@@ -62,6 +62,11 @@ function fmtTime(date) {
   return new Date(date).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
 }
 
+function fmtShortDate(date) {
+  const d = new Date(date);
+  return `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
 function fmtDateTime(date) {
   return new Date(date).toLocaleDateString('da-DK', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -414,25 +419,48 @@ function buildDayCol(day, enabledCars) {
     const car = enabledCars.find(c => c.id === b.car_id);
     if (!car) return '';
 
-    const bStart  = new Date(b.start_time);
-    const bEnd    = new Date(b.end_time);
-    const clampS  = Math.max((bStart.getHours()*60 + bStart.getMinutes()) - DAY_START_H*60, 0);
-    const clampE  = Math.min((bEnd.getHours()*60   + bEnd.getMinutes())   - DAY_START_H*60, DAY_MINUTES);
-    const h       = Math.max(clampE - clampS, 18);
+    const bStart     = new Date(b.start_time);
+    const bEnd       = new Date(b.end_time);
+    const startsHere = bStart >= dayStart;
+    const endsHere   = bEnd   <= dayEnd;
 
-    const carIdx  = enabledCars.findIndex(c => c.id === b.car_id);
-    const total   = enabledCars.length;
-    const lPct    = (carIdx / total) * 100;
-    const wPct    = 100 / total;
+    // Clip top/bottom to this day's boundaries for multi-day bookings
+    const clampS = startsHere ? bStart.getHours()*60 + bStart.getMinutes() - DAY_START_H*60 : 0;
+    const clampE = endsHere   ? bEnd.getHours()*60   + bEnd.getMinutes()   - DAY_START_H*60 : DAY_MINUTES;
+    const h      = Math.max(clampE - clampS, 18);
+
+    const carIdx = enabledCars.findIndex(c => c.id === b.car_id);
+    const total  = enabledCars.length;
+    const lPct   = (carIdx / total) * 100;
+    const wPct   = 100 / total;
+
+    // Visual span markers: dashed edge where the booking bleeds into another day
+    let spanCls = '';
+    if (!startsHere) spanCls += ' span-closed';
+    if (!endsHere)   spanCls += ' span-open';
+
+    // Time label — for multi-day show the actual start/end date so it's clear
+    let timeLabel = '';
+    if (h >= 28) {
+      if (startsHere && endsHere) {
+        timeLabel = `<span class="bb-time">${fmtTime(bStart)}–${fmtTime(bEnd)}</span>`;
+      } else if (startsHere) {
+        timeLabel = `<span class="bb-time">${fmtTime(bStart)} &#9658; ${fmtShortDate(bEnd)}</span>`;
+      } else if (endsHere) {
+        timeLabel = `<span class="bb-time">&#9668; ${fmtShortDate(bStart)} – ${fmtTime(bEnd)}</span>`;
+      } else {
+        timeLabel = `<span class="bb-time">&#9668; hele dagen &#9658;</span>`;
+      }
+    }
 
     const isCompleted = b.status === 'completed';
     return `
-      <div class="booking-block${isCompleted ? ' completed' : ''}"
+      <div class="booking-block${isCompleted ? ' completed' : ''}${spanCls}"
         style="top:${clampS}px;height:${h}px;left:calc(${lPct}% + 1px);width:calc(${wPct}% - 2px);${isCompleted ? '' : `background:${car.color};`}"
         data-booking-id="${b.id}">
         <span class="bb-name">${b.user_name}</span>
-        ${h >= 32 ? `<span class="bb-time">${fmtTime(bStart)}–${fmtTime(bEnd)}</span>` : ''}
-        ${h >= 48 ? `<span class="bb-car">${car.name}</span>` : ''}
+        ${timeLabel}
+        ${h >= 52 ? `<span class="bb-car">${car.name}</span>` : ''}
       </div>`;
   }).join('');
 
