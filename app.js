@@ -766,7 +766,7 @@ async function openDetailModal(bookingId) {
     const { data: del } = await db.from('deliveries').select('*').eq('booking_id', bookingId).maybeSingle();
     if (del) {
       deliveryHtml = `
-        <div class="dm-row"><label>Afleveret</label><span>${fmtDateTime(del.delivered_at)}</span></div>
+        <div class="dm-row"><label>Afleveret</label><span>${fmtDateTime(del.created_at)}</span></div>
         <div class="dm-row"><label>Km kørt</label><span>${del.km_driven?.toLocaleString('da-DK')} km</span></div>
         <div class="dm-row"><label>Km-stand ved aflevering</label><span>${del.end_km?.toLocaleString('da-DK')} km</span></div>
         ${del.comments ? `<div class="dm-row"><label>Kommentar</label><span>${del.comments}</span></div>` : ''}
@@ -1365,7 +1365,7 @@ async function restoreFromTrash(trashId) {
         id: d.id, booking_id: d.booking_id || null, car_id: d.car_id,
         start_km: d.start_km, end_km: d.end_km,
         duration_quarters: d.duration_quarters, comments: d.comments || null,
-        delivered_at: d.delivered_at || d.created_at,
+        created_at: d.created_at,
       });
       if (error) throw error;
     } else if (item.type === 'log') {
