@@ -26,6 +26,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   height: 100vh;
+  height: 100dvh; /* dynamic viewport — fixes mobile browser chrome clipping */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -138,7 +139,21 @@ body {
 .legend-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
 /* ===================== CALENDAR SCROLL ===================== */
-.cal-scroll { flex: 1; overflow: auto; }
+.cal-scroll { flex: 1; overflow: auto; overscroll-behavior: contain; }
+
+/* Pull-to-refresh indicator */
+.ptr-indicator {
+  display: flex; align-items: center; justify-content: center;
+  height: 0; overflow: hidden; transition: height .2s ease;
+  background: var(--surface); font-size: 13px; color: var(--muted); gap: 8px;
+}
+.ptr-indicator.visible { height: 44px; }
+.ptr-spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 #calendar-grid { min-width: 500px; }
 
@@ -153,7 +168,14 @@ body {
   background: var(--surface);
   border-bottom: 2px solid var(--border2);
 }
-.cal-time-spacer { flex: 0 0 52px; border-right: 1px solid var(--border); }
+.cal-time-spacer {
+  flex: 0 0 52px; border-right: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+.week-num-label {
+  font-size: 9px; font-weight: 700; color: var(--primary);
+  text-align: center; line-height: 1.3; text-transform: uppercase; letter-spacing: .03em;
+}
 .cal-head-cells  { flex: 1; display: grid; grid-template-columns: repeat(var(--num-days), 1fr); }
 
 .cal-head-cell {
@@ -289,7 +311,7 @@ body {
 /* ===================== MONTH VIEW ===================== */
 .month-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 36px repeat(7, 1fr);
   border-left: 1px solid var(--border);
   border-top: 1px solid var(--border);
 }
@@ -304,6 +326,22 @@ body {
   border-right: 1px solid var(--border);
   border-bottom: 2px solid var(--border2);
   background: var(--surface);
+}
+.month-week-num {
+  padding: 4px 2px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.month-week-num.head {
+  font-size: 9px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 2px solid var(--border2);
 }
 .month-cell {
   min-height: 100px;
@@ -528,11 +566,19 @@ body {
 }
 .admin-tab:hover { color: var(--text); }
 .admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
-.admin-tab-content { flex: 1; overflow: auto; }
+.admin-tab-content { flex: 1; overflow: auto; overscroll-behavior: contain; }
 
 
 /* ===================== FIELD NOTE ===================== */
 .field-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ===================== REMEMBER ME ===================== */
+.remember-row { margin: -4px 0 14px; }
+.remember-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
+}
+.remember-label input[type="checkbox"] { width: auto; margin: 0; }
 
 /* ===================== ADMIN TABLE WRAPS ===================== */
 #ab-table-wrap, #ad-table-wrap { overflow: auto; padding: 14px 20px; }
@@ -565,7 +611,7 @@ body {
 
 /* ===================== HELP VIEW ===================== */
 #view-help { background: var(--bg); }
-.help-scroll { flex: 1; overflow-y: auto; }
+.help-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
 .help-content {
   max-width: 680px;
   margin: 0 auto;
@@ -651,7 +697,7 @@ body {
 
 /* ===================== TOAST ===================== */
 #toast-container {
-  position: fixed; bottom: 20px; right: 20px;
+  position: fixed; bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: 20px;
   z-index: 500; display: flex; flex-direction: column; gap: 8px;
 }
 .toast {

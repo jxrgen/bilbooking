@@ -409,6 +409,9 @@
     <div class="modal">
       <button class="modal-close" id="bm-close">&#10005;</button>
       <h2 id="bm-modal-title">Ny booking</h2>
+      <div id="bm-completed-warn" class="warning-box hidden" style="margin-bottom:14px">
+        &#9888; Denne booking er allerede afleveret. Ændringer påvirker kun bookingsdata — ikke afleveringsregistreringen.
+      </div>
 
       <div id="bm-car-selector-wrap" class="field">
         <label>Vælg bil <span class="required">*</span></label>
@@ -431,6 +434,12 @@
       <div class="field">
         <label>Telefonnummer <span class="required">*</span></label>
         <input type="tel" id="bm-phone" placeholder="f.eks. 12345678">
+      </div>
+      <div class="remember-row">
+        <label class="remember-label">
+          <input type="checkbox" id="bm-remember">
+          Husk mit navn og telefonnummer til næste booking
+        </label>
       </div>
       <div class="field">
         <label>Forventet antal km <span class="required">*</span></label>
@@ -455,6 +464,9 @@
       <div class="field">
         <label>Bemærkninger</label>
         <textarea id="bm-notes" rows="2" placeholder="Valgfrit..."></textarea>
+      </div>
+      <div id="bm-past-warn" class="warning-box hidden">
+        &#9888; Du booker mere end 30 minutter tilbage i tiden — er du sikker?
       </div>
       <div id="bm-error" class="error-msg hidden"></div>
       <div class="modal-actions">

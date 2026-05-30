@@ -92,6 +92,23 @@ function roundTo15(date) {
   return d;
 }
 
+function getISOWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - y) / 86400000) + 1) / 7);
+}
+
+// =============================================
+// USER PREFERENCES (localStorage)
+// =============================================
+const PREFS_KEY      = 'bilbooking_prefs';
+const CAR_FILTER_KEY = 'bilbooking_car_filter';
+
+function loadPrefs() { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null'); }
+function savePrefs(name, phone) { localStorage.setItem(PREFS_KEY, JSON.stringify({ name, phone })); }
+function clearPrefs() { localStorage.removeItem(PREFS_KEY); }
+
 // Fyld et <select>-element med tidsintervaller á 15 min (00:00 – 23:45)
 function buildTimeSelect(id) {
   const sel = document.getElementById(id);
@@ -182,7 +199,15 @@ async function loadCars() {
   const { data, error } = await db.from('cars').select('*').eq('active', true).order('name');
   if (error) throw error;
   state.cars = data;
-  if (state.enabledCars.size === 0) data.forEach(c => state.enabledCars.add(c.id));
+  if (state.enabledCars.size === 0) {
+    const saved = JSON.parse(localStorage.getItem(CAR_FILTER_KEY) || 'null');
+    if (saved?.length) {
+      data.forEach(c => { if (saved.includes(c.id)) state.enabledCars.add(c.id); });
+      if (state.enabledCars.size === 0) data.forEach(c => state.enabledCars.add(c.id));
+    } else {
+      data.forEach(c => state.enabledCars.add(c.id));
+    }
+  }
 }
 
 async function loadBookingsForCurrentView() {
@@ -306,6 +331,7 @@ function renderCarToggles() {
       const id = btn.dataset.carId;
       if (state.enabledCars.has(id)) { state.enabledCars.delete(id); btn.classList.replace('on','off'); }
       else                            { state.enabledCars.add(id);    btn.classList.replace('off','on'); }
+      localStorage.setItem(CAR_FILTER_KEY, JSON.stringify([...state.enabledCars]));
       renderCalendarGrid();
     });
   });
@@ -317,7 +343,7 @@ function renderNavLabel() {
     el.textContent = cap(fmtWeekday(state.selectedDay)) + ', ' + fmtDayNum(state.selectedDay);
   } else if (state.viewMode === 'week') {
     const end = addDays(state.weekStart, 6);
-    el.textContent = `${fmtDayNum(state.weekStart)} – ${fmtDayNum(end)} ${state.weekStart.getFullYear()}`;
+    el.textContent = `Uge ${getISOWeek(state.weekStart)} · ${fmtDayNum(state.weekStart)} – ${fmtDayNum(end)} ${state.weekStart.getFullYear()}`;
   } else {
     el.textContent = cap(state.currentMonth.toLocaleDateString('da-DK', { month: 'long', year: 'numeric' }));
   }
@@ -388,10 +414,12 @@ function buildTimeline(days, enabledCars) {
   // Day columns
   const dayCols = days.map(day => buildDayCol(day, enabledCars)).join('');
 
+  const weekNumHtml = `<div class="week-num-label">Uge<br>${getISOWeek(days[0])}</div>`;
+
   return `
     ${legend}
     <div class="cal-header-row">
-      <div class="cal-time-spacer"></div>
+      <div class="cal-time-spacer">${weekNumHtml}</div>
       <div class="cal-head-cells" style="--num-days:${days.length}">${headerCells}</div>
     </div>
     <div class="cal-body">
@@ -500,10 +528,11 @@ function buildMonthView(enabledCars) {
   const today  = new Date(); today.setHours(0,0,0,0);
   const dayNames = ['Ma','Ti','On','To','Fr','Lø','Sø'];
 
-  const header = dayNames.map(d => `<div class="month-head">${d}</div>`).join('');
+  const header = `<div class="month-week-num head">Uge</div>` + dayNames.map(d => `<div class="month-head">${d}</div>`).join('');
 
-  const cells = weeks.flatMap(week =>
-    week.map(day => {
+  const cells = weeks.flatMap(week => {
+    const weekNumCell = `<div class="month-week-num">${getISOWeek(week[0])}</div>`;
+    const dayCells = week.map(day => {
       const inMonth  = day.getMonth() === m;
       const isToday  = day.toDateString() === today.toDateString();
       const isPast   = day < today;
@@ -527,8 +556,9 @@ function buildMonthView(enabledCars) {
           <div class="month-day-num${isToday ? ' is-today' : ''}">${day.getDate()}</div>
           <div class="month-events">${bars}${more}</div>
         </div>`;
-    })
-  ).join('');
+    });
+    return [weekNumCell, ...dayCells];
+  }).join('');
 
   return `<div class="month-grid">${header}${cells}</div>`;
 }
@@ -661,15 +691,30 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 
   setDT('bm-start-date', 'bm-start-time', editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
   setDT('bm-end-date',   'bm-end-time',   editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
-  document.getElementById('bm-name').value    = editingBooking ? editingBooking.user_name : '';
-  document.getElementById('bm-phone').value   = editingBooking ? editingBooking.phone     : '';
-  document.getElementById('bm-exp-km').value  = editingBooking ? editingBooking.expected_km : '';
-  document.getElementById('bm-notes').value   = editingBooking ? (editingBooking.notes || '') : '';
+
+  if (editingBooking) {
+    document.getElementById('bm-name').value   = editingBooking.user_name;
+    document.getElementById('bm-phone').value  = editingBooking.phone;
+    document.getElementById('bm-remember').checked = !!loadPrefs();
+  } else {
+    const prefs = loadPrefs();
+    document.getElementById('bm-name').value   = prefs?.name  || '';
+    document.getElementById('bm-phone').value  = prefs?.phone || '';
+    document.getElementById('bm-remember').checked = !!prefs;
+  }
+
+  document.getElementById('bm-exp-km').value = editingBooking ? editingBooking.expected_km : '';
+  document.getElementById('bm-notes').value  = editingBooking ? (editingBooking.notes || '') : '';
+
+  // Show warning if editing a completed booking
+  document.getElementById('bm-completed-warn')?.classList.toggle(
+    'hidden', !editingBooking || editingBooking.status !== 'completed');
 
   document.getElementById('bm-submit').textContent = editingBooking ? 'Gem ændringer' : 'Book bil';
   document.getElementById('bm-modal-title').textContent = editingBooking ? 'Rediger booking' : 'Ny booking';
 
   showError('bm-error', '');
+  onStartChange(); // trigger past-date warning if needed
   document.getElementById('booking-modal').classList.remove('hidden');
   document.getElementById('bm-name').focus();
 }
@@ -678,6 +723,10 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 function onStartChange() {
   const start = getDT('bm-start-date', 'bm-start-time');
   if (!start) return;
+
+  const minsInPast = (Date.now() - start.getTime()) / 60000;
+  document.getElementById('bm-past-warn')?.classList.toggle('hidden', minsInPast <= 30);
+
   const end = getDT('bm-end-date', 'bm-end-time');
   if (!end || end <= start) {
     const newEnd = new Date(start);
@@ -712,8 +761,6 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   if (!startTime || !endTime) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
 
   if (endTime <= startTime) return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
-  if (!state.adminUnlocked && !state.editingBookingId && startTime < new Date(Date.now() - 15 * 60 * 1000))
-    return showError('bm-error', 'Du kan ikke booke mere end 15 minutter tilbage i tiden.');
 
   const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
   if (conflict) {
@@ -744,6 +791,9 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
       const created = await createBooking(bookingData);
       toast(`Booking oprettet for ${state.cars.find(c=>c.id===carId)?.name}`, 'success');
     }
+
+    if (document.getElementById('bm-remember').checked) savePrefs(name, phone);
+    else clearPrefs();
 
     closeBookingModal();
     await loadBookingsForCurrentView();
@@ -827,9 +877,6 @@ document.getElementById('dm-close-btn').addEventListener('click', () =>
 
 document.getElementById('dm-edit-btn').addEventListener('click', async function () {
   const bookingId = this.dataset.bookingId;
-  if (!confirm('Vil du ændre bookingen?')) return;
-
-  document.getElementById('detail-modal').classList.add('hidden');
 
   let b = state.bookings.find(x => x.id === bookingId);
   if (!b) {
@@ -838,6 +885,12 @@ document.getElementById('dm-edit-btn').addEventListener('click', async function 
   }
   if (!b) return;
 
+  const msg = b.status === 'completed'
+    ? 'Denne booking er allerede afleveret.\nVil du alligevel redigere den?'
+    : 'Vil du ændre bookingen?';
+  if (!confirm(msg)) return;
+
+  document.getElementById('detail-modal').classList.add('hidden');
   openBookingModal(b.car_id, new Date(b.start_time), b);
 });
 
@@ -1710,6 +1763,48 @@ document.getElementById('today-btn').addEventListener('click', async () => {
 });
 
 // =============================================
+// PULL-TO-REFRESH (custom — body is overflow:hidden so native PTR can't fire)
+// =============================================
+function initPullToRefresh(scrollEl, onRefresh) {
+  // Insert indicator above the scroll content
+  const indicator = document.createElement('div');
+  indicator.className = 'ptr-indicator';
+  indicator.innerHTML = '<div class="ptr-spinner"></div><span>Opdaterer…</span>';
+  scrollEl.parentNode.insertBefore(indicator, scrollEl);
+
+  let startY = 0, pulling = false, refreshing = false;
+
+  scrollEl.addEventListener('touchstart', e => {
+    if (scrollEl.scrollTop === 0 && !refreshing) {
+      startY  = e.touches[0].clientY;
+      pulling = true;
+    }
+  }, { passive: true });
+
+  scrollEl.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    indicator.classList.toggle('visible', dy > 55);
+  }, { passive: true });
+
+  scrollEl.addEventListener('touchend', async e => {
+    if (!pulling) return;
+    pulling = false;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 55 && !refreshing) {
+      refreshing = true;
+      try { await onRefresh(); }
+      finally {
+        refreshing = false;
+        indicator.classList.remove('visible');
+      }
+    } else {
+      indicator.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+// =============================================
 // INIT
 // =============================================
 async function init() {
@@ -1717,6 +1812,12 @@ async function init() {
     await loadCars();
     await loadBookingsForCurrentView();
     renderCalendar();
+
+    initPullToRefresh(document.querySelector('.cal-scroll'), async () => {
+      await loadBookingsForCurrentView();
+      renderCalendarGrid();
+      toast('Kalenderen er opdateret', 'success', 2000);
+    });
   } catch (err) {
     console.error('Init error:', err);
     toast('Kunne ikke forbinde til databasen.', 'error', 8000);
