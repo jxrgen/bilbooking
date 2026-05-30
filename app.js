@@ -516,14 +516,54 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   const suggestedEnd = new Date(suggestedStart);
   suggestedEnd.setHours(suggestedEnd.getHours() + 1);
 
-  document.getElementById('bm-car-badge').textContent = car.name;
-  document.getElementById('bm-car-badge').style.background = car.color;
-  document.getElementById('bm-car-id').value = carId;
+  const selectorWrap  = document.getElementById('bm-car-selector-wrap');
+  const badgeWrap     = document.getElementById('bm-car-badge-wrap');
+
+  if (editingBooking) {
+    // Ved redigering: vis fast badge, ingen vælger
+    selectorWrap.classList.add('hidden');
+    badgeWrap.classList.remove('hidden');
+    document.getElementById('bm-car-badge').textContent = car.name;
+    document.getElementById('bm-car-badge').style.background = car.color;
+    document.getElementById('bm-car-id').value = carId;
+  } else {
+    // Ny booking: vis vælger med alle aktiverede biler
+    selectorWrap.classList.remove('hidden');
+    badgeWrap.classList.add('hidden');
+
+    const enabledCars = state.cars.filter(c => state.enabledCars.has(c.id));
+    const selector = document.getElementById('bm-car-selector');
+    selector.innerHTML = enabledCars.map(c => `
+      <button type="button" class="car-select-btn${c.id === carId ? ' selected' : ''}"
+        data-car-id="${c.id}" style="background:${c.color}">
+        ${c.name}
+      </button>`).join('');
+
+    document.getElementById('bm-car-id').value = carId;
+
+    selector.querySelectorAll('.car-select-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selector.querySelectorAll('.car-select-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        const selectedId  = btn.dataset.carId;
+        const selectedCar = state.cars.find(c => c.id === selectedId);
+        document.getElementById('bm-car-id').value = selectedId;
+        // Opdater start-km til den valgte bils seneste km-stand
+        if (selectedCar) {
+          const km = selectedCar.current_km || 0;
+          const kmInput = document.getElementById('bm-start-km');
+          kmInput.value = km;
+          kmInput.dataset.original = km;
+          document.getElementById('bm-km-warning').classList.add('hidden');
+        }
+      });
+    });
+  }
 
   const currentKm = editingBooking ? editingBooking.start_km : (car.current_km || 0);
   const kmInput   = document.getElementById('bm-start-km');
-  kmInput.value           = currentKm;
-  kmInput.dataset.original = editingBooking ? editingBooking.start_km : (car.current_km || 0);
+  kmInput.value            = currentKm;
+  kmInput.dataset.original = currentKm;
   document.getElementById('bm-km-warning').classList.add('hidden');
 
   document.getElementById('bm-start').value   = toLocal(editingBooking ? new Date(editingBooking.start_time) : suggestedStart);

@@ -177,7 +177,14 @@
     <div class="modal">
       <button class="modal-close" id="bm-close">&#10005;</button>
       <h2 id="bm-modal-title">Ny booking</h2>
-      <div class="car-badge" id="bm-car-badge"></div>
+      <div id="bm-car-selector-wrap" class="field">
+        <label>Vælg bil <span class="required">*</span></label>
+        <div id="bm-car-selector" class="car-selector"></div>
+      </div>
+      <!-- vises i stedet ved redigering -->
+      <div id="bm-car-badge-wrap" class="hidden">
+        <div class="car-badge" id="bm-car-badge"></div>
+      </div>
       <input type="hidden" id="bm-car-id">
 
       <div class="field">
