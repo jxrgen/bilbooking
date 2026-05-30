@@ -8,14 +8,12 @@
 </head>
 <body>
 
-  <!-- Navigation -->
+  <!-- Navigation — kun Kalender + Aflever bil for almindelige brugere -->
   <nav class="topnav">
     <div class="logo">&#128663; Delebilsklub</div>
     <div class="nav-links">
       <button class="nav-btn active" data-view="calendar">Kalender</button>
       <button class="nav-btn" data-view="delivery">Aflever bil</button>
-      <button class="nav-btn" data-view="log">Log</button>
-      <button class="nav-btn" data-view="admin">Admin</button>
     </div>
   </nav>
 
@@ -28,11 +26,14 @@
         <span id="week-label"></span>
         <button id="today-btn" class="btn-sm">I dag</button>
         <button id="next-week" class="icon-btn">&#8594;</button>
-        <div class="view-mode-btns">
-          <button class="view-mode-btn" data-mode="day">Dag</button>
-          <button class="view-mode-btn active" data-mode="week">Uge</button>
-          <button class="view-mode-btn" data-mode="month">Måned</button>
-        </div>
+      </div>
+    </div>
+    <!-- Visningsknapper i egen række — altid synlig inkl. mobil -->
+    <div class="view-mode-row">
+      <div class="view-mode-btns">
+        <button class="view-mode-btn" data-mode="day">Dag</button>
+        <button class="view-mode-btn active" data-mode="week">Uge</button>
+        <button class="view-mode-btn" data-mode="month">Måned</button>
       </div>
     </div>
     <div class="cal-scroll">
@@ -53,6 +54,11 @@
         <select id="del-booking"></select>
       </div>
       <div id="del-booking-info" class="info-box hidden"></div>
+      <!-- Start-km vises automatisk fra bilens aktuelle km-tæller -->
+      <div id="del-start-km-row" class="field hidden">
+        <label>Start km <span class="muted">(bilens aktuelle stand)</span></label>
+        <input type="number" id="del-start-km" readonly>
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Timer brugt</label>
@@ -70,7 +76,7 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Aflæst km-stand</label>
+          <label>Aflæst km-stand <span class="required">*</span></label>
           <input type="number" id="del-end-km" placeholder="f.eks. 15250">
         </div>
         <div class="field">
@@ -87,50 +93,12 @@
     </div>
   </div>
 
-  <!-- ===================== LOG ===================== -->
-  <div id="view-log" class="view hidden">
-    <div class="log-toolbar">
-      <h2>Aktivitetslog</h2>
-      <div class="log-filters">
-        <select id="log-filter-car">
-          <option value="">Alle biler</option>
-        </select>
-        <select id="log-filter-action">
-          <option value="">Alle handlinger</option>
-          <option value="booking_oprettet">Booking oprettet</option>
-          <option value="booking_annulleret">Booking annulleret</option>
-          <option value="booking_aendret">Booking ændret</option>
-          <option value="aflevering">Aflevering</option>
-          <option value="km_override">KM ændret ved booking</option>
-          <option value="bil_oprettet">Bil oprettet</option>
-          <option value="bil_slettet">Bil slettet</option>
-          <option value="bil_aendret">Bil ændret</option>
-        </select>
-        <button id="log-refresh" class="btn-sm">&#8635; Opdater</button>
-      </div>
-    </div>
-    <div id="log-table-wrap">
-      <table id="log-table">
-        <thead>
-          <tr>
-            <th>Tidspunkt</th>
-            <th>Handling</th>
-            <th>Bil</th>
-            <th>Bruger</th>
-            <th>Detaljer</th>
-          </tr>
-        </thead>
-        <tbody id="log-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ===================== ADMIN ===================== -->
+  <!-- ===================== ADMIN (inkl. log og bookinger) ===================== -->
   <div id="view-admin" class="view hidden">
     <!-- Password gate -->
     <div id="admin-gate" class="form-card">
-      <h2>Admin</h2>
-      <p class="muted">Indtast adgangskode for at fortsætte.</p>
+      <h2>&#128274; Admin</h2>
+      <p class="muted">Kun for klubadministratorer.</p>
       <div class="field">
         <input type="password" id="admin-pw" placeholder="Adgangskode">
       </div>
@@ -138,35 +106,118 @@
       <button id="admin-pw-btn" class="btn-primary">Log ind</button>
     </div>
 
-    <!-- Admin panel (hidden until unlocked) -->
+    <!-- Admin panel -->
     <div id="admin-panel" class="hidden">
-      <div class="admin-layout">
-        <!-- Bil-styring -->
-        <div class="form-card">
-          <h2>Biler</h2>
-          <div id="admin-car-list"></div>
-          <hr>
-          <h3>Tilføj ny bil</h3>
-          <div class="field">
-            <label>Navn</label>
-            <input type="text" id="new-car-name" placeholder="f.eks. Model Y">
-          </div>
-          <div class="field">
-            <label>Farve</label>
-            <input type="color" id="new-car-color" value="#6366F1">
-          </div>
-          <div class="field">
-            <label>Startkilometer</label>
-            <input type="number" id="new-car-km" value="0">
-          </div>
-          <div id="new-car-error" class="error-msg hidden"></div>
-          <button id="new-car-btn" class="btn-primary">Tilføj bil</button>
-        </div>
+      <!-- Admin-tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="cars">&#128663; Biler</button>
+        <button class="admin-tab" data-tab="bookings">&#128197; Bookinger</button>
+        <button class="admin-tab" data-tab="deliveries">&#9989; Afleveringer</button>
+        <button class="admin-tab" data-tab="log">&#128221; Log</button>
+      </div>
 
-        <!-- Kommende bookinger -->
-        <div class="form-card">
-          <h2>Kommende bookinger</h2>
-          <div id="admin-bookings"></div>
+      <!-- Tab: Biler -->
+      <div id="admin-tab-cars" class="admin-tab-content">
+        <div class="admin-layout">
+          <div class="form-card">
+            <h2>Biler</h2>
+            <div id="admin-car-list"></div>
+            <hr>
+            <h3>Tilføj ny bil</h3>
+            <div class="field">
+              <label>Navn</label>
+              <input type="text" id="new-car-name" placeholder="f.eks. Model Y">
+            </div>
+            <div class="field">
+              <label>Farve</label>
+              <input type="color" id="new-car-color" value="#6366F1">
+            </div>
+            <div class="field">
+              <label>Startkilometer</label>
+              <input type="number" id="new-car-km" value="0">
+            </div>
+            <div id="new-car-error" class="error-msg hidden"></div>
+            <button id="new-car-btn" class="btn-primary">Tilføj bil</button>
+          </div>
+          <div class="form-card">
+            <h2>Kommende bookinger</h2>
+            <div id="admin-bookings"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Alle bookinger -->
+      <div id="admin-tab-bookings" class="admin-tab-content hidden">
+        <div class="log-toolbar">
+          <h2>Alle bookinger</h2>
+          <div class="log-filters">
+            <select id="ab-filter-car"><option value="">Alle biler</option></select>
+            <select id="ab-filter-status">
+              <option value="">Alle statusser</option>
+              <option value="active">Aktive</option>
+              <option value="completed">Afsluttede</option>
+              <option value="cancelled">Annullerede</option>
+            </select>
+            <button id="ab-refresh" class="btn-sm">&#8635; Opdater</button>
+          </div>
+        </div>
+        <div id="ab-table-wrap">
+          <table id="ab-table">
+            <thead><tr>
+              <th>Bil</th><th>Bruger</th><th>Telefon</th>
+              <th>Start</th><th>Slut</th><th>Start km</th><th>Forv. km</th><th>Status</th>
+            </tr></thead>
+            <tbody id="ab-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Alle afleveringer -->
+      <div id="admin-tab-deliveries" class="admin-tab-content hidden">
+        <div class="log-toolbar">
+          <h2>Afleveringer</h2>
+          <div class="log-filters">
+            <select id="ad-filter-car"><option value="">Alle biler</option></select>
+            <button id="ad-refresh" class="btn-sm">&#8635; Opdater</button>
+          </div>
+        </div>
+        <div id="ad-table-wrap">
+          <table id="ad-table">
+            <thead><tr>
+              <th>Bil</th><th>Bruger</th><th>Tidspunkt</th>
+              <th>Start km</th><th>Slut km</th><th>Km kørt</th><th>Varighed</th><th>Kommentarer</th>
+            </tr></thead>
+            <tbody id="ad-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: Log -->
+      <div id="admin-tab-log" class="admin-tab-content hidden">
+        <div class="log-toolbar">
+          <h2>Aktivitetslog</h2>
+          <div class="log-filters">
+            <select id="log-filter-car"><option value="">Alle biler</option></select>
+            <select id="log-filter-action">
+              <option value="">Alle handlinger</option>
+              <option value="booking_oprettet">Booking oprettet</option>
+              <option value="booking_annulleret">Booking annulleret</option>
+              <option value="booking_aendret">Booking ændret</option>
+              <option value="aflevering">Aflevering</option>
+              <option value="bil_oprettet">Bil oprettet</option>
+              <option value="bil_slettet">Bil slettet</option>
+              <option value="bil_aendret">Bil ændret</option>
+            </select>
+            <button id="log-refresh" class="btn-sm">&#8635; Opdater</button>
+          </div>
+        </div>
+        <div id="log-table-wrap">
+          <table id="log-table">
+            <thead><tr>
+              <th>Tidspunkt</th><th>Handling</th><th>Bil</th><th>Bruger</th><th>Detaljer</th>
+            </tr></thead>
+            <tbody id="log-body"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -177,22 +228,20 @@
     <div class="modal">
       <button class="modal-close" id="bm-close">&#10005;</button>
       <h2 id="bm-modal-title">Ny booking</h2>
+
       <div id="bm-car-selector-wrap" class="field">
         <label>Vælg bil <span class="required">*</span></label>
         <div id="bm-car-selector" class="car-selector"></div>
       </div>
-      <!-- vises i stedet ved redigering -->
       <div id="bm-car-badge-wrap" class="hidden">
         <div class="car-badge" id="bm-car-badge"></div>
       </div>
       <input type="hidden" id="bm-car-id">
 
       <div class="field">
-        <label>Start km-stand <span class="muted">(senest registreret)</span></label>
-        <input type="number" id="bm-start-km">
-        <div id="bm-km-warning" class="warning-box hidden">
-          &#9888; Du har ændret start km-standen fra den registrerede værdi. Dette vil blive noteret i loggen.
-        </div>
+        <label>Nuværende km-stand</label>
+        <input type="number" id="bm-start-km" readonly>
+        <div class="field-note">Km-standen er vejledende — ved aflevering bruges bilens aktuelle stand på det tidspunkt.</div>
       </div>
       <div class="field">
         <label>Dit navn <span class="required">*</span></label>
@@ -270,6 +319,11 @@
 
   <!-- Toast notifications -->
   <div id="toast-container"></div>
+
+  <!-- Admin-adgang i bunden — diskret, usynlig for almindelige brugere -->
+  <footer class="admin-footer">
+    <button id="admin-footer-btn" class="admin-footer-link">&#128274; Admin</button>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="app.js"></script>

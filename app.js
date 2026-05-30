@@ -4,9 +4,9 @@
 const SUPABASE_URL = 'https://fdwiooogkophykysbbrh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4';
 const ADMIN_PASSWORD = 'bilklub2024';
-const DAY_START_H  = 6;
-const DAY_END_H    = 22;
-const DAY_MINUTES  = (DAY_END_H - DAY_START_H) * 60; // 960
+const DAY_START_H  = 0;
+const DAY_END_H    = 24;
+const DAY_MINUTES  = (DAY_END_H - DAY_START_H) * 60; // 1440
 const PX_PER_MIN   = 1; // 1 px pr. minut → kolonnehøjde = 960 px
 
 const { createClient } = supabase;
@@ -589,21 +589,13 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
         document.getElementById('bm-car-id').value = selectedId;
         // Opdater start-km til den valgte bils seneste km-stand
         if (selectedCar) {
-          const km = selectedCar.current_km || 0;
-          const kmInput = document.getElementById('bm-start-km');
-          kmInput.value = km;
-          kmInput.dataset.original = km;
-          document.getElementById('bm-km-warning').classList.add('hidden');
+          document.getElementById('bm-start-km').value = selectedCar.current_km || 0;
         }
       });
     });
   }
 
-  const currentKm = editingBooking ? editingBooking.start_km : (car.current_km || 0);
-  const kmInput   = document.getElementById('bm-start-km');
-  kmInput.value            = currentKm;
-  kmInput.dataset.original = currentKm;
-  document.getElementById('bm-km-warning').classList.add('hidden');
+  document.getElementById('bm-start-km').value = car.current_km || 0;
 
   document.getElementById('bm-start').value   = toLocal(editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
   document.getElementById('bm-end').value     = toLocal(editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
@@ -620,11 +612,6 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   document.getElementById('bm-name').focus();
 }
 
-document.getElementById('bm-start-km').addEventListener('input', function () {
-  const original = parseInt(this.dataset.original, 10);
-  const current  = parseInt(this.value, 10);
-  document.getElementById('bm-km-warning').classList.toggle('hidden', isNaN(current) || current === original);
-});
 
 document.getElementById('bm-start').addEventListener('change', function () {
   const start    = new Date(this.value);
@@ -649,7 +636,6 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   const phone    = document.getElementById('bm-phone').value.trim();
   const expKm    = parseInt(document.getElementById('bm-exp-km').value, 10);
   const startKm  = parseInt(document.getElementById('bm-start-km').value, 10);
-  const origKm   = parseInt(document.getElementById('bm-start-km').dataset.original, 10);
   const startVal = document.getElementById('bm-start').value;
   const endVal   = document.getElementById('bm-end').value;
   const notes    = document.getElementById('bm-notes').value.trim();
@@ -693,12 +679,6 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
       toast('Booking opdateret', 'success');
     } else {
       const created = await createBooking(bookingData);
-      if (!isNaN(origKm) && startKm !== origKm) {
-        await logActivity('km_override', carId, created.id, name, {
-          suggested_km: origKm, entered_km: startKm,
-          note: 'Bruger ændrede start km-stand',
-        });
-      }
       toast(`Booking oprettet for ${state.cars.find(c=>c.id===carId)?.name}`, 'success');
     }
 
@@ -732,7 +712,8 @@ async function openDetailModal(bookingId) {
     <div class="dm-row"><label>Booket af</label><span>${b.user_name}</span></div>
     <div class="dm-row"><label>Telefon</label><span>${b.phone}</span></div>
     <div class="dm-row"><label>Periode</label><span>${fmtDateTime(b.start_time)} → ${fmtDateTime(b.end_time)}</span></div>
-    <div class="dm-row"><label>Start km</label><span>${b.start_km?.toLocaleString('da-DK')} km</span></div>
+    <div class="dm-row"><label>Start km (ved booking)</label><span>${b.start_km?.toLocaleString('da-DK')} km</span></div>
+    <div class="dm-row"><label>Aktuel km-stand</label><span>${(state.cars.find(c=>c.id===b.car_id)?.current_km ?? b.start_km)?.toLocaleString('da-DK')} km</span></div>
     <div class="dm-row"><label>Forventet km</label><span>${b.expected_km} km</span></div>
     ${b.notes ? `<div class="dm-row"><label>Bemærkninger</label><span>${b.notes}</span></div>` : ''}
     <div class="dm-row"><label>Oprettet</label><span>${fmtDateTime(b.created_at)}</span></div>
@@ -795,10 +776,21 @@ async function initDeliveryView() {
 }
 
 async function loadCarBookings() {
-  const carId = document.getElementById('del-car').value;
-  const row   = document.getElementById('del-booking-row');
-  const info  = document.getElementById('del-booking-info');
-  if (!carId) { row.classList.add('hidden'); info.classList.add('hidden'); return; }
+  const carId      = document.getElementById('del-car').value;
+  const row        = document.getElementById('del-booking-row');
+  const info       = document.getElementById('del-booking-info');
+  const startKmRow = document.getElementById('del-start-km-row');
+  if (!carId) {
+    row.classList.add('hidden');
+    info.classList.add('hidden');
+    startKmRow.classList.add('hidden');
+    return;
+  }
+  const car = state.cars.find(c => c.id === carId);
+  if (car) {
+    document.getElementById('del-start-km').value = car.current_km || 0;
+    startKmRow.classList.remove('hidden');
+  }
 
   const bookings = await loadAllBookingsForCar(carId);
   const sel = document.getElementById('del-booking');
@@ -825,7 +817,7 @@ function updateBookingInfo() {
   info.innerHTML = `
     <strong>${b.user_name}</strong> &mdash; ${b.phone}<br>
     ${fmtDateTime(b.start_time)} → ${fmtDateTime(b.end_time)}<br>
-    Start km: ${b.start_km?.toLocaleString('da-DK')} &nbsp;|&nbsp; Forventet: ${b.expected_km} km
+    Forventet: ${b.expected_km} km
   `;
   info.classList.remove('hidden');
   document.getElementById('del-end-km').value = '';
@@ -833,12 +825,13 @@ function updateBookingInfo() {
 }
 
 function updateKmDriven() {
-  const bookingId = document.getElementById('del-booking').value;
-  const endKm = parseInt(document.getElementById('del-end-km').value, 10);
+  const carId  = document.getElementById('del-car').value;
+  const endKm  = parseInt(document.getElementById('del-end-km').value, 10);
   const driven = document.getElementById('del-km-driven');
-  if (!bookingId || isNaN(endKm)) { driven.value = ''; return; }
-  const b = state.bookings.find(x => x.id === bookingId);
-  if (b && !isNaN(b.start_km)) driven.value = endKm >= b.start_km ? endKm - b.start_km : '';
+  if (!carId || isNaN(endKm)) { driven.value = ''; return; }
+  const car     = state.cars.find(c => c.id === carId);
+  const startKm = car?.current_km || 0;
+  driven.value  = endKm >= startKm ? endKm - startKm : '';
 }
 
 document.getElementById('del-submit').addEventListener('click', async () => {
@@ -854,16 +847,14 @@ document.getElementById('del-submit').addEventListener('click', async () => {
   const durationQuarters = hours * 4 + quarters;
   if (!durationQuarters) return showError('del-error', 'Angiv den tid bilen har været brugt.');
 
-  let startKm = 0;
+  const deliveryCar = state.cars.find(c => c.id === carId);
+  const startKm     = deliveryCar?.current_km || 0;
+  if (endKm < startKm) return showError('del-error', `Aflæst km (${endKm}) er lavere end bilens aktuelle km (${startKm}).`);
+
   const booking = bookingId
     ? (state.bookings.find(b => b.id === bookingId)
       || (await db.from('bookings').select('*').eq('id', bookingId).single()).data)
     : null;
-
-  if (booking) {
-    startKm = booking.start_km;
-    if (endKm < startKm) return showError('del-error', `Aflæst km (${endKm}) er lavere end start km (${startKm}).`);
-  }
 
   const btn = document.getElementById('del-submit');
   btn.disabled = true; btn.textContent = 'Registrerer…';
@@ -896,6 +887,8 @@ document.getElementById('del-submit').addEventListener('click', async () => {
     document.getElementById('del-minutes').value = '0';
     document.getElementById('del-booking-row').classList.add('hidden');
     document.getElementById('del-booking-info').classList.add('hidden');
+    document.getElementById('del-start-km-row').classList.add('hidden');
+    document.getElementById('del-start-km').value = '';
     showError('del-error', '');
     await loadCars();
     await loadBookingsForCurrentView();
@@ -906,6 +899,96 @@ document.getElementById('del-submit').addEventListener('click', async () => {
   } finally {
     btn.disabled = false; btn.textContent = 'Registrer aflevering';
   }
+});
+
+// =============================================
+// ADMIN ALL-BOOKINGS + ALL-DELIVERIES
+// =============================================
+async function loadAllBookingsAdmin() {
+  const carFilter    = document.getElementById('ab-filter-car').value;
+  const statusFilter = document.getElementById('ab-filter-status').value;
+  let query = db.from('bookings').select('*, cars(name, color)')
+    .order('start_time', { ascending: false }).limit(200);
+  if (carFilter)    query = query.eq('car_id', carFilter);
+  if (statusFilter) query = query.eq('status', statusFilter);
+  const { data, error } = await query;
+  if (error) { toast('Fejl ved indlæsning', 'error'); return; }
+  const tbody = document.getElementById('ab-body');
+  if (!data?.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Ingen bookinger.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(b => {
+    const car = b.cars;
+    const statusLabel = { active:'Aktiv', completed:'Afsluttet', cancelled:'Annulleret' }[b.status] || b.status;
+    const statusCls   = { active:'badge-blue', completed:'badge-green', cancelled:'badge-red' }[b.status] || 'badge-gray';
+    return `
+      <tr>
+        <td>${car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–'}</td>
+        <td>${b.user_name}</td><td>${b.phone}</td>
+        <td style="white-space:nowrap">${fmtDateTime(b.start_time)}</td>
+        <td style="white-space:nowrap">${fmtDateTime(b.end_time)}</td>
+        <td>${b.start_km?.toLocaleString('da-DK')}</td>
+        <td>${b.expected_km}</td>
+        <td><span class="badge ${statusCls}">${statusLabel}</span></td>
+      </tr>`;
+  }).join('');
+}
+
+async function loadAllDeliveriesAdmin() {
+  const carFilter = document.getElementById('ad-filter-car').value;
+  let query = db.from('deliveries').select('*, cars(name, color), bookings(user_name)')
+    .order('created_at', { ascending: false }).limit(200);
+  if (carFilter) query = query.eq('car_id', carFilter);
+  const { data, error } = await query;
+  if (error) { toast('Fejl ved indlæsning', 'error'); return; }
+  const tbody = document.getElementById('ad-body');
+  if (!data?.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Ingen afleveringer.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(d => {
+    const car  = d.cars;
+    const h    = Math.floor(d.duration_quarters / 4);
+    const m    = (d.duration_quarters % 4) * 15;
+    const durTxt = `${h}t${m ? ' '+m+'min' : ''}`;
+    return `
+      <tr>
+        <td>${car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–'}</td>
+        <td>${d.bookings?.user_name || '–'}</td>
+        <td style="white-space:nowrap">${fmtDateTime(d.created_at)}</td>
+        <td>${d.start_km?.toLocaleString('da-DK')}</td>
+        <td>${d.end_km?.toLocaleString('da-DK')}</td>
+        <td>${d.km_driven?.toLocaleString('da-DK')}</td>
+        <td>${durTxt}</td>
+        <td>${d.comments || '–'}</td>
+      </tr>`;
+  }).join('');
+}
+
+function initAdminFilters() {
+  const carOptions = `<option value="">Alle biler</option>` +
+    state.cars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('ab-filter-car').innerHTML = carOptions;
+  document.getElementById('ad-filter-car').innerHTML = carOptions;
+  document.getElementById('ab-refresh').addEventListener('click', loadAllBookingsAdmin);
+  document.getElementById('ab-filter-car').addEventListener('change', loadAllBookingsAdmin);
+  document.getElementById('ab-filter-status').addEventListener('change', loadAllBookingsAdmin);
+  document.getElementById('ad-refresh').addEventListener('click', loadAllDeliveriesAdmin);
+  document.getElementById('ad-filter-car').addEventListener('change', loadAllDeliveriesAdmin);
+}
+
+// Admin tab switching
+document.querySelectorAll('.admin-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+    tab.classList.add('active');
+    document.getElementById(`admin-tab-${tab.dataset.tab}`)?.classList.remove('hidden');
+    if (tab.dataset.tab === 'log')         loadLog();
+    if (tab.dataset.tab === 'bookings')    loadAllBookingsAdmin();
+    if (tab.dataset.tab === 'deliveries')  loadAllDeliveriesAdmin();
+  });
 });
 
 // =============================================
@@ -987,7 +1070,7 @@ document.getElementById('admin-pw-btn').addEventListener('click', () => {
     document.getElementById('admin-gate').classList.add('hidden');
     document.getElementById('admin-panel').classList.remove('hidden');
     state.adminUnlocked = true;
-    renderAdminCars(); loadAdminBookings();
+    renderAdminCars(); loadAdminBookings(); initAdminFilters(); initLogFilters();
   } else {
     document.getElementById('admin-pw-error').classList.remove('hidden');
   }
@@ -1112,12 +1195,13 @@ function setView(view) {
   document.getElementById(`view-${view}`)?.classList.remove('hidden');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.nav-btn[data-view="${view}"]`)?.classList.add('active');
-  if (view === 'log') loadLog();
   if (view === 'delivery') initDeliveryView();
   if (view === 'admin' && state.adminUnlocked) { renderAdminCars(); loadAdminBookings(); }
 }
 document.querySelectorAll('.nav-btn').forEach(btn =>
   btn.addEventListener('click', () => setView(btn.dataset.view)));
+
+document.getElementById('admin-footer-btn').addEventListener('click', () => setView('admin'));
 
 document.getElementById('prev-week').addEventListener('click', async () => {
   if (state.viewMode === 'day')   state.selectedDay   = addDays(state.selectedDay, -1);
@@ -1158,7 +1242,6 @@ async function init() {
     await loadCars();
     await loadBookingsForCurrentView();
     renderCalendar();
-    initLogFilters();
   } catch (err) {
     console.error('Init error:', err);
     toast('Kunne ikke forbinde til databasen.', 'error', 8000);

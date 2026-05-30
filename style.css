@@ -104,6 +104,17 @@ body {
 }
 .btn-sm:hover { background: var(--bg); }
 
+/* ===================== VIEW MODE ROW ===================== */
+.view-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
 .view-mode-btns {
   display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
 }
@@ -172,7 +183,7 @@ body {
   flex: 0 0 52px;
   position: relative;
   border-right: 1px solid var(--border);
-  height: 960px; /* DAY_MINUTES × PX_PER_MIN */
+  height: 1440px; /* DAY_MINUTES × PX_PER_MIN */
 }
 .time-lbl {
   position: absolute;
@@ -478,6 +489,56 @@ body {
 .badge-yellow { background: #FEF9C3; color: #78350F; }
 .badge-purple { background: #EDE9FE; color: #4C1D95; }
 
+/* ===================== ADMIN TABS ===================== */
+#admin-panel {
+  display: flex; flex-direction: column; flex: 1; overflow: hidden;
+}
+.admin-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.admin-tab {
+  padding: 11px 18px; border: none; background: none;
+  cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted);
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; transition: color .15s, border-color .15s;
+}
+.admin-tab:hover { color: var(--text); }
+.admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.admin-tab-content { flex: 1; overflow: auto; }
+
+/* ===================== ADMIN FOOTER ===================== */
+.admin-footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: center;
+  padding: 4px; z-index: 50; pointer-events: none;
+}
+.admin-footer-link {
+  pointer-events: all; background: none; border: none;
+  color: var(--muted); font-size: 11px; cursor: pointer;
+  opacity: 0.35; padding: 4px 10px;
+  transition: opacity .2s;
+}
+.admin-footer-link:hover { opacity: 1; }
+
+/* ===================== FIELD NOTE ===================== */
+.field-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ===================== ADMIN TABLE WRAPS ===================== */
+#ab-table-wrap, #ad-table-wrap { overflow: auto; padding: 14px 20px; }
+#ab-table, #ad-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#ab-table th, #ad-table th {
+  text-align: left; padding: 7px 11px;
+  background: var(--bg); border-bottom: 2px solid var(--border);
+  font-weight: 700; color: var(--muted);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+}
+#ab-table td, #ad-table td { padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+#ab-table tr:hover td, #ad-table tr:hover td { background: var(--bg); }
+
 /* ===================== ADMIN ===================== */
 .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow: auto; }
 @media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } }
@@ -523,10 +584,9 @@ body {
 .hidden { display: none !important; }
 
 @media (max-width: 600px) {
-  .topnav   { padding: 0 10px; }
+  .topnav      { padding: 0 10px; }
   .cal-toolbar { padding: 8px 10px; }
   .form-card   { margin: 12px; padding: 18px; }
   .field-row   { flex-direction: column; }
   #week-label  { min-width: 100px; font-size: 11px; }
-  .view-mode-btns { display: none; }
 }
