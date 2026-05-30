@@ -62,6 +62,12 @@ function fmtTime(date) {
   return new Date(date).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
 }
 
+function fmtDur(totalMins) {
+  const h = Math.floor(totalMins / 60);
+  const m = Math.round(totalMins % 60);
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
+
 function fmtShortDate(date) {
   const d = new Date(date);
   return `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -454,12 +460,15 @@ function buildDayCol(day, enabledCars) {
     }
 
     const isCompleted = b.status === 'completed';
+    const durLabel = isCompleted && h >= 28
+      ? `<span class="bb-dur">${fmtDur(Math.round((bEnd - bStart) / 60000))}</span>` : '';
     return `
       <div class="booking-block${isCompleted ? ' completed' : ''}${spanCls}"
         style="top:${clampS}px;height:${h}px;left:calc(${lPct}% + 1px);width:calc(${wPct}% - 2px);${isCompleted ? '' : `background:${car.color};`}"
         data-booking-id="${b.id}">
         <span class="bb-name">${b.user_name}</span>
         ${timeLabel}
+        ${durLabel}
         ${h >= 52 ? `<span class="bb-car">${car.name}</span>` : ''}
       </div>`;
   }).join('');
@@ -915,9 +924,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   // DB constraint kræver end_time > start_time — brug mindst start + 1 min
   const safeEndTime      = endTime > startTime ? endTime : new Date(startTime.getTime() + 60000);
   const durationQuarters = Math.max(1, Math.round((safeEndTime - startTime) / (15 * 60 * 1000)));
-  const h      = Math.floor(durationQuarters / 4);
-  const m      = (durationQuarters % 4) * 15;
-  const durTxt = `${h}t${m ? ' ' + m + 'min' : ''}`;
+  const durTxt = fmtDur(durationQuarters * 15);
 
   const btn = document.getElementById('dlm-submit');
   btn.disabled = true; btn.textContent = 'Registrerer…';
@@ -1027,7 +1034,6 @@ async function loadAllDeliveriesAdmin() {
   }
   const carDot = car => car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–';
   tbody.innerHTML = adminData.deliveries.map(d => {
-    const h = Math.floor(d.duration_quarters / 4), m = (d.duration_quarters % 4) * 15;
     const checked = st.selected.has(d.id);
     return `<tr data-id="${d.id}" class="${checked ? 'row-selected' : ''}">
       ${st.active ? `<td class="check-col"><input type="checkbox" class="row-check" data-id="${d.id}" ${checked?'checked':''}></td>` : ''}
@@ -1037,7 +1043,7 @@ async function loadAllDeliveriesAdmin() {
       <td>${d.start_km?.toLocaleString('da-DK')}</td>
       <td>${d.end_km?.toLocaleString('da-DK')}</td>
       <td>${d.km_driven?.toLocaleString('da-DK')}</td>
-      <td>${h}t${m ? ' '+m+'min' : ''}</td>
+      <td>${fmtDur(d.duration_quarters * 15)}</td>
       <td>${d.comments || '–'}</td>
     </tr>`;
   }).join('');
@@ -1224,11 +1230,10 @@ function exportAdminData(tab, fmt) {
     if (fmt === 'csv') downloadCSV(['Bil','Bruger','Telefon','Start','Slut','Forv. km','Status','Bemærkninger'], rows, `bookinger-${todayStr()}.csv`);
     else downloadJSON(adminData.bookings, `bookinger-${todayStr()}.json`);
   } else if (tab === 'deliveries') {
-    const rows = adminData.deliveries.map(d => {
-      const h = Math.floor(d.duration_quarters / 4), m = (d.duration_quarters % 4) * 15;
-      return [d.cars?.name || '', d.bookings?.user_name || '', fmtDateTime(d.created_at),
-              d.start_km, d.end_km, d.km_driven, `${h}t${m ? ` ${m}min` : ''}`, d.comments || ''];
-    });
+    const rows = adminData.deliveries.map(d => [
+      d.cars?.name || '', d.bookings?.user_name || '', fmtDateTime(d.created_at),
+      d.start_km, d.end_km, d.km_driven, fmtDur(d.duration_quarters * 15), d.comments || '',
+    ]);
     if (fmt === 'csv') downloadCSV(['Bil','Bruger','Tidspunkt','Start km','Slut km','Km kørt','Varighed','Kommentarer'], rows, `afleveringer-${todayStr()}.csv`);
     else downloadJSON(adminData.deliveries, `afleveringer-${todayStr()}.json`);
   } else {
