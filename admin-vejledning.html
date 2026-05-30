@@ -831,6 +831,13 @@
         <p>Start- og sluttidspunkter vælges i spring på 15 minutter (00, 15, 30, 45). Dette sikrer ensartet håndtering på tværs af bookinger.</p>
       </div>
     </div>
+    <div class="callout tip">
+      <div class="callout-icon">🔑</div>
+      <div class="callout-body">
+        <strong>Admin kan booke i fortiden</strong>
+        <p>Når du er logget ind som administrator, er begrænsningen mod at oprette bookinger med tilbagevirkende kraft ophævet. Almindelige brugere kan kun booke fremtidige tidspunkter.</p>
+      </div>
+    </div>
 
     <h3>Se og rediger en eksisterende booking</h3>
     <p>Klik på en farveblok i kalenderen for at åbne detaljerne for den booking. Her ses booker, telefon, periode og km-oplysninger.</p>
@@ -867,10 +874,17 @@
     <p class="section-lead">Aflevering sker direkte fra kalenderen — ingen separat fane. Brugeren klikker på sin aktive booking og trykker på "Aflever bil". Knappen er kun aktiv, når bookingen er gået i gang.</p>
 
     <div class="callout tip">
+      <div class="callout-icon">🔑</div>
+      <div class="callout-body">
+        <strong>Admin har udvidede rettigheder ved aflevering</strong>
+        <p>Som administrator er "Aflever bil"-knappen <em>altid</em> aktiv for aktive bookinger — uanset om bookingen er gået i gang eller ej. Det giver mulighed for at registrere afleveringer i særlige situationer.</p>
+      </div>
+    </div>
+    <div class="callout tip">
       <div class="callout-icon">🕐</div>
       <div class="callout-body">
-        <strong>Tidsbetinget aktivering</strong>
-        <p>Knappen "Aflever bil" i bookingdetaljerne er gråtonet og inaktiv frem til bookingperiodens starttidspunkt. Det forhindrer for-tidlig registrering. Systemet tjekker enhedens lokale tid.</p>
+        <strong>Tidsbetinget aktivering for brugere</strong>
+        <p>For almindelige brugere er knappen aktiv fra bookingperiodens starttidspunkt. Den er også aktiv hvis bookingperiodens sluttidspunkt er overskredet — brugere kan altså altid aflevere en overskreden booking.</p>
       </div>
     </div>
 

@@ -639,7 +639,7 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   const endTime   = new Date(endVal);
 
   if (endTime <= startTime) return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
-  if (!state.editingBookingId && startTime < new Date())
+  if (!state.adminUnlocked && !state.editingBookingId && startTime < new Date())
     return showError('bm-error', 'Du kan ikke booke i fortiden.');
 
   const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
@@ -714,7 +714,10 @@ async function openDetailModal(bookingId) {
   document.getElementById('dm-deliver-btn').dataset.bookingId = bookingId;
 
   const isActive = b.status === 'active';
-  const hasStarted = new Date() >= new Date(b.start_time);
+  const now        = new Date();
+  const hasStarted = now >= new Date(b.start_time);
+  const hasExpired = now > new Date(b.end_time);
+  const canDeliver = state.adminUnlocked || hasStarted || hasExpired;
 
   const deliverBtn = document.getElementById('dm-deliver-btn');
   const editBtn    = document.getElementById('dm-edit-btn');
@@ -724,8 +727,8 @@ async function openDetailModal(bookingId) {
   editBtn.classList.toggle('hidden', !isActive);
   cancelBtn.classList.toggle('hidden', !isActive);
 
-  deliverBtn.disabled = !hasStarted;
-  deliverBtn.title = hasStarted ? '' : `Bookingen starter ${fmtDateTime(b.start_time)} — kan først afleveres da`;
+  deliverBtn.disabled = !canDeliver;
+  deliverBtn.title = canDeliver ? '' : `Bookingen starter ${fmtDateTime(b.start_time)} — kan først afleveres da`;
 
   document.getElementById('detail-modal').classList.remove('hidden');
 }
@@ -831,9 +834,12 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
 
   const endTime  = new Date(endTimeVal);
   const startTime = new Date(b.start_time);
-  if (endTime <= startTime) return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
+  if (!state.adminUnlocked && endTime <= startTime)
+    return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
 
-  const durationQuarters = Math.max(1, Math.round((endTime - startTime) / (15 * 60 * 1000)));
+  // DB constraint kræver end_time > start_time — brug mindst start + 1 min
+  const safeEndTime      = endTime > startTime ? endTime : new Date(startTime.getTime() + 60000);
+  const durationQuarters = Math.max(1, Math.round((safeEndTime - startTime) / (15 * 60 * 1000)));
   const h      = Math.floor(durationQuarters / 4);
   const m      = (durationQuarters % 4) * 15;
   const durTxt = `${h}t${m ? ' ' + m + 'min' : ''}`;
@@ -850,7 +856,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
     if (delErr) throw delErr;
 
     await db.from('cars').update({ current_km: endKm }).eq('id', b.car_id);
-    await db.from('bookings').update({ status: 'completed', end_time: endTime.toISOString() }).eq('id', b.id);
+    await db.from('bookings').update({ status: 'completed', end_time: safeEndTime.toISOString() }).eq('id', b.id);
 
     await logActivity('aflevering', b.car_id, b.id, b.user_name, {
       end_km: endKm, start_km: startKm, km_driven: endKm - startKm,
@@ -1165,9 +1171,20 @@ function setView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.nav-btn[data-view="${view}"]`)?.classList.add('active');
   if (view === 'admin' && state.adminUnlocked) { renderAdminCars(); loadAdminBookings(); }
+
+  // Knappen skifter label afhængigt af om hjælpevisningen er aktiv
+  const helpBtn = document.querySelector('.nav-btn[data-view="help"]');
+  if (helpBtn) helpBtn.textContent = (view === 'help') ? 'Kalender' : 'Vejledning';
 }
 document.querySelectorAll('.nav-btn').forEach(btn =>
-  btn.addEventListener('click', () => setView(btn.dataset.view)));
+  btn.addEventListener('click', () => {
+    // Help-knappen fungerer som toggle: åbner vejledning eller vender tilbage til kalender
+    if (btn.dataset.view === 'help' && state.currentView === 'help') {
+      setView('calendar');
+    } else {
+      setView(btn.dataset.view);
+    }
+  }));
 
 // Logo: enkelt klik → kalender; 5 hurtige klik → admin
 (function () {
