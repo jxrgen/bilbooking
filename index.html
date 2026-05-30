@@ -28,6 +28,11 @@
         <span id="week-label"></span>
         <button id="today-btn" class="btn-sm">I dag</button>
         <button id="next-week" class="icon-btn">&#8594;</button>
+        <div class="view-mode-btns">
+          <button class="view-mode-btn" data-mode="day">Dag</button>
+          <button class="view-mode-btn active" data-mode="week">Uge</button>
+          <button class="view-mode-btn" data-mode="month">Måned</button>
+        </div>
       </div>
     </div>
     <div class="cal-scroll">
@@ -171,7 +176,7 @@
   <div id="booking-modal" class="modal-overlay hidden">
     <div class="modal">
       <button class="modal-close" id="bm-close">&#10005;</button>
-      <h2>Ny booking</h2>
+      <h2 id="bm-modal-title">Ny booking</h2>
       <div class="car-badge" id="bm-car-badge"></div>
       <input type="hidden" id="bm-car-id">
 
@@ -224,6 +229,7 @@
       <div id="dm-content"></div>
       <div class="modal-actions">
         <button id="dm-cancel-booking" class="btn-danger">Annuller booking</button>
+        <button id="dm-edit-btn" class="btn-secondary">Rediger</button>
         <button id="dm-close-btn" class="btn-secondary">Luk</button>
       </div>
     </div>

@@ -59,9 +59,15 @@ CREATE POLICY "Public access" ON bookings FOR ALL TO anon USING (true) WITH CHEC
 CREATE POLICY "Public access" ON deliveries FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Public access" ON activity_log FOR ALL TO anon USING (true) WITH CHECK (true);
 
--- Indsæt de 4 biler
+-- Indsæt de 4 biler (mættede, stærke farver)
 INSERT INTO cars (name, color, current_km) VALUES
-  ('ID3',          '#3B82F6', 0),
-  ('Renault Zoe',  '#10B981', 0),
-  ('Berlingo',     '#F59E0B', 0),
-  ('ID Buzz',      '#8B5CF6', 0);
+  ('ID3',          '#1D4ED8', 0),
+  ('Renault Zoe',  '#047857', 0),
+  ('Berlingo',     '#B45309', 0),
+  ('ID Buzz',      '#6D28D9', 0);
+
+-- Hvis du allerede har kørt skemaet og vil opdatere farverne:
+-- UPDATE cars SET color = '#1D4ED8' WHERE name = 'ID3';
+-- UPDATE cars SET color = '#047857' WHERE name = 'Renault Zoe';
+-- UPDATE cars SET color = '#B45309' WHERE name = 'Berlingo';
+-- UPDATE cars SET color = '#6D28D9' WHERE name = 'ID Buzz';
