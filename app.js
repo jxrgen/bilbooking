@@ -603,20 +603,26 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 }
 
 
-document.getElementById('bm-start').addEventListener('change', function () {
-  const snapped = roundTo15(new Date(this.value));
-  this.value = toLocal(snapped);
+function snapStartInput() {
+  const raw = document.getElementById('bm-start').value;
+  if (!raw) return;
+  const snapped = roundTo15(new Date(raw));
+  document.getElementById('bm-start').value = toLocal(snapped);
   const endInput = document.getElementById('bm-end');
-  if (isNaN(new Date(endInput.value)) || new Date(endInput.value) <= snapped) {
+  if (!endInput.value || new Date(endInput.value) <= snapped) {
     const newEnd = new Date(snapped);
     newEnd.setHours(newEnd.getHours() + 1);
     endInput.value = toLocal(newEnd);
   }
-});
-
-document.getElementById('bm-end').addEventListener('change', function () {
-  this.value = toLocal(roundTo15(new Date(this.value)));
-});
+}
+function snapEndInput() {
+  const raw = document.getElementById('bm-end').value;
+  if (raw) document.getElementById('bm-end').value = toLocal(roundTo15(new Date(raw)));
+}
+document.getElementById('bm-start').addEventListener('change', snapStartInput);
+document.getElementById('bm-start').addEventListener('blur',   snapStartInput);
+document.getElementById('bm-end').addEventListener('change',   snapEndInput);
+document.getElementById('bm-end').addEventListener('blur',     snapEndInput);
 
 function closeBookingModal() {
   document.getElementById('booking-modal').classList.add('hidden');
@@ -640,12 +646,12 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
   if (!startVal || !endVal) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
 
-  const startTime = new Date(startVal);
-  const endTime   = new Date(endVal);
+  const startTime = roundTo15(new Date(startVal));
+  const endTime   = roundTo15(new Date(endVal));
 
   if (endTime <= startTime) return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
-  if (!state.adminUnlocked && !state.editingBookingId && startTime < new Date())
-    return showError('bm-error', 'Du kan ikke booke i fortiden.');
+  if (!state.adminUnlocked && !state.editingBookingId && startTime < new Date(Date.now() - 15 * 60 * 1000))
+    return showError('bm-error', 'Du kan ikke booke mere end 15 minutter tilbage i tiden.');
 
   const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
   if (conflict) {
@@ -822,9 +828,12 @@ function openDeliveryModal(bookingId) {
   document.getElementById('dlm-end-km').focus();
 }
 
-document.getElementById('dlm-end-time').addEventListener('change', function () {
-  this.value = toLocal(roundTo15(new Date(this.value)));
-});
+function snapDeliveryTime() {
+  const raw = document.getElementById('dlm-end-time').value;
+  if (raw) document.getElementById('dlm-end-time').value = toLocal(roundTo15(new Date(raw)));
+}
+document.getElementById('dlm-end-time').addEventListener('change', snapDeliveryTime);
+document.getElementById('dlm-end-time').addEventListener('blur',   snapDeliveryTime);
 
 document.getElementById('dlm-end-km').addEventListener('input', function () {
   const startKm = parseInt(document.getElementById('dlm-start-km').value, 10);
