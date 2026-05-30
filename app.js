@@ -790,6 +790,7 @@ async function openDetailModal(bookingId) {
     <div class="dm-row"><label>Booket af</label><span>${b.user_name}</span></div>
     <div class="dm-row"><label>Telefon</label><span>${b.phone}</span></div>
     <div class="dm-row"><label>Periode</label><span>${fmtDateTime(b.start_time)} → ${fmtDateTime(b.end_time)}</span></div>
+    <div class="dm-row"><label>Tidsrum</label><span>${fmtDur(Math.round((new Date(b.end_time) - new Date(b.start_time)) / 60000))}</span></div>
     <div class="dm-row"><label>Forventet km</label><span>${b.expected_km} km</span></div>
     ${deliveryHtml}
     ${b.notes ? `<div class="dm-row"><label>Bemærkninger</label><span>${b.notes}</span></div>` : ''}
