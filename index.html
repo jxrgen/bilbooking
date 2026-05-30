@@ -8,13 +8,11 @@
 </head>
 <body>
 
-  <!-- Navigation — kun Kalender + Aflever bil for almindelige brugere -->
+  <!-- Navigation -->
   <nav class="topnav">
     <div class="logo" id="logo-btn">&#128663; Delebilsklub</div>
     <div class="nav-links">
-      <button class="nav-btn active" data-view="calendar">Kalender</button>
-      <button class="nav-btn" data-view="delivery">Aflever bil</button>
-      <button class="nav-btn" data-view="help">&#63;</button>
+      <button class="nav-btn" data-view="help">Vejledning</button>
     </div>
   </nav>
 
@@ -42,57 +40,6 @@
     </div>
   </div>
 
-  <!-- ===================== AFLEVER BIL ===================== -->
-  <div id="view-delivery" class="view hidden">
-    <div class="form-card">
-      <h2>Aflever bil</h2>
-      <div class="field">
-        <label>Vælg bil</label>
-        <select id="del-car"></select>
-      </div>
-      <div id="del-booking-row" class="field hidden">
-        <label>Booking</label>
-        <select id="del-booking"></select>
-      </div>
-      <div id="del-booking-info" class="info-box hidden"></div>
-      <!-- Start-km vises automatisk fra bilens aktuelle km-tæller -->
-      <div id="del-start-km-row" class="field hidden">
-        <label>Start km <span class="muted">(bilens aktuelle stand)</span></label>
-        <input type="number" id="del-start-km" readonly>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Timer brugt</label>
-          <select id="del-hours"></select>
-        </div>
-        <div class="field">
-          <label>Minutter</label>
-          <select id="del-minutes">
-            <option value="0">0 min</option>
-            <option value="1">15 min</option>
-            <option value="2">30 min</option>
-            <option value="3">45 min</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Aflæst km-stand <span class="required">*</span></label>
-          <input type="number" id="del-end-km" placeholder="f.eks. 15250">
-        </div>
-        <div class="field">
-          <label>Kørte km</label>
-          <input type="number" id="del-km-driven" readonly placeholder="Beregnes auto">
-        </div>
-      </div>
-      <div class="field">
-        <label>Kommentarer (valgfrit)</label>
-        <textarea id="del-comments" rows="3" placeholder="Eventuelle bemærkninger om bilen..."></textarea>
-      </div>
-      <div id="del-error" class="error-msg hidden"></div>
-      <button id="del-submit" class="btn-primary">Registrer aflevering</button>
-    </div>
-  </div>
 
   <!-- ===================== HJÆLP / BRUGERVEJLEDNING ===================== -->
   <div id="view-help" class="view hidden">
@@ -206,32 +153,28 @@
             <div class="help-icon-wrap" style="background:#F0FDF4;color:#059669">&#10003;</div>
             <div>
               <h2>Aflever bil</h2>
-              <p class="help-lead">Registrer aflevering under fanen "Aflever bil" i toppen</p>
+              <p class="help-lead">Aflevering sker direkte fra kalenderen — klik på din booking</p>
             </div>
           </div>
           <div class="help-steps">
             <div class="help-step">
               <div class="help-step-dot">1</div>
-              <div>Vælg <strong>Aflever bil</strong> i navigationen øverst</div>
+              <div><strong>Klik på din booking</strong> i kalenderen — den vises som en farveblok</div>
             </div>
             <div class="help-step">
               <div class="help-step-dot">2</div>
-              <div><strong>Vælg bil</strong> — bilens aktuelle km-stand vises automatisk</div>
+              <div>Klik på knappen <strong>"Aflever bil"</strong> (aktiv først når bookingen er gået i gang)</div>
             </div>
             <div class="help-step">
               <div class="help-step-dot">3</div>
-              <div>Vælg eventuelt din <strong>booking</strong> fra listen</div>
+              <div>Bekræft eller tilpas <strong>afleveringstidspunktet</strong></div>
             </div>
             <div class="help-step">
               <div class="help-step-dot">4</div>
-              <div>Angiv <strong>tid brugt</strong> (timer og minutter)</div>
-            </div>
-            <div class="help-step">
-              <div class="help-step-dot">5</div>
               <div>Aflæs bilens <strong>km-tæller</strong> og skriv standen — kørte km beregnes automatisk</div>
             </div>
             <div class="help-step">
-              <div class="help-step-dot">6</div>
+              <div class="help-step-dot">5</div>
               <div>Tilføj eventuelle <strong>kommentarer</strong> og klik "Registrer aflevering"</div>
             </div>
           </div>
@@ -449,7 +392,47 @@
       <div class="modal-actions">
         <button id="dm-cancel-booking" class="btn-danger">Annuller booking</button>
         <button id="dm-edit-btn" class="btn-secondary">Rediger</button>
+        <button id="dm-deliver-btn" class="btn-primary">Aflever bil</button>
         <button id="dm-close-btn" class="btn-secondary">Luk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== AFLEVER BIL MODAL ===================== -->
+  <div id="delivery-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <button class="modal-close" id="dlm-close">&#10005;</button>
+      <h2>Aflever bil</h2>
+      <div id="dlm-car-badge-wrap" style="margin-bottom:14px">
+        <span class="car-badge" id="dlm-car-badge"></span>
+      </div>
+      <div id="dlm-booking-info" class="info-box"></div>
+      <div class="field">
+        <label>Faktisk afleveringstidspunkt <span class="required">*</span></label>
+        <input type="datetime-local" id="dlm-end-time" step="900">
+      </div>
+      <div class="field">
+        <label>Start km <span class="muted">(bilens aktuelle stand)</span></label>
+        <input type="number" id="dlm-start-km" readonly>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Aflæst km-stand <span class="required">*</span></label>
+          <input type="number" id="dlm-end-km" placeholder="f.eks. 15250">
+        </div>
+        <div class="field">
+          <label>Kørte km</label>
+          <input type="number" id="dlm-km-driven" readonly placeholder="Beregnes auto">
+        </div>
+      </div>
+      <div class="field">
+        <label>Kommentarer (valgfrit)</label>
+        <textarea id="dlm-comments" rows="2" placeholder="Eventuelle bemærkninger om bilen..."></textarea>
+      </div>
+      <div id="dlm-error" class="error-msg hidden"></div>
+      <div class="modal-actions">
+        <button id="dlm-cancel" class="btn-secondary">Annuller</button>
+        <button id="dlm-submit" class="btn-primary">&#10003; Registrer aflevering</button>
       </div>
     </div>
   </div>

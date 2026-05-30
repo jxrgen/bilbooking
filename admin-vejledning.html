@@ -864,53 +864,57 @@
   <div class="section">
     <div class="section-num">Sektion 5</div>
     <h2 class="section-title">Aflever bil</h2>
-    <p class="section-lead">Når et medlem returnerer en bil, registreres afleveringen under fanen "Aflever bil". Her logges den faktiske km-stand, og bilens km-tæller opdateres automatisk.</p>
+    <p class="section-lead">Aflevering sker direkte fra kalenderen — ingen separat fane. Brugeren klikker på sin aktive booking og trykker på "Aflever bil". Knappen er kun aktiv, når bookingen er gået i gang.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">🕐</div>
+      <div class="callout-body">
+        <strong>Tidsbetinget aktivering</strong>
+        <p>Knappen "Aflever bil" i bookingdetaljerne er gråtonet og inaktiv frem til bookingperiodens starttidspunkt. Det forhindrer for-tidlig registrering. Systemet tjekker enhedens lokale tid.</p>
+      </div>
+    </div>
 
     <h3>Registrer en aflevering</h3>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <strong>Vælg "Aflever bil" i topmenuens</strong>
-          Klik på fanen øverst i navigationen.
+          <strong>Klik på booking-blokken i kalenderen</strong>
+          Aktive bookinger vises som farvede blokke. Afleverede bookinger vises gråt og kan ikke klikkes.
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <strong>Vælg bil</strong>
-          Vælg den bil der afleveres fra dropdown-menuen. Bilens aktuelle km-stand vises automatisk som startpunkt.
+          <strong>Klik "Aflever bil"</strong>
+          Knappen er aktiv fra bookingperiodens starttidspunkt. Afleveringsformularen åbner.
         </div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <strong>Vælg tilknyttet booking (valgfrit)</strong>
-          Hvis der er en aktiv booking for bilen, vises den i en dropdown. Det er valgfrit at tilknytte — man kan aflevere uden booking.
+          <strong>Bekræft eller juster afleveringstidspunktet</strong>
+          Feltet er forudfyldt med nuværende tidspunkt (afrundet til 15 min). Kan ændres.
         </div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-body">
-          <strong>Angiv brugt tid</strong>
-          Vælg antal timer og minutter (i kvarterstrin: 0, 15, 30, 45 min).
+          <strong>Aflæs og indtast km-stand</strong>
+          Bilens aktuelle km-stand vises automatisk. Feltet "Kørte km" beregnes ud fra differencen.
         </div>
       </div>
       <div class="step">
         <div class="step-num">5</div>
-        <div class="step-body">
-          <strong>Aflæs og indtast km-stand</strong>
-          Aflæs bilens km-tæller og skriv den aktuelle stand. Feltet "Kørte km" beregnes automatisk.
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">6</div>
         <div class="step-body">
           <strong>Tilføj evt. kommentarer og klik "Registrer aflevering"</strong>
           Kommentarer kan bruges til at notere skader, manko på batteri, parkeringsforhold osv.
         </div>
       </div>
     </div>
+
+    <h3>Hvad sker i kalenderen efter aflevering?</h3>
+    <p>Den afleverede booking forbliver synlig i kalenderen, men ændrer udseende: den vises gråt og nedtonet og kan ikke klikkes. Det giver et korrekt historisk billede af bilens brug i perioden.</p>
 
     <h3>Hvad sker der ved registrering?</h3>
     <table>
@@ -1109,7 +1113,7 @@
       <div class="callout-icon">❓</div>
       <div class="callout-body">
         <strong>Booking vises ikke i kalenderen efter oprettelse</strong>
-        <p>Kalenderen viser kun aktive bookinger inden for den valgte periode. Skift til den uge/måned bookingen er i, eller brug Alle bookinger i admin-panelet.</p>
+        <p>Kalenderen viser aktive og afleverede bookinger inden for den valgte periode. Skift til den uge/måned bookingen er i, eller brug Alle bookinger i admin-panelet.</p>
       </div>
     </div>
 
@@ -1137,15 +1141,18 @@
       </div>
     </div>
 
-    <h3>Tastaturklik-reference</h3>
+    <h3>Hurtig-reference</h3>
     <table class="no-break">
       <thead><tr><th>Handling</th><th>Hvordan</th></tr></thead>
       <tbody>
         <tr><td>Åbn admin</td><td>Klik 5× hurtigt på logoet øverst til venstre</td></tr>
+        <tr><td>Gå til kalender</td><td>Klik én gang på logoet</td></tr>
         <tr><td>Log ind som admin</td><td>Skriv adgangskode + tryk Enter</td></tr>
         <tr><td>Ny booking</td><td>Klik på ledigt tidspunkt i dag- eller ugevisningen</td></tr>
-        <tr><td>Se bookingdetaljer</td><td>Klik på farveblokken i kalenderen</td></tr>
+        <tr><td>Se bookingdetaljer</td><td>Klik på den farvede blok i kalenderen</td></tr>
+        <tr><td>Aflever bil</td><td>Bookingdetaljer → "Aflever bil" (aktiv fra starttidspunkt)</td></tr>
         <tr><td>Naviger til i dag</td><td>Klik på knappen "I dag" i toolbar</td></tr>
+        <tr><td>Åbn brugervejledning</td><td>Klik på "Vejledning" øverst i nav</td></tr>
         <tr><td>Luk dialog</td><td>Klik på ✕ i hjørnet, eller klik uden for dialogen</td></tr>
         <tr><td>Hård genindlæsning</td><td>Cmd+Shift+R (Mac) / Ctrl+Shift+R (Windows)</td></tr>
       </tbody>
