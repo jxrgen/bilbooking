@@ -730,17 +730,17 @@
       <tbody>
         <tr>
           <td><strong>Dag</strong></td>
-          <td>Én dag ad gangen med fuld tidslinje (00:00–24:00)</td>
+          <td>Én dag ad gangen med fuld tidslinje (00:00–24:00). Ugenummer vises i hjørnet af tidskolonnen.</td>
           <td>Detaljeret overblik for en bestemt dag</td>
         </tr>
         <tr>
           <td><strong>Uge</strong></td>
-          <td>7 dage side om side med tidslinje</td>
+          <td>7 dage side om side. Ugenummer vises i navigationsbjælken (<em>Uge 22 · 26 maj – 1 jun</em>) og i tidskolonnens hjørne.</td>
           <td>Standard ugeoverblik — anbefales</td>
         </tr>
         <tr>
           <td><strong>Måned</strong></td>
-          <td>Månedsgitter med farvestreger per booking</td>
+          <td>Månedsgitter med farvestreger per booking. Ugenumre vises i en dedikeret venstre kolonne.</td>
           <td>Hurtigt overblik over belægning</td>
         </tr>
       </tbody>
@@ -754,6 +754,7 @@
 
     <h3>3.2 Til- og fravalg af biler</h3>
     <p>Øverst i kalenderen er der farveknapper for hver bil. Klik på en knap for at skjule eller vise den pågælende bil i kalenderen. En nedtonet knap (lav opacitet) betyder, at bilen er skjult. Dette ændrer ikke bookingerne — det er kun en visuel filtrering.</p>
+    <p>Valget huskes automatisk i browseren og gendannes næste gang systemet åbnes.</p>
 
     <div class="callout tip">
       <div class="callout-icon">💡</div>
@@ -842,10 +843,17 @@
       </div>
     </div>
     <div class="callout tip">
-      <div class="callout-icon">🔑</div>
+      <div class="callout-icon">⏪</div>
       <div class="callout-body">
-        <strong>Admin kan booke i fortiden</strong>
-        <p>Når du er logget ind som administrator, er begrænsningen mod at oprette bookinger med tilbagevirkende kraft ophævet. Almindelige brugere kan kun booke fremtidige tidspunkter.</p>
+        <strong>Booking tilbage i tiden</strong>
+        <p>Alle brugere — ikke kun administratorer — kan booke med et starttidspunkt i fortiden, f.eks. for at registrere en tur i efterhånd. Hvis starttidspunktet er mere end 30 minutter tilbage, vises en gul advarsel i formularen, så man ikke kommer til det ved en fejl.</p>
+      </div>
+    </div>
+    <div class="callout tip">
+      <div class="callout-icon">💾</div>
+      <div class="callout-body">
+        <strong>Husk mig</strong>
+        <p>I bookingformularen kan brugeren sætte hak i <em>Husk mit navn og telefonnummer</em>. Oplysningerne gemmes i browseren og udfyldes automatisk næste gang — ingen login kræves.</p>
       </div>
     </div>
 
@@ -867,6 +875,13 @@
       </div>
     </div>
 
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Redigering af afleverede bookinger</strong>
+        <p>Når man redigerer en booking med status <em>Afsluttet</em>, vises en advarsel både i bekræftelsesdialogen og i selve formularen. Ændringer påvirker kun bookingsdata — afleveringsregistreringen (km, varighed) forbliver uændret.</p>
+      </div>
+    </div>
     <div class="callout warn">
       <div class="callout-icon">⚠️</div>
       <div class="callout-body">
