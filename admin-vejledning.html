@@ -531,6 +531,12 @@
       <span class="toc-dots"></span>
       <span>13</span>
     </li>
+    <li class="toc-sub">
+      <span class="toc-num">6.5</span>
+      <span class="toc-label">Skraldespand — gendan og slet</span>
+      <span class="toc-dots"></span>
+      <span>14</span>
+    </li>
     <li>
       <span class="toc-num">7</span>
       <span class="toc-label">Km-håndtering</span>
@@ -635,7 +641,7 @@
         <div class="step-num">3</div>
         <div class="step-body">
           <strong>Admin-panelet åbner</strong>
-          Du ser nu 4 faner: Biler, Bookinger, Afleveringer og Log.
+          Du ser nu 5 faner: Biler, Bookinger, Afleveringer, Log og Skraldespand.
         </div>
       </div>
     </div>
@@ -742,6 +748,10 @@
 
     <p>Navigationspilene <strong>← →</strong> skifter hhv. en dag, en uge eller en måned. Knappen <strong>I dag</strong> springer altid tilbage til den aktuelle dato.</p>
 
+    <h3>Bookinger over flere dage</h3>
+    <p>En booking der strækker sig over midnat vises i kalenderen på <em>alle</em> de dage den dækker. Blokken fylder hele søjlen for dage midt i perioden. Øverste kant af blokken er stiplet, hvis bookingen begyndte dagen før — tilsvarende er bundkanten stiplet, hvis den fortsætter dagen efter. Det gør det let at se præcis hvornår en bil er optaget på tværs af dage.</p>
+    <p>Afleverede (grå) bookinger viser desuden en varighed (f.eks. <strong>2:45</strong>) direkte i kalenderblokken, så man hurtigt kan se hvor længe bilen var i brug.</p>
+
     <h3>3.2 Til- og fravalg af biler</h3>
     <p>Øverst i kalenderen er der farveknapper for hver bil. Klik på en knap for at skjule eller vise den pågælende bil i kalenderen. En nedtonet knap (lav opacitet) betyder, at bilen er skjult. Dette ændrer ikke bookingerne — det er kun en visuel filtrering.</p>
 
@@ -840,7 +850,7 @@
     </div>
 
     <h3>Se og rediger en eksisterende booking</h3>
-    <p>Klik på en farveblok i kalenderen for at åbne detaljerne for den booking. Her ses booker, telefon, periode, forventet km og eventuelle afleveringsoplysninger. Grå (afleverede) bookinger kan også klikkes og redigeres.</p>
+    <p>Klik på en farveblok i kalenderen for at åbne detaljerne for den booking. Her ses booker, telefon, periode, <strong>tidsrum</strong> (beregnet varighed i format T:MM, f.eks. 2:45), forventet km og eventuelle afleveringsoplysninger. Grå (afleverede) bookinger kan også klikkes og redigeres.</p>
 
     <div class="steps">
       <div class="step">
@@ -928,7 +938,7 @@
     </div>
 
     <h3>Hvad sker i kalenderen efter aflevering?</h3>
-    <p>Den afleverede booking forbliver synlig i kalenderen, men ændrer udseende: den vises gråt og nedtonet. Den kan stadig klikkes og redigeres — klik på den grå blok for at se afleveringsoplysninger (km kørt, km-stand ved aflevering, kommentarer) eller for at redigere bookingen.</p>
+    <p>Den afleverede booking forbliver synlig i kalenderen, men ændrer udseende: den vises gråt og nedtonet. Inde i den grå blok vises den faktiske varighed i format T:MM (f.eks. <strong>2:45</strong>). Klik på blokken for at se fulde afleveringsoplysninger (km kørt, km-stand ved aflevering, kommentarer) eller for at redigere bookingen.</p>
     <p>En grå (afleveret) booking <strong>spærrer aldrig</strong> for nye bookinger — selv hvis der stadig er tid tilbage af den oprindelige bookingperiode, kan en anden bruger frit reservere bilen i det tidsrum.</p>
 
     <h3>Hvad sker der ved registrering?</h3>
@@ -978,6 +988,7 @@
         <div class="admin-tab-mock">📅 Bookinger</div>
         <div class="admin-tab-mock">✅ Afleveringer</div>
         <div class="admin-tab-mock">📋 Log</div>
+        <div class="admin-tab-mock">🗑 Skraldespand</div>
       </div>
       <div class="mockup-body" style="padding-top:12px">
         <p style="font-size:9pt;color:var(--muted)">← Vælg en fane for at se de tilsvarende data</p>
@@ -1023,7 +1034,6 @@
         <tr><td>Bruger</td><td>Navn på den der bookede</td></tr>
         <tr><td>Telefon</td><td>Kontaktnummer</td></tr>
         <tr><td>Start / Slut</td><td>Bookingperioden</td></tr>
-        <tr><td>Start km</td><td>Km-stand da bookingen blev oprettet</td></tr>
         <tr><td>Forv. km</td><td>Forventet antal km ved bookingen</td></tr>
         <tr><td>Status</td>
           <td>
@@ -1037,9 +1047,37 @@
 
     <p>Brug filtrene øverst til at afgrænse på bil og/eller status. Klik <strong>↻ Opdater</strong> for at hente de nyeste data.</p>
 
+    <h4>Eksport</h4>
+    <p>Klik på knappen <strong>⬇ Eksporter</strong> for at downloade alle viste bookinger. Vælg format i menuen:</p>
+    <table class="no-break">
+      <thead><tr><th>Format</th><th>Bruges til</th></tr></thead>
+      <tbody>
+        <tr><td><strong>CSV (Excel)</strong></td><td>Åbnes direkte i Excel eller Google Sheets — tegnsæt er UTF-8 med BOM</td></tr>
+        <tr><td><strong>JSON</strong></td><td>Maskinlæsbart format til viderebehandling</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Redigeringstilstand</h4>
+    <p>Klik på <strong>✏ Rediger</strong> for at aktivere redigeringstilstand. Der vises et afkrydsningsfelt ud for hver række. Vælg de ønskede poster og brug knapperne i bjælken:</p>
+    <table class="no-break">
+      <thead><tr><th>Knap</th><th>Funktion</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Rediger valgte</strong></td><td>Åbner bookingformularen forudfyldt for redigering. Bekræftelse kræves.</td></tr>
+        <tr><td><strong>Slet valgte</strong></td><td>Sletter de markerede poster. Bekræftelse kræves — de flyttes til Skraldespanden.</td></tr>
+        <tr><td><strong>Slet alle</strong></td><td>Sletter samtlige bookinger i listen. Kræver dobbelt bekræftelse.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Slettede poster gemmes i Skraldespanden</strong>
+        <p>Poster der slettes via redigeringstilstand havner i fanen Skraldespand og kan gendannes. Se afsnit 6.5.</p>
+      </div>
+    </div>
+
     <h3>6.3 Afleveringer</h3>
-    <p>Fanen <strong>Afleveringer</strong> viser alle registrerede afleveringer med start km, slut km, kørte km, varighed og eventuelle kommentarer.</p>
-    <p>Brug bilfilter og opdateringsknappen på samme måde som under Bookinger.</p>
+    <p>Fanen <strong>Afleveringer</strong> viser alle registrerede afleveringer med start km, slut km, kørte km, <strong>varighed</strong> (T:MM-format, f.eks. 2:45) og eventuelle kommentarer.</p>
+    <p>Brug bilfilter og opdateringsknappen på samme måde som under Bookinger. Eksport og redigeringstilstand fungerer på samme vis — se afsnit 6.2.</p>
 
     <h3>6.4 Aktivitetslog</h3>
     <p>Loggen er en komplet kronologisk historik over alle handlinger i systemet. Den kan ikke slettes eller redigeres.</p>
@@ -1057,7 +1095,42 @@
       </tbody>
     </table>
 
-    <p>Loggen viser altid de 200 seneste poster. Brug filtrene <em>Bil</em> og <em>Handling</em> til at indsnævre søgningen.</p>
+    <p>Loggen viser altid de 200 seneste poster. Brug filtrene <em>Bil</em> og <em>Handling</em> til at indsnævre søgningen. Eksport og redigeringstilstand er tilgængelig på samme vis som under Bookinger (se afsnit 6.2).</p>
+
+    <h3>6.5 Skraldespand — gendan og slet</h3>
+    <p>Fanen <strong>Skraldespand</strong> indeholder alle poster der er slettet via redigeringstilstand i fanerne Bookinger, Afleveringer og Log. Data opbevares lokalt i browseren og går ikke tabt ved genindlæsning.</p>
+
+    <h4>Gendan en post</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">Find posten i Skraldespanden og klik <strong>Gendan</strong>.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Kun for bookinger:</strong> Systemet kontrollerer automatisk om den oprindelige periode nu er i konflikt med andre bookinger. Er der konflikt, afvises gendannelsen med en besked om tidspunktet.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">Ved vellykket gendannelse fjernes posten fra Skraldespanden og vises igen i den relevante fane.</div>
+      </div>
+    </div>
+
+    <h4>Slet fra Skraldespanden</h4>
+    <p>Poster i Skraldespanden kan slettes permanent via redigeringstilstand (markér + <em>Slet valgte</em>) eller ved at tømme hele Skraldespanden med <strong>Tøm skraldespand</strong>. Begge handlinger kræver bekræftelse og kan ikke fortrydes.</p>
+
+    <h4>Eksport fra Skraldespanden</h4>
+    <p>Brug <strong>⬇ Eksporter</strong> til at downloade Skraldespandens indhold som CSV eller JSON — nyttigt inden permanent sletning.</p>
+
+    <div class="callout danger">
+      <div class="callout-icon">🚫</div>
+      <div class="callout-body">
+        <strong>Skraldespanden er browserspecifik</strong>
+        <p>Data i Skraldespanden gemmes i browserens localStorage. De er kun tilgængelige i den browser og på den enhed, hvorfra sletningen skete.</p>
+      </div>
+    </div>
   </div>
 
 
