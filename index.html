@@ -14,6 +14,7 @@
     <div class="nav-links">
       <button class="nav-btn active" data-view="calendar">Kalender</button>
       <button class="nav-btn" data-view="delivery">Aflever bil</button>
+      <button class="nav-btn" data-view="help">&#63;</button>
     </div>
   </nav>
 
@@ -91,6 +92,168 @@
       <div id="del-error" class="error-msg hidden"></div>
       <button id="del-submit" class="btn-primary">Registrer aflevering</button>
     </div>
+  </div>
+
+  <!-- ===================== HJÆLP / BRUGERVEJLEDNING ===================== -->
+  <div id="view-help" class="view hidden">
+    <div class="help-scroll">
+      <div class="help-content">
+
+        <div class="help-hero">
+          <div class="help-hero-icon">&#128663;</div>
+          <h1>Sådan bruger du bookingsystemet</h1>
+          <p>Alt du skal vide for at reservere og aflevere en bil</p>
+        </div>
+
+        <!-- KALENDER -->
+        <div class="help-section">
+          <div class="help-section-header">
+            <div class="help-icon-wrap" style="background:#EFF6FF;color:#2563EB">&#128197;</div>
+            <div>
+              <h2>Kalender</h2>
+              <p class="help-lead">Se hvornår bilerne er ledige</p>
+            </div>
+          </div>
+          <div class="help-steps">
+            <div class="help-step">
+              <div class="help-step-dot">1</div>
+              <div><strong>Vælg visning</strong> — skift mellem Dag, Uge og Måned med knapperne under toolbar</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">2</div>
+              <div><strong>Naviger</strong> — brug ← og → til at bevæge dig frem og tilbage, eller klik "I dag"</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">3</div>
+              <div><strong>Filtrer biler</strong> — klik på bilknapperne øverst for at til- eller fravælge biler i visningen</div>
+            </div>
+          </div>
+          <div class="help-tip">
+            <span class="help-tip-icon">💡</span>
+            Farverne svarer til bilerne: <strong style="color:#1D4ED8">blå = ID3</strong>, <strong style="color:#047857">grøn = Renault Zoe</strong>, <strong style="color:#B45309">amber = Berlingo</strong>, <strong style="color:#6D28D9">lilla = ID Buzz</strong>
+          </div>
+        </div>
+
+        <!-- BOG EN BIL -->
+        <div class="help-section">
+          <div class="help-section-header">
+            <div class="help-icon-wrap" style="background:#F0FDF4;color:#16A34A">&#43;</div>
+            <div>
+              <h2>Book en bil</h2>
+              <p class="help-lead">Reserver en ledig bil i kalenderens dag- eller ugevisning</p>
+            </div>
+          </div>
+          <div class="help-steps">
+            <div class="help-step">
+              <div class="help-step-dot">1</div>
+              <div><strong>Klik på et ledigt tidspunkt</strong> i kalenderen — et +-tegn viser at du kan klikke der</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">2</div>
+              <div><strong>Vælg hvilken bil</strong> du ønsker øverst i formularen</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">3</div>
+              <div><strong>Udfyld navn og telefon</strong> — så andre ved hvem der har bilen</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">4</div>
+              <div><strong>Angiv forventet antal km</strong> — et skøn er fint</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">5</div>
+              <div><strong>Vælg start- og sluttidspunkt</strong> i trin på 15 minutter</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">6</div>
+              <div>Klik <strong>Book bil</strong> — du ser straks bookingen i kalenderen</div>
+            </div>
+          </div>
+          <div class="help-tip">
+            <span class="help-tip-icon">&#9888;&#65039;</span>
+            Hvis bilen allerede er optaget, vises det konflikterende tidsrum og det næste ledige tidspunkt.
+          </div>
+        </div>
+
+        <!-- SE / REDIGER BOOKING -->
+        <div class="help-section">
+          <div class="help-section-header">
+            <div class="help-icon-wrap" style="background:#FFF7ED;color:#EA580C">&#9998;</div>
+            <div>
+              <h2>Rediger eller annuller</h2>
+              <p class="help-lead">Klik på en farveblok i kalenderen for at se detaljer</p>
+            </div>
+          </div>
+          <div class="help-steps">
+            <div class="help-step">
+              <div class="help-step-dot">1</div>
+              <div><strong>Klik på bookingblokken</strong> i kalenderen for at se hvem der har bilen og hvornår</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">2</div>
+              <div>Klik <strong>Rediger</strong> for at ændre tidspunkt, km eller bemærkninger</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">3</div>
+              <div>Klik <strong>Annuller booking</strong> for at slette reservationen</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AFLEVER BIL -->
+        <div class="help-section">
+          <div class="help-section-header">
+            <div class="help-icon-wrap" style="background:#F0FDF4;color:#059669">&#10003;</div>
+            <div>
+              <h2>Aflever bil</h2>
+              <p class="help-lead">Registrer aflevering under fanen "Aflever bil" i toppen</p>
+            </div>
+          </div>
+          <div class="help-steps">
+            <div class="help-step">
+              <div class="help-step-dot">1</div>
+              <div>Vælg <strong>Aflever bil</strong> i navigationen øverst</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">2</div>
+              <div><strong>Vælg bil</strong> — bilens aktuelle km-stand vises automatisk</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">3</div>
+              <div>Vælg eventuelt din <strong>booking</strong> fra listen</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">4</div>
+              <div>Angiv <strong>tid brugt</strong> (timer og minutter)</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">5</div>
+              <div>Aflæs bilens <strong>km-tæller</strong> og skriv standen — kørte km beregnes automatisk</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">6</div>
+              <div>Tilføj eventuelle <strong>kommentarer</strong> og klik "Registrer aflevering"</div>
+            </div>
+          </div>
+          <div class="help-tip">
+            <span class="help-tip-icon">&#128274;</span>
+            Aflæst km-stand skal være lig med eller højere end bilens aktuelle stand. Kontakt en administrator ved problemer.
+          </div>
+        </div>
+
+        <!-- BILER -->
+        <div class="help-section help-cars-section">
+          <h2 style="margin-bottom:14px">Klubbens biler</h2>
+          <div class="help-cars-grid">
+            <div class="help-car" style="background:#1D4ED8"><span>ID3</span></div>
+            <div class="help-car" style="background:#047857"><span>Renault Zoe</span></div>
+            <div class="help-car" style="background:#B45309"><span>Berlingo</span></div>
+            <div class="help-car" style="background:#6D28D9"><span>ID Buzz</span></div>
+          </div>
+        </div>
+
+      </div><!-- end help-content -->
+    </div><!-- end help-scroll -->
   </div>
 
   <!-- ===================== ADMIN (inkl. log og bookinger) ===================== -->

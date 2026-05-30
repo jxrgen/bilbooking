@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delebilsklub — Administratorvejledning</title>
+<style>
+  /* ===== PRINT + SCREEN RESET ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue:    #2563EB;
+    --blue-d:  #1D4ED8;
+    --blue-lt: #EFF6FF;
+    --text:    #0F172A;
+    --muted:   #64748B;
+    --border:  #E2E8F0;
+    --bg:      #F8FAFC;
+    --green:   #047857;
+    --amber:   #B45309;
+    --purple:  #6D28D9;
+    --red:     #DC2626;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11pt;
+    color: var(--text);
+    line-height: 1.6;
+    background: #fff;
+  }
+
+  /* ===== PAGE SETUP ===== */
+  @page {
+    size: A4;
+    margin: 18mm 20mm 20mm 20mm;
+  }
+  @page :first { margin-top: 0; margin-bottom: 0; }
+
+  .page-break { page-break-after: always; break-after: page; }
+  .no-break   { page-break-inside: avoid; break-inside: avoid; }
+
+  /* ===== COVER PAGE ===== */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(155deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%);
+    color: #fff;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+  }
+  .cover-logo {
+    font-size: 56pt;
+    margin-bottom: 20px;
+    opacity: .92;
+  }
+  .cover-club {
+    font-size: 13pt;
+    font-weight: 400;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    opacity: .8;
+    margin-bottom: 28px;
+  }
+  .cover-title {
+    font-size: 32pt;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    letter-spacing: -.02em;
+  }
+  .cover-subtitle {
+    font-size: 14pt;
+    font-weight: 300;
+    opacity: .85;
+    margin-bottom: 60px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 20px;
+    padding: 6px 20px;
+    font-size: 10pt;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 30px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 9pt;
+    opacity: .5;
+  }
+  .cover-cars {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 52px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .cover-car-chip {
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 10pt;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .03em;
+  }
+
+  /* ===== TOC PAGE ===== */
+  .toc-page {
+    padding: 48px 0 40px;
+  }
+  .toc-title {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 11pt;
+  }
+  .toc-list li:last-child { border-bottom: none; }
+  .toc-num {
+    color: var(--blue);
+    font-weight: 700;
+    min-width: 28px;
+  }
+  .toc-label { flex: 1; }
+  .toc-dots {
+    flex: 1;
+    border-bottom: 1px dotted #CBD5E1;
+    margin: 0 8px 4px;
+  }
+  .toc-sub {
+    padding-left: 28px !important;
+    font-size: 10pt;
+    color: var(--muted);
+    border-bottom: none !important;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+  }
+  .toc-sub .toc-num { font-weight: 400; color: var(--muted); font-size: 10pt; }
+
+  /* ===== MAIN CONTENT ===== */
+  .content { padding: 0; }
+
+  .section {
+    padding: 40px 0 32px;
+    border-top: 2px solid var(--border);
+  }
+  .section:first-child { border-top: none; padding-top: 48px; }
+
+  .section-num {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--blue);
+    margin-bottom: 4px;
+  }
+  .section-title {
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .section-lead {
+    font-size: 11.5pt;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.7;
+    max-width: 520px;
+  }
+
+  h3 {
+    font-size: 13pt;
+    font-weight: 700;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 18px 0 6px;
+    color: var(--text);
+  }
+  p { margin-bottom: 10px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ===== STEPS ===== */
+  .steps { margin: 18px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10pt;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .step-body { flex: 1; padding-top: 2px; }
+  .step-body strong { display: block; margin-bottom: 2px; }
+
+  /* ===== CALLOUT BOXES ===== */
+  .callout {
+    border-radius: 8px;
+    padding: 13px 16px;
+    margin: 18px 0;
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 16pt; flex-shrink: 0; line-height: 1.2; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 3px; font-size: 10.5pt; }
+  .callout-body p { font-size: 10pt; color: #374151; margin: 0; }
+
+  .callout.tip    { background: #EFF6FF; border-left: 4px solid var(--blue); }
+  .callout.warn   { background: #FFFBEB; border-left: 4px solid #F59E0B; }
+  .callout.danger { background: #FEF2F2; border-left: 4px solid var(--red); }
+  .callout.secret { background: #F5F3FF; border-left: 4px solid var(--purple); }
+
+  /* ===== CARS TABLE ===== */
+  .cars-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .car-card {
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: #fff;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .car-card-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: rgba(255,255,255,.35);
+    flex-shrink: 0;
+  }
+  .car-card-name { font-weight: 700; font-size: 12pt; }
+  .car-card-sub  { font-size: 9pt; opacity: .8; margin-top: 1px; }
+
+  /* ===== FEATURE TABLE ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+  th {
+    background: var(--bg);
+    padding: 7px 11px;
+    text-align: left;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 8px 11px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--bg); }
+
+  /* ===== SCREEN MOCKUPS ===== */
+  .mockup {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .mockup-bar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .mockup-bar .logo { font-weight: 800; font-size: 10pt; }
+  .mockup-nav { display: flex; gap: 5px; }
+  .mockup-btn {
+    padding: 4px 11px; border-radius: 5px;
+    font-size: 9pt; font-weight: 600;
+    border: none; background: var(--bg); color: var(--muted);
+  }
+  .mockup-btn.active { background: var(--blue); color: #fff; }
+  .mockup-body { padding: 14px; }
+  .mockup-toolbar {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .mockup-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 14px;
+    border: 2px solid transparent;
+    font-size: 9pt; font-weight: 700;
+  }
+  .mockup-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .cal-preview {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 9pt;
+  }
+  .cal-preview-head {
+    display: grid;
+    grid-template-columns: 38px repeat(4, 1fr);
+    background: #fff;
+    border-bottom: 2px solid var(--border);
+  }
+  .cal-preview-head div {
+    padding: 5px 6px; text-align: center;
+    font-weight: 700; font-size: 8pt; color: var(--muted);
+    border-right: 1px solid var(--border);
+  }
+  .cal-preview-head div:last-child { border-right: none; }
+  .cal-preview-body {
+    display: grid;
+    grid-template-columns: 38px repeat(4, 1fr);
+    height: 80px;
+    background: #fff;
+    position: relative;
+  }
+  .cal-preview-body > div {
+    border-right: 1px solid var(--border);
+    height: 80px;
+    position: relative;
+  }
+  .cal-preview-body > div:last-child { border-right: none; }
+  .cal-block {
+    position: absolute; left: 1px; right: 1px;
+    border-radius: 3px; padding: 2px 4px;
+    font-size: 8pt; font-weight: 700; color: #fff;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+  .time-col { display: flex; flex-direction: column; justify-content: space-between; padding: 4px 5px; }
+  .time-col span { font-size: 8pt; color: var(--muted); }
+
+  /* ===== FIELD EXAMPLES ===== */
+  .field-example {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin: 12px 0;
+  }
+  .field-example .field { margin-bottom: 10px; }
+  .field-example .field:last-child { margin-bottom: 0; }
+  .field-example label {
+    display: block;
+    font-size: 8pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--muted); margin-bottom: 3px;
+  }
+  .field-example input-mock {
+    display: block;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 6px 9px; font-size: 10pt; color: var(--muted);
+    background: var(--bg);
+  }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+
+  /* ===== ADMIN PANEL MOCK ===== */
+  .admin-tabs-mock {
+    display: flex;
+    background: #fff;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+  }
+  .admin-tab-mock {
+    padding: 8px 14px; font-size: 9.5pt; font-weight: 500;
+    color: var(--muted); border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+  .admin-tab-mock.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 700; }
+
+  /* ===== BADGE ===== */
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 10px; font-size: 9pt; font-weight: 700;
+  }
+  .badge-blue   { background: #DBEAFE; color: #1E40AF; }
+  .badge-green  { background: #D1FAE5; color: #065F46; }
+  .badge-red    { background: #FEE2E2; color: #991B1B; }
+  .badge-gray   { background: #F1F5F9; color: #475569; }
+  .badge-yellow { background: #FEF9C3; color: #78350F; }
+
+  /* ===== PRINT OVERRIDES ===== */
+  @media print {
+    body { font-size: 10.5pt; }
+    .cover { min-height: 100vh; }
+    .section { border-top-color: #CBD5E1; }
+    a { color: inherit; text-decoration: none; }
+  }
+
+  @media screen {
+    body { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+    .cover { border-radius: 12px; margin: 24px 0; min-height: 420px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== FORSIDE ==================== -->
+<div class="cover page-break">
+  <div class="cover-logo">🚗</div>
+  <div class="cover-club">Delebilsklub</div>
+  <h1 class="cover-title">Administratorvejledning</h1>
+  <p class="cover-subtitle">Bookingsystem — komplet guide til administratorer</p>
+
+  <div class="cover-cars">
+    <div class="cover-car-chip" style="background:#1D4ED8">ID3</div>
+    <div class="cover-car-chip" style="background:#047857">Renault Zoe</div>
+    <div class="cover-car-chip" style="background:#B45309">Berlingo</div>
+    <div class="cover-car-chip" style="background:#6D28D9">ID Buzz</div>
+  </div>
+
+  <div class="cover-badge">🔒 Kun for administratorer</div>
+  <div class="cover-footer">Delebilsklub · Bookingsystem · 2025</div>
+</div>
+
+
+<!-- ==================== INDHOLDSFORTEGNELSE ==================== -->
+<div class="toc-page page-break">
+  <div class="toc-title">Indholdsfortegnelse</div>
+  <ol class="toc-list">
+    <li>
+      <span class="toc-num">1</span>
+      <span class="toc-label">Om systemet</span>
+      <span class="toc-dots"></span>
+      <span>3</span>
+    </li>
+    <li>
+      <span class="toc-num">2</span>
+      <span class="toc-label">Admin-adgang</span>
+      <span class="toc-dots"></span>
+      <span>4</span>
+    </li>
+    <li>
+      <span class="toc-num">3</span>
+      <span class="toc-label">Kalendervisning</span>
+      <span class="toc-dots"></span>
+      <span>5</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">3.1</span>
+      <span class="toc-label">Dag-, uge- og månedvisning</span>
+      <span class="toc-dots"></span>
+      <span>5</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">3.2</span>
+      <span class="toc-label">Til- og fravalg af biler</span>
+      <span class="toc-dots"></span>
+      <span>6</span>
+    </li>
+    <li>
+      <span class="toc-num">4</span>
+      <span class="toc-label">Opret og rediger bookinger</span>
+      <span class="toc-dots"></span>
+      <span>7</span>
+    </li>
+    <li>
+      <span class="toc-num">5</span>
+      <span class="toc-label">Aflever bil</span>
+      <span class="toc-dots"></span>
+      <span>9</span>
+    </li>
+    <li>
+      <span class="toc-num">6</span>
+      <span class="toc-label">Admin-panelet</span>
+      <span class="toc-dots"></span>
+      <span>11</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">6.1</span>
+      <span class="toc-label">Biler — tilføj, rediger, slet</span>
+      <span class="toc-dots"></span>
+      <span>11</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">6.2</span>
+      <span class="toc-label">Alle bookinger</span>
+      <span class="toc-dots"></span>
+      <span>12</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">6.3</span>
+      <span class="toc-label">Afleveringer</span>
+      <span class="toc-dots"></span>
+      <span>13</span>
+    </li>
+    <li class="toc-sub">
+      <span class="toc-num">6.4</span>
+      <span class="toc-label">Aktivitetslog</span>
+      <span class="toc-dots"></span>
+      <span>13</span>
+    </li>
+    <li>
+      <span class="toc-num">7</span>
+      <span class="toc-label">Km-håndtering</span>
+      <span class="toc-dots"></span>
+      <span>14</span>
+    </li>
+    <li>
+      <span class="toc-num">8</span>
+      <span class="toc-label">Tips og hurtige svar</span>
+      <span class="toc-dots"></span>
+      <span>15</span>
+    </li>
+  </ol>
+</div>
+
+
+<!-- ==================== INDHOLD ==================== -->
+<div class="content">
+
+  <!-- SEKTION 1 -->
+  <div class="section no-break">
+    <div class="section-num">Sektion 1</div>
+    <h2 class="section-title">Om systemet</h2>
+    <p class="section-lead">Delebilsklubens bookingsystem giver alle medlemmer mulighed for at reservere og aflevere klub­bens biler via en simpel webapp — ingen installation, ingen login for brugere.</p>
+
+    <div class="cars-grid">
+      <div class="car-card" style="background:#1D4ED8">
+        <div class="car-card-dot"></div>
+        <div><div class="car-card-name">ID3</div><div class="car-card-sub">Blå</div></div>
+      </div>
+      <div class="car-card" style="background:#047857">
+        <div class="car-card-dot"></div>
+        <div><div class="car-card-name">Renault Zoe</div><div class="car-card-sub">Grøn</div></div>
+      </div>
+      <div class="car-card" style="background:#B45309">
+        <div class="car-card-dot"></div>
+        <div><div class="car-card-name">Berlingo</div><div class="car-card-sub">Amber</div></div>
+      </div>
+      <div class="car-card" style="background:#6D28D9">
+        <div class="car-card-dot"></div>
+        <div><div class="car-card-name">ID Buzz</div><div class="car-card-sub">Lilla</div></div>
+      </div>
+    </div>
+
+    <h3>Hvad kan systemet?</h3>
+    <table>
+      <thead><tr><th>Funktion</th><th>Beskrivelse</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Kalender</strong></td><td>Visuelt overblik over alle bookinger — dag, uge eller måned</td></tr>
+        <tr><td><strong>Booking</strong></td><td>Reserver en bil med navn, tlf., tidspunkt og forventet km</td></tr>
+        <tr><td><strong>Aflever bil</strong></td><td>Registrer aflevering med faktisk km-stand og køretid</td></tr>
+        <tr><td><strong>Admin-panel</strong></td><td>Fuldt overblik over biler, bookinger, afleveringer og log</td></tr>
+        <tr><td><strong>Km-tracking</strong></td><td>Automatisk beregning af kørte km og opdatering af km-tæller</td></tr>
+        <tr><td><strong>Aktivitetslog</strong></td><td>Komplet historik over alle handlinger i systemet</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Teknisk platform</h3>
+    <p>Systemet kører som en statisk webside hostet på <strong>GitHub Pages</strong> (gratis). Databasen er <strong>Supabase</strong> (gratis tier). Der kræves ingen server, ingen installation og ingen vedligeholdelse af infrastruktur.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Adgang til systemet</strong>
+        <p>Systemet åbnes i en webbrowser. Alle med linket kan bruge det — ingen login kræves for almindelige brugere. Admin-adgang beskyttes med adgangskode.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SEKTION 2 -->
+  <div class="section no-break">
+    <div class="section-num">Sektion 2</div>
+    <h2 class="section-title">Admin-adgang</h2>
+    <p class="section-lead">Admin-funktionerne er skjult for almindelige brugere. Adgangen er bevidst gjort diskret, så layoutet fremstår rent og enkelt for alle andre.</p>
+
+    <div class="callout secret">
+      <div class="callout-icon">🔒</div>
+      <div class="callout-body">
+        <strong>Sådan åbner du admin-panelet</strong>
+        <p>Klik <strong>5 gange hurtigt</strong> på logoet "🚗 Delebilsklub" øverst til venstre i navigationsbjælken. Klik alle 5 klik inden for 2 sekunder. Siden skifter automatisk til admin-visningen.</p>
+      </div>
+    </div>
+
+    <h3>Log ind med adgangskode</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Åbn admin-siden</strong>
+          Klik 5 gange hurtigt på logoet øverst til venstre.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Indtast adgangskoden</strong>
+          Skriv admin-adgangskoden i feltet og tryk <em>Log ind</em> (eller Enter).
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Admin-panelet åbner</strong>
+          Du ser nu 4 faner: Biler, Bookinger, Afleveringer og Log.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Opbevar adgangskoden sikkert</strong>
+        <p>Del kun adgangskoden med klubadministratorer. Adgangskoden er gemt i systemets kode — kontakt den tekniske ansvarlige for at ændre den.</p>
+      </div>
+    </div>
+
+    <p>Sessionen husker ikke din admin-status — næste gang du besøger siden, skal du logge ind igen. Dette er en bevidst sikkerhedsforanstaltning.</p>
+  </div>
+
+
+  <!-- SEKTION 3 -->
+  <div class="section">
+    <div class="section-num">Sektion 3</div>
+    <h2 class="section-title">Kalendervisning</h2>
+    <p class="section-lead">Forsiden viser en kalender over alle bookinger. Her kan du se hvem der har booket hvilken bil, og hvornår bilerne er ledige.</p>
+
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="logo">🚗 Delebilsklub</div>
+        <div class="mockup-nav">
+          <div class="mockup-btn active">Kalender</div>
+          <div class="mockup-btn">Aflever bil</div>
+        </div>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-toolbar">
+          <div class="mockup-chip" style="border-color:#1D4ED8;color:#1D4ED8">
+            <div class="dot" style="background:#1D4ED8"></div>ID3
+          </div>
+          <div class="mockup-chip" style="border-color:#047857;color:#047857">
+            <div class="dot" style="background:#047857"></div>Renault Zoe
+          </div>
+          <div class="mockup-chip" style="border-color:#B45309;color:#B45309;opacity:.35">
+            <div class="dot" style="background:#B45309"></div>Berlingo
+          </div>
+          <div class="mockup-chip" style="border-color:#6D28D9;color:#6D28D9">
+            <div class="dot" style="background:#6D28D9"></div>ID Buzz
+          </div>
+          <div style="margin-left:auto;display:flex;gap:5px;align-items:center;font-size:9pt;color:var(--muted)">
+            ← &nbsp; 26 maj – 1 jun 2025 &nbsp; I dag &nbsp; →
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;justify-content:center">
+          <div style="padding:3px 10px;border:1px solid var(--border);border-radius:5px;font-size:9pt;color:var(--muted)">Dag</div>
+          <div style="padding:3px 10px;border:1px solid var(--blue);border-radius:5px;font-size:9pt;background:var(--blue);color:#fff;font-weight:700">Uge</div>
+          <div style="padding:3px 10px;border:1px solid var(--border);border-radius:5px;font-size:9pt;color:var(--muted)">Måned</div>
+        </div>
+        <div class="cal-preview">
+          <div class="cal-preview-head">
+            <div></div>
+            <div>MAN<br>26</div>
+            <div>TIR<br>27</div>
+            <div>ONS<br>28</div>
+            <div>TOR<br>29</div>
+          </div>
+          <div class="cal-preview-body">
+            <div class="time-col"><span>08:00</span><span>12:00</span><span>16:00</span></div>
+            <div>
+              <div class="cal-block" style="background:#1D4ED8;top:10px;height:28px;width:48%">Peter H.</div>
+              <div class="cal-block" style="background:#6D28D9;top:10px;height:28px;left:50%;right:1px">Sofie</div>
+            </div>
+            <div>
+              <div class="cal-block" style="background:#047857;top:30px;height:32px">Anna M.</div>
+            </div>
+            <div></div>
+            <div>
+              <div class="cal-block" style="background:#1D4ED8;top:5px;height:52px;width:48%">Lars K.</div>
+              <div class="cal-block" style="background:#047857;top:40px;height:22px;left:50%;right:1px">Bo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>3.1 Dag-, uge- og månedvisning</h3>
+    <p>Brug de tre knapper <strong>Dag / Uge / Måned</strong> til at skifte visning. Knapperne er placeret i en separat række under toolbar og er altid synlige — også på mobil.</p>
+
+    <table>
+      <thead><tr><th>Visning</th><th>Hvad du ser</th><th>Bedst til</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Dag</strong></td>
+          <td>Én dag ad gangen med fuld tidslinje (00:00–24:00)</td>
+          <td>Detaljeret overblik for en bestemt dag</td>
+        </tr>
+        <tr>
+          <td><strong>Uge</strong></td>
+          <td>7 dage side om side med tidslinje</td>
+          <td>Standard ugeoverblik — anbefales</td>
+        </tr>
+        <tr>
+          <td><strong>Måned</strong></td>
+          <td>Månedsgitter med farvestreger per booking</td>
+          <td>Hurtigt overblik over belægning</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Navigationspilene <strong>← →</strong> skifter hhv. en dag, en uge eller en måned. Knappen <strong>I dag</strong> springer altid tilbage til den aktuelle dato.</p>
+
+    <h3>3.2 Til- og fravalg af biler</h3>
+    <p>Øverst i kalenderen er der farveknapper for hver bil. Klik på en knap for at skjule eller vise den pågælende bil i kalenderen. En nedtonet knap (lav opacitet) betyder, at bilen er skjult. Dette ændrer ikke bookingerne — det er kun en visuel filtrering.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Klik i kalenderen for at oprette booking</strong>
+        <p>Klik på et ledigt tidspunkt i dag- eller ugevisningen for at åbne bookingformularen. I månedvisningen skifter et klik til dagvisningen for den valgte dag.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SEKTION 4 -->
+  <div class="section">
+    <div class="section-num">Sektion 4</div>
+    <h2 class="section-title">Opret og rediger bookinger</h2>
+    <p class="section-lead">Bookinger oprettes fra kalenderen. Alle medlemmer kan booke — der kræves ingen konto. Systemet tjekker automatisk for dobbeltbookinger.</p>
+
+    <h3>Opret en ny booking</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Klik i kalenderen</strong>
+          Klik på et ledigt tidspunkt i dag- eller ugevisningen. Et +-tegn viser, at området er klikbart. Formularen åbner med det valgte tidspunkt forudfyldt.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Vælg bil</strong>
+          Øverst i formularen vises farveknapper for alle biler. Klik på den bil du ønsker at booke.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Udfyld dine oplysninger</strong>
+          Navn, telefonnummer, forventet antal km og tidsrum (start og slut). Bemærkninger er valgfrit.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Klik "Book bil"</strong>
+          Systemet kontrollerer for konflikter i realtid. Hvis bilen er optaget, vises tidspunktet for konflikten samt hvornår bilen er ledig igen.
+        </div>
+      </div>
+    </div>
+
+    <div class="field-example no-break">
+      <div class="field-row">
+        <div class="field">
+          <label>Dit navn *</label>
+          <input-mock>Peter Hansen</input-mock>
+        </div>
+        <div class="field">
+          <label>Telefonnummer *</label>
+          <input-mock>42 33 55 66</input-mock>
+        </div>
+      </div>
+      <div class="field">
+        <label>Forventet antal km *</label>
+        <input-mock>85 km</input-mock>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Starttidspunkt *</label>
+          <input-mock>Man 26. maj kl. 09:00</input-mock>
+        </div>
+        <div class="field">
+          <label>Sluttidspunkt *</label>
+          <input-mock>Man 26. maj kl. 17:00</input-mock>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bemærkninger</label>
+        <input-mock style="color:#94A3B8">Valgfrit...</input-mock>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">⏱</div>
+      <div class="callout-body">
+        <strong>Tidspunkter i kvarterstrin</strong>
+        <p>Start- og sluttidspunkter vælges i spring på 15 minutter (00, 15, 30, 45). Dette sikrer ensartet håndtering på tværs af bookinger.</p>
+      </div>
+    </div>
+
+    <h3>Se og rediger en eksisterende booking</h3>
+    <p>Klik på en farveblok i kalenderen for at åbne detaljerne for den booking. Her ses booker, telefon, periode og km-oplysninger.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>Klik på bookingblokken</strong> i kalenderen</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>Klik "Rediger"</strong> i detailvisningen for at rette navn, tidspunkt, km eller bemærkninger</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>Klik "Annuller booking"</strong> for at slette bookingen — det kræver bekræftelse</div>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Annullering er permanent</strong>
+        <p>En annulleret booking kan ikke gendannes. Handlingen skrives til aktivitetsloggen.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SEKTION 5 -->
+  <div class="section">
+    <div class="section-num">Sektion 5</div>
+    <h2 class="section-title">Aflever bil</h2>
+    <p class="section-lead">Når et medlem returnerer en bil, registreres afleveringen under fanen "Aflever bil". Her logges den faktiske km-stand, og bilens km-tæller opdateres automatisk.</p>
+
+    <h3>Registrer en aflevering</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Vælg "Aflever bil" i topmenuens</strong>
+          Klik på fanen øverst i navigationen.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Vælg bil</strong>
+          Vælg den bil der afleveres fra dropdown-menuen. Bilens aktuelle km-stand vises automatisk som startpunkt.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Vælg tilknyttet booking (valgfrit)</strong>
+          Hvis der er en aktiv booking for bilen, vises den i en dropdown. Det er valgfrit at tilknytte — man kan aflevere uden booking.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Angiv brugt tid</strong>
+          Vælg antal timer og minutter (i kvarterstrin: 0, 15, 30, 45 min).
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Aflæs og indtast km-stand</strong>
+          Aflæs bilens km-tæller og skriv den aktuelle stand. Feltet "Kørte km" beregnes automatisk.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <strong>Tilføj evt. kommentarer og klik "Registrer aflevering"</strong>
+          Kommentarer kan bruges til at notere skader, manko på batteri, parkeringsforhold osv.
+        </div>
+      </div>
+    </div>
+
+    <h3>Hvad sker der ved registrering?</h3>
+    <table>
+      <thead><tr><th>Handling</th><th>Beskrivelse</th></tr></thead>
+      <tbody>
+        <tr><td>Km-tæller opdateres</td><td>Bilens <em>aktuelle km</em> sættes til den aflæste km-stand</td></tr>
+        <tr><td>Booking markeres færdig</td><td>Hvis en booking er tilknyttet, ændres status til "Afsluttet"</td></tr>
+        <tr><td>Aflevering gemmes</td><td>Start km, slut km, kørte km, varighed og kommentarer logges</td></tr>
+        <tr><td>Aktivitetslog opdateres</td><td>Handlingen skrives til systemets log med alle detaljer</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-icon">🔑</div>
+      <div class="callout-body">
+        <strong>Km-standen er altid bilens faktiske nuværende stand</strong>
+        <p>Systemet bruger bilens <em>aktuelle</em> km-tæller (ikke km-standen fra da bookingen blev oprettet) som startpunkt for beregning. Det sikrer korrekt optælling selv hvis bilen har kørt siden bookingen blev oprettet.</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Aflæst km-stand skal være højere end eller lig med startværdien</strong>
+        <p>Systemet afviser en registrering hvor den aflæste km-stand er lavere end bilens aktuelle km-stand. Dobbelttjek altid aflæsningen inden du registrerer.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SEKTION 6 -->
+  <div class="section">
+    <div class="section-num">Sektion 6</div>
+    <h2 class="section-title">Admin-panelet</h2>
+    <p class="section-lead">Admin-panelet giver dig fuldt overblik og kontrol over systemet. Det åbnes via 5 hurtige klik på logoet efterfulgt af adgangskoden.</p>
+
+    <div class="mockup no-break">
+      <div class="mockup-bar">
+        <div class="logo">🚗 Delebilsklub</div>
+        <div class="mockup-nav">
+          <div class="mockup-btn active">Admin</div>
+        </div>
+      </div>
+      <div class="admin-tabs-mock">
+        <div class="admin-tab-mock active">🚗 Biler</div>
+        <div class="admin-tab-mock">📅 Bookinger</div>
+        <div class="admin-tab-mock">✅ Afleveringer</div>
+        <div class="admin-tab-mock">📋 Log</div>
+      </div>
+      <div class="mockup-body" style="padding-top:12px">
+        <p style="font-size:9pt;color:var(--muted)">← Vælg en fane for at se de tilsvarende data</p>
+      </div>
+    </div>
+
+    <h3>6.1 Biler — tilføj, rediger, slet</h3>
+    <p>Under fanen <strong>Biler</strong> ser du alle aktive biler med navn og aktuel km-stand. Til højre vises de næste kommende bookinger.</p>
+
+    <h4>Tilføj ny bil</h4>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">Udfyld <strong>Navn</strong> (f.eks. "Model Y"), vælg <strong>farve</strong> med farvepaletten og angiv <strong>Startkilometer</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">Klik <strong>Tilføj bil</strong> — bilen vises straks i kalenderen og i afleveringsformularen</div>
+      </div>
+    </div>
+
+    <h4>Rediger eksisterende bil</h4>
+    <p>Klik på <strong>✏ Rediger</strong> ud for bilen. Du kan ændre navn, farve og km-stand. Km-standen bør normalt kun ændres ved fejlindtastning — brug ellers afleveringsfunktionen.</p>
+
+    <h4>Slet bil</h4>
+    <p>Klik på <strong>🗑 Slet</strong> ud for bilen og bekræft. Bilen markeres som inaktiv og forsvinder fra kalenderen. <em>Alle tilknyttede bookinger slettes også.</em></p>
+
+    <div class="callout danger">
+      <div class="callout-icon">🚫</div>
+      <div class="callout-body">
+        <strong>Sletning er permanent</strong>
+        <p>En slettet bil kan ikke gendannes via systemet. Historiske afleveringer beholdes i databasen, men bilen fjernes fra alle visninger.</p>
+      </div>
+    </div>
+
+    <h3>6.2 Alle bookinger</h3>
+    <p>Fanen <strong>Bookinger</strong> viser alle bookinger i systemet — aktive, afsluttede og annullerede — med mulighed for filtrering.</p>
+
+    <table class="no-break">
+      <thead><tr><th>Kolonne</th><th>Beskrivelse</th></tr></thead>
+      <tbody>
+        <tr><td>Bil</td><td>Farvet prik + bilnavn</td></tr>
+        <tr><td>Bruger</td><td>Navn på den der bookede</td></tr>
+        <tr><td>Telefon</td><td>Kontaktnummer</td></tr>
+        <tr><td>Start / Slut</td><td>Bookingperioden</td></tr>
+        <tr><td>Start km</td><td>Km-stand da bookingen blev oprettet</td></tr>
+        <tr><td>Forv. km</td><td>Forventet antal km ved bookingen</td></tr>
+        <tr><td>Status</td>
+          <td>
+            <span class="badge badge-blue">Aktiv</span> &nbsp;
+            <span class="badge badge-green">Afsluttet</span> &nbsp;
+            <span class="badge badge-red">Annulleret</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Brug filtrene øverst til at afgrænse på bil og/eller status. Klik <strong>↻ Opdater</strong> for at hente de nyeste data.</p>
+
+    <h3>6.3 Afleveringer</h3>
+    <p>Fanen <strong>Afleveringer</strong> viser alle registrerede afleveringer med start km, slut km, kørte km, varighed og eventuelle kommentarer.</p>
+    <p>Brug bilfilter og opdateringsknappen på samme måde som under Bookinger.</p>
+
+    <h3>6.4 Aktivitetslog</h3>
+    <p>Loggen er en komplet kronologisk historik over alle handlinger i systemet. Den kan ikke slettes eller redigeres.</p>
+
+    <table class="no-break">
+      <thead><tr><th>Handling</th><th>Farve</th><th>Hvornår logges den?</th></tr></thead>
+      <tbody>
+        <tr><td>Booking oprettet</td><td><span class="badge badge-blue">Blå</span></td><td>Når en ny booking gemmes</td></tr>
+        <tr><td>Booking ændret</td><td><span class="badge badge-yellow">Gul</span></td><td>Når en booking redigeres</td></tr>
+        <tr><td>Booking annulleret</td><td><span class="badge badge-red">Rød</span></td><td>Når en booking slettes</td></tr>
+        <tr><td>Aflevering</td><td><span class="badge badge-green">Grøn</span></td><td>Når en aflevering registreres</td></tr>
+        <tr><td>Bil oprettet</td><td><span class="badge" style="background:#EDE9FE;color:#4C1D95">Lilla</span></td><td>Når en ny bil tilføjes</td></tr>
+        <tr><td>Bil ændret</td><td><span class="badge badge-gray">Grå</span></td><td>Når bilens oplysninger redigeres</td></tr>
+        <tr><td>Bil slettet</td><td><span class="badge badge-red">Rød</span></td><td>Når en bil markeres inaktiv</td></tr>
+      </tbody>
+    </table>
+
+    <p>Loggen viser altid de 200 seneste poster. Brug filtrene <em>Bil</em> og <em>Handling</em> til at indsnævre søgningen.</p>
+  </div>
+
+
+  <!-- SEKTION 7 -->
+  <div class="section no-break">
+    <div class="section-num">Sektion 7</div>
+    <h2 class="section-title">Km-håndtering</h2>
+    <p class="section-lead">Korrekt km-tracking er vigtigt for at holde styr på bilernes brug og slid. Her er en forklaring af systemets logik.</p>
+
+    <h3>Km-tæller pr. bil</h3>
+    <p>Hver bil har én aktuel km-stand (<em>current_km</em>) i databasen. Den opdateres automatisk ved hver aflevering til den aflæste slut-km-stand.</p>
+
+    <h3>Hvad vises hvornår?</h3>
+    <table>
+      <thead><tr><th>Sted</th><th>Km-stand der vises</th><th>Formål</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Bookingformular</td>
+          <td>Bilens nuværende km-stand</td>
+          <td>Vejledende information til bookeren — kan ikke ændres</td>
+        </tr>
+        <tr>
+          <td>Booking­detaljer (klik i kalender)</td>
+          <td>Km ved booking + aktuel km-stand</td>
+          <td>Sammenligning — viser eventuel brug siden booking</td>
+        </tr>
+        <tr>
+          <td>Afleveringsformular</td>
+          <td>Bilens aktuelle km-stand</td>
+          <td>Bruges som startpunkt for beregning af kørte km</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">📐</div>
+      <div class="callout-body">
+        <strong>Eksempel: Bil booket en uge i forvejen</strong>
+        <p>
+          Mandag bookes ID3 til fredag. Km-standen er 12.000 ved booking.<br>
+          Tirsdag låner nogen bilen ad hoc og afleverer med km-stand 12.150.<br>
+          Fredag bruger bookingsystemet 12.150 (den faktiske aktuelle stand) som startpunkt for afleveringsberegningen — <em>ikke</em> 12.000 fra bookingstidspunktet.
+        </p>
+      </div>
+    </div>
+
+    <h3>Manuel korrektion af km-stand</h3>
+    <p>Hvis km-standen er forkert (f.eks. efter fejlindtastning), kan en administrator redigere den direkte under <strong>Admin → Biler → ✏ Rediger</strong>. Korrektionen logges automatisk i aktivitetsloggen.</p>
+  </div>
+
+
+  <!-- SEKTION 8 -->
+  <div class="section">
+    <div class="section-num">Sektion 8</div>
+    <h2 class="section-title">Tips og hurtige svar</h2>
+
+    <h3>Hyppige situationer</h3>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">❓</div>
+      <div class="callout-body">
+        <strong>En bruger kan ikke se ledige tider</strong>
+        <p>Tjek om bilerne er slået til (farveknapperne i kalendertoolbaren). En nedtonet knap betyder bilen er skjult i visningen.</p>
+      </div>
+    </div>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">❓</div>
+      <div class="callout-body">
+        <strong>Booking vises ikke i kalenderen efter oprettelse</strong>
+        <p>Kalenderen viser kun aktive bookinger inden for den valgte periode. Skift til den uge/måned bookingen er i, eller brug Alle bookinger i admin-panelet.</p>
+      </div>
+    </div>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">❓</div>
+      <div class="callout-body">
+        <strong>Kan jeg annullere en afsluttet booking?</strong>
+        <p>Afsluttede bookinger (status "Afsluttet") vises i admin-panelet under Bookinger, men kan ikke annulleres via systemet. Km-standen er allerede opdateret ved afleveringen.</p>
+      </div>
+    </div>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">❓</div>
+      <div class="callout-body">
+        <strong>Siden viser ikke de nyeste data</strong>
+        <p>Prøv en hård genindlæsning: <strong>Cmd+Shift+R</strong> (Mac) eller <strong>Ctrl+Shift+R</strong> (Windows). Browseren kan have en ældre version i cache.</p>
+      </div>
+    </div>
+
+    <div class="callout tip no-break">
+      <div class="callout-icon">❓</div>
+      <div class="callout-body">
+        <strong>En aflevering er registreret med forkert km-stand</strong>
+        <p>Ret km-standen manuelt under <strong>Admin → Biler → ✏ Rediger</strong>. Selve afleveringsregistreringen kan ikke redigeres — der oprettes en ny korrektionspost i loggen.</p>
+      </div>
+    </div>
+
+    <h3>Tastaturklik-reference</h3>
+    <table class="no-break">
+      <thead><tr><th>Handling</th><th>Hvordan</th></tr></thead>
+      <tbody>
+        <tr><td>Åbn admin</td><td>Klik 5× hurtigt på logoet øverst til venstre</td></tr>
+        <tr><td>Log ind som admin</td><td>Skriv adgangskode + tryk Enter</td></tr>
+        <tr><td>Ny booking</td><td>Klik på ledigt tidspunkt i dag- eller ugevisningen</td></tr>
+        <tr><td>Se bookingdetaljer</td><td>Klik på farveblokken i kalenderen</td></tr>
+        <tr><td>Naviger til i dag</td><td>Klik på knappen "I dag" i toolbar</td></tr>
+        <tr><td>Luk dialog</td><td>Klik på ✕ i hjørnet, eller klik uden for dialogen</td></tr>
+        <tr><td>Hård genindlæsning</td><td>Cmd+Shift+R (Mac) / Ctrl+Shift+R (Windows)</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:9pt">
+      Delebilsklub — Bookingsystem · Administratorvejledning · 2025 &nbsp;·&nbsp; 🔒 Fortrolig
+    </div>
+  </div>
+
+</div><!-- end content -->
+
+</body>
+</html>

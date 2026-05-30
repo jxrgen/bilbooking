@@ -58,6 +58,13 @@ body {
 }
 .nav-btn:hover  { background: var(--bg); color: var(--text); }
 .nav-btn.active { background: var(--primary); color: #fff; }
+.nav-btn[data-view="help"] {
+  width: 28px; height: 28px; padding: 0;
+  border-radius: 50%; font-size: 14px; font-weight: 700;
+  border: 1.5px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.nav-btn[data-view="help"].active { border-color: var(--primary); }
 
 /* ===================== VIEWS ===================== */
 .view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
@@ -542,6 +549,92 @@ body {
 
 .booking-admin-row { padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .booking-admin-row:last-of-type { border-bottom: none; }
+
+/* ===================== HELP VIEW ===================== */
+#view-help { background: var(--bg); }
+.help-scroll { flex: 1; overflow-y: auto; }
+.help-content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+.help-hero {
+  text-align: center;
+  padding: 44px 20px 36px;
+}
+.help-hero-icon { font-size: 40px; margin-bottom: 12px; }
+.help-hero h1  { font-size: 22px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.02em; }
+.help-hero p   { color: var(--muted); font-size: 14px; }
+
+.help-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 22px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.help-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.help-icon-wrap {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0; font-weight: 700;
+}
+.help-section-header h2 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+.help-lead { font-size: 13px; color: var(--muted); }
+
+.help-steps { display: flex; flex-direction: column; gap: 10px; }
+.help-step {
+  display: flex; gap: 12px; align-items: flex-start;
+  font-size: 13.5px; line-height: 1.5;
+}
+.help-step-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+.help-tip {
+  margin-top: 14px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 12.5px;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.help-tip-icon { flex-shrink: 0; }
+
+.help-cars-section { padding-bottom: 22px; }
+.help-cars-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.help-car {
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .help-hero { padding: 28px 10px 24px; }
+  .help-hero h1 { font-size: 18px; }
+  .help-content { padding: 0 12px 48px; }
+  .help-section { padding: 16px 15px 14px; }
+}
 
 /* ===================== TOAST ===================== */
 #toast-container {
