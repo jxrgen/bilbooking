@@ -10,7 +10,7 @@
 
   <!-- Navigation — kun Kalender + Aflever bil for almindelige brugere -->
   <nav class="topnav">
-    <div class="logo">&#128663; Delebilsklub</div>
+    <div class="logo" id="logo-btn">&#128663; Delebilsklub</div>
     <div class="nav-links">
       <button class="nav-btn active" data-view="calendar">Kalender</button>
       <button class="nav-btn" data-view="delivery">Aflever bil</button>
@@ -320,10 +320,6 @@
   <!-- Toast notifications -->
   <div id="toast-container"></div>
 
-  <!-- Admin-adgang i bunden — diskret, usynlig for almindelige brugere -->
-  <footer class="admin-footer">
-    <button id="admin-footer-btn" class="admin-footer-link">&#128274; Admin</button>
-  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="app.js"></script>

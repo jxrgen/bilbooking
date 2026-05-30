@@ -1201,7 +1201,16 @@ function setView(view) {
 document.querySelectorAll('.nav-btn').forEach(btn =>
   btn.addEventListener('click', () => setView(btn.dataset.view)));
 
-document.getElementById('admin-footer-btn').addEventListener('click', () => setView('admin'));
+// 5 klik på logoet inden for 2 sekunder åbner admin
+(function () {
+  let clicks = 0, timer;
+  document.getElementById('logo-btn').addEventListener('click', () => {
+    clicks++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { clicks = 0; }, 2000);
+    if (clicks >= 5) { clicks = 0; setView('admin'); }
+  });
+})();
 
 document.getElementById('prev-week').addEventListener('click', async () => {
   if (state.viewMode === 'day')   state.selectedDay   = addDays(state.selectedDay, -1);
