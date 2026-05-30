@@ -661,6 +661,61 @@ body {
 .dm-row label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; display: block; }
 .dm-row span  { font-size: 14px; }
 
+/* ===================== EXPORT DROPDOWN ===================== */
+.export-wrap { position: relative; }
+.export-menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 200;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  min-width: 160px; overflow: hidden;
+}
+.export-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 14px; border: none; background: none;
+  font-size: 13px; cursor: pointer; color: var(--text);
+}
+.export-menu button:hover { background: var(--bg); }
+
+/* ===================== EDIT BAR ===================== */
+.edit-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 16px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE;
+  flex-shrink: 0;
+}
+.sel-count { font-size: 13px; font-weight: 600; color: #1E40AF; }
+.btn-danger { background: #EF4444 !important; color: #fff !important; border-color: #EF4444 !important; }
+.btn-danger:hover:not(:disabled) { background: #DC2626 !important; }
+.btn-danger:disabled { background: #FCA5A5 !important; opacity: .7; }
+
+/* ===================== EDIT MODE TABLE ===================== */
+tr.row-selected td { background: #DBEAFE !important; }
+.row-check { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
+.btn-icon {
+  background: none; border: 1px solid var(--border); border-radius: 5px;
+  padding: 3px 7px; font-size: 11px; cursor: pointer; color: var(--primary);
+  transition: background .15s; white-space: nowrap;
+}
+.btn-icon:hover { background: var(--bg); }
+th.check-col, td.check-col { width: 32px; padding: 6px 4px !important; }
+th.act-col,  td.act-col  { width: 50px; padding: 6px 4px !important; }
+
+/* ===================== TRASH ===================== */
+.trash-section { margin-bottom: 24px; }
+.trash-section-header {
+  font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.trash-item {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 6px; font-size: 13px;
+}
+.trash-item-label { flex: 1; min-width: 0; overflow: hidden; }
+.trash-item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.trash-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.trash-empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 15px; }
+
 /* ===================== MISC ===================== */
 .hidden { display: none !important; }
 

@@ -228,6 +228,7 @@
         <button class="admin-tab" data-tab="bookings">&#128197; Bookinger</button>
         <button class="admin-tab" data-tab="deliveries">&#9989; Afleveringer</button>
         <button class="admin-tab" data-tab="log">&#128221; Log</button>
+        <button class="admin-tab" data-tab="trash">&#128465; Skraldespand</button>
       </div>
 
       <!-- Tab: Biler -->
@@ -265,6 +266,14 @@
         <div class="log-toolbar">
           <h2>Alle bookinger</h2>
           <div class="log-filters">
+            <div class="export-wrap">
+              <button id="ab-export-btn" class="btn-sm">&#8659; Eksporter</button>
+              <div id="ab-export-menu" class="export-menu hidden">
+                <button onclick="exportAdminData('bookings','csv')">&#128196; CSV (Excel)</button>
+                <button onclick="exportAdminData('bookings','json')">{ } JSON</button>
+              </div>
+            </div>
+            <button id="ab-edit-toggle" class="btn-sm">&#9998; Rediger</button>
             <select id="ab-filter-car"><option value="">Alle biler</option></select>
             <select id="ab-filter-status">
               <option value="">Alle statusser</option>
@@ -275,11 +284,18 @@
             <button id="ab-refresh" class="btn-sm">&#8635; Opdater</button>
           </div>
         </div>
+        <div id="ab-edit-bar" class="edit-bar hidden">
+          <span id="ab-sel-count" class="sel-count">0 valgte</span>
+          <button id="ab-select-all" class="btn-sm">Vælg alle</button>
+          <button id="ab-edit-selected" class="btn-sm" disabled>&#9998; Rediger valgt</button>
+          <button id="ab-delete-selected" class="btn-sm btn-danger" disabled>&#128465; Slet valgte</button>
+          <button id="ab-delete-all" class="btn-sm btn-danger">&#128465; Slet alle synlige</button>
+        </div>
         <div id="ab-table-wrap">
           <table id="ab-table">
-            <thead><tr>
+            <thead><tr id="ab-thead-row">
               <th>Bil</th><th>Bruger</th><th>Telefon</th>
-              <th>Start</th><th>Slut</th><th>Start km</th><th>Forv. km</th><th>Status</th>
+              <th>Start</th><th>Slut</th><th>Forv. km</th><th>Status</th>
             </tr></thead>
             <tbody id="ab-body"></tbody>
           </table>
@@ -291,13 +307,27 @@
         <div class="log-toolbar">
           <h2>Afleveringer</h2>
           <div class="log-filters">
+            <div class="export-wrap">
+              <button id="ad-export-btn" class="btn-sm">&#8659; Eksporter</button>
+              <div id="ad-export-menu" class="export-menu hidden">
+                <button onclick="exportAdminData('deliveries','csv')">&#128196; CSV (Excel)</button>
+                <button onclick="exportAdminData('deliveries','json')">{ } JSON</button>
+              </div>
+            </div>
+            <button id="ad-edit-toggle" class="btn-sm">&#9998; Rediger</button>
             <select id="ad-filter-car"><option value="">Alle biler</option></select>
             <button id="ad-refresh" class="btn-sm">&#8635; Opdater</button>
           </div>
         </div>
+        <div id="ad-edit-bar" class="edit-bar hidden">
+          <span id="ad-sel-count" class="sel-count">0 valgte</span>
+          <button id="ad-select-all" class="btn-sm">Vælg alle</button>
+          <button id="ad-delete-selected" class="btn-sm btn-danger" disabled>&#128465; Slet valgte</button>
+          <button id="ad-delete-all" class="btn-sm btn-danger">&#128465; Slet alle synlige</button>
+        </div>
         <div id="ad-table-wrap">
           <table id="ad-table">
-            <thead><tr>
+            <thead><tr id="ad-thead-row">
               <th>Bil</th><th>Bruger</th><th>Tidspunkt</th>
               <th>Start km</th><th>Slut km</th><th>Km kørt</th><th>Varighed</th><th>Kommentarer</th>
             </tr></thead>
@@ -311,6 +341,14 @@
         <div class="log-toolbar">
           <h2>Aktivitetslog</h2>
           <div class="log-filters">
+            <div class="export-wrap">
+              <button id="log-export-btn" class="btn-sm">&#8659; Eksporter</button>
+              <div id="log-export-menu" class="export-menu hidden">
+                <button onclick="exportAdminData('log','csv')">&#128196; CSV (Excel)</button>
+                <button onclick="exportAdminData('log','json')">{ } JSON</button>
+              </div>
+            </div>
+            <button id="log-edit-toggle" class="btn-sm">&#9998; Rediger</button>
             <select id="log-filter-car"><option value="">Alle biler</option></select>
             <select id="log-filter-action">
               <option value="">Alle handlinger</option>
@@ -325,15 +363,40 @@
             <button id="log-refresh" class="btn-sm">&#8635; Opdater</button>
           </div>
         </div>
+        <div id="log-edit-bar" class="edit-bar hidden">
+          <span id="log-sel-count" class="sel-count">0 valgte</span>
+          <button id="log-select-all" class="btn-sm">Vælg alle</button>
+          <button id="log-delete-selected" class="btn-sm btn-danger" disabled>&#128465; Slet valgte</button>
+          <button id="log-delete-all" class="btn-sm btn-danger">&#128465; Slet alle synlige</button>
+        </div>
         <div id="log-table-wrap">
           <table id="log-table">
-            <thead><tr>
+            <thead><tr id="log-thead-row">
               <th>Tidspunkt</th><th>Handling</th><th>Bil</th><th>Bruger</th><th>Detaljer</th>
             </tr></thead>
             <tbody id="log-body"></tbody>
           </table>
         </div>
       </div>
+
+      <!-- Tab: Skraldespand -->
+      <div id="admin-tab-trash" class="admin-tab-content hidden">
+        <div class="log-toolbar">
+          <h2>&#128465; Skraldespand</h2>
+          <div class="log-filters">
+            <div class="export-wrap">
+              <button id="trash-export-btn" class="btn-sm">&#8659; Eksporter</button>
+              <div id="trash-export-menu" class="export-menu hidden">
+                <button onclick="exportTrashData('csv')">&#128196; CSV (Excel)</button>
+                <button onclick="exportTrashData('json')">{ } JSON</button>
+              </div>
+            </div>
+            <button id="trash-empty-all" class="btn-sm btn-danger">&#128465; Tøm alt permanent</button>
+          </div>
+        </div>
+        <div id="trash-content" style="padding:16px 20px"></div>
+      </div>
+
     </div>
   </div>
 

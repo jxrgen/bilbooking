@@ -711,6 +711,7 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
     closeBookingModal();
     await loadBookingsForCurrentView();
     renderCalendarGrid();
+    if (state.adminUnlocked) loadAllBookingsAdmin();
   } catch (err) {
     showError('bm-error', err.message || 'Fejl — prøv igen.');
   } finally {
@@ -934,26 +935,46 @@ async function loadAllBookingsAdmin() {
   if (statusFilter) query = query.eq('status', statusFilter);
   const { data, error } = await query;
   if (error) { toast('Fejl ved indlæsning', 'error'); return; }
+  adminData.bookings = data || [];
+  const st = editState.bookings;
   const tbody = document.getElementById('ab-body');
-  if (!data?.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Ingen bookinger.</td></tr>`;
+  const theadRow = document.getElementById('ab-thead-row');
+  if (st.active) {
+    theadRow.innerHTML = `<th class="check-col"></th><th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th><th>Forv. km</th><th>Status</th><th class="act-col"></th>`;
+  } else {
+    theadRow.innerHTML = `<th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th><th>Forv. km</th><th>Status</th>`;
+  }
+  if (!adminData.bookings.length) {
+    tbody.innerHTML = `<tr><td colspan="${st.active?9:7}" style="text-align:center;padding:24px;color:var(--muted)">Ingen bookinger.</td></tr>`;
     return;
   }
-  tbody.innerHTML = data.map(b => {
-    const car = b.cars;
+  const carDot = car => car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–';
+  tbody.innerHTML = adminData.bookings.map(b => {
     const statusLabel = { active:'Aktiv', completed:'Afsluttet', cancelled:'Annulleret' }[b.status] || b.status;
     const statusCls   = { active:'badge-blue', completed:'badge-green', cancelled:'badge-red' }[b.status] || 'badge-gray';
-    return `
-      <tr>
-        <td>${car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–'}</td>
-        <td>${b.user_name}</td><td>${b.phone}</td>
-        <td style="white-space:nowrap">${fmtDateTime(b.start_time)}</td>
-        <td style="white-space:nowrap">${fmtDateTime(b.end_time)}</td>
-        <td>${b.start_km?.toLocaleString('da-DK')}</td>
-        <td>${b.expected_km}</td>
-        <td><span class="badge ${statusCls}">${statusLabel}</span></td>
-      </tr>`;
+    const checked     = st.selected.has(b.id);
+    return `<tr data-id="${b.id}" class="${checked ? 'row-selected' : ''}">
+      ${st.active ? `<td class="check-col"><input type="checkbox" class="row-check" data-id="${b.id}" ${checked?'checked':''}></td>` : ''}
+      <td>${carDot(b.cars)}</td>
+      <td>${b.user_name}</td><td>${b.phone}</td>
+      <td style="white-space:nowrap">${fmtDateTime(b.start_time)}</td>
+      <td style="white-space:nowrap">${fmtDateTime(b.end_time)}</td>
+      <td>${b.expected_km}</td>
+      <td><span class="badge ${statusCls}">${statusLabel}</span></td>
+      ${st.active ? `<td class="act-col"><button class="btn-icon" onclick="adminEditBooking('${b.id}')">&#9998;</button></td>` : ''}
+    </tr>`;
   }).join('');
+  if (st.active) {
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) st.selected.add(cb.dataset.id);
+        else st.selected.delete(cb.dataset.id);
+        cb.closest('tr').classList.toggle('row-selected', cb.checked);
+        updateSelCount('bookings');
+      });
+    });
+  }
+  updateSelCount('bookings');
 }
 
 async function loadAllDeliveriesAdmin() {
@@ -963,28 +984,384 @@ async function loadAllDeliveriesAdmin() {
   if (carFilter) query = query.eq('car_id', carFilter);
   const { data, error } = await query;
   if (error) { toast('Fejl ved indlæsning', 'error'); return; }
+  adminData.deliveries = data || [];
+  const st = editState.deliveries;
   const tbody = document.getElementById('ad-body');
-  if (!data?.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Ingen afleveringer.</td></tr>`;
+  const theadRow = document.getElementById('ad-thead-row');
+  if (st.active) {
+    theadRow.innerHTML = `<th class="check-col"></th><th>Bil</th><th>Bruger</th><th>Tidspunkt</th><th>Start km</th><th>Slut km</th><th>Km kørt</th><th>Varighed</th><th>Kommentarer</th>`;
+  } else {
+    theadRow.innerHTML = `<th>Bil</th><th>Bruger</th><th>Tidspunkt</th><th>Start km</th><th>Slut km</th><th>Km kørt</th><th>Varighed</th><th>Kommentarer</th>`;
+  }
+  if (!adminData.deliveries.length) {
+    tbody.innerHTML = `<tr><td colspan="${st.active?9:8}" style="text-align:center;padding:24px;color:var(--muted)">Ingen afleveringer.</td></tr>`;
     return;
   }
-  tbody.innerHTML = data.map(d => {
-    const car  = d.cars;
-    const h    = Math.floor(d.duration_quarters / 4);
-    const m    = (d.duration_quarters % 4) * 15;
-    const durTxt = `${h}t${m ? ' '+m+'min' : ''}`;
-    return `
-      <tr>
-        <td>${car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–'}</td>
-        <td>${d.bookings?.user_name || '–'}</td>
-        <td style="white-space:nowrap">${fmtDateTime(d.created_at)}</td>
-        <td>${d.start_km?.toLocaleString('da-DK')}</td>
-        <td>${d.end_km?.toLocaleString('da-DK')}</td>
-        <td>${d.km_driven?.toLocaleString('da-DK')}</td>
-        <td>${durTxt}</td>
-        <td>${d.comments || '–'}</td>
-      </tr>`;
+  const carDot = car => car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–';
+  tbody.innerHTML = adminData.deliveries.map(d => {
+    const h = Math.floor(d.duration_quarters / 4), m = (d.duration_quarters % 4) * 15;
+    const checked = st.selected.has(d.id);
+    return `<tr data-id="${d.id}" class="${checked ? 'row-selected' : ''}">
+      ${st.active ? `<td class="check-col"><input type="checkbox" class="row-check" data-id="${d.id}" ${checked?'checked':''}></td>` : ''}
+      <td>${carDot(d.cars)}</td>
+      <td>${d.bookings?.user_name || '–'}</td>
+      <td style="white-space:nowrap">${fmtDateTime(d.created_at)}</td>
+      <td>${d.start_km?.toLocaleString('da-DK')}</td>
+      <td>${d.end_km?.toLocaleString('da-DK')}</td>
+      <td>${d.km_driven?.toLocaleString('da-DK')}</td>
+      <td>${h}t${m ? ' '+m+'min' : ''}</td>
+      <td>${d.comments || '–'}</td>
+    </tr>`;
   }).join('');
+  if (st.active) {
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) st.selected.add(cb.dataset.id);
+        else st.selected.delete(cb.dataset.id);
+        cb.closest('tr').classList.toggle('row-selected', cb.checked);
+        updateSelCount('deliveries');
+      });
+    });
+  }
+  updateSelCount('deliveries');
+}
+
+// =============================================
+// ADMIN DATA CACHE + EDIT STATE
+// =============================================
+const adminData = { bookings: [], deliveries: [], log: [] };
+
+const editState = {
+  bookings:   { active: false, selected: new Set() },
+  deliveries: { active: false, selected: new Set() },
+  log:        { active: false, selected: new Set() },
+};
+
+function tabPrefix(tab) {
+  return { bookings: 'ab', deliveries: 'ad', log: 'log' }[tab] || tab;
+}
+
+function updateSelCount(tab) {
+  const st  = editState[tab];
+  const pfx = tabPrefix(tab);
+  const countEl = document.getElementById(`${pfx}-sel-count`);
+  if (countEl) countEl.textContent = `${st.selected.size} valgte`;
+  const editBtn = document.getElementById(`${pfx}-edit-selected`);
+  if (editBtn) editBtn.disabled = st.selected.size !== 1;
+  const delBtn = document.getElementById(`${pfx}-delete-selected`);
+  if (delBtn) delBtn.disabled = st.selected.size === 0;
+}
+
+function toggleEditMode(tab) {
+  const st  = editState[tab];
+  const pfx = tabPrefix(tab);
+  st.active = !st.active;
+  st.selected.clear();
+  const bar = document.getElementById(`${pfx}-edit-bar`);
+  const btn = document.getElementById(`${pfx}-edit-toggle`);
+  if (bar) bar.classList.toggle('hidden', !st.active);
+  if (btn) {
+    btn.style.background = st.active ? 'var(--primary)' : '';
+    btn.style.color       = st.active ? '#fff' : '';
+  }
+  if (tab === 'bookings')   loadAllBookingsAdmin();
+  if (tab === 'deliveries') loadAllDeliveriesAdmin();
+  if (tab === 'log')        loadLog();
+}
+
+function adminEditBooking(bookingId) {
+  const b = adminData.bookings.find(x => x.id === bookingId);
+  if (!b) return;
+  openBookingModal(b.car_id, new Date(b.start_time), b);
+}
+
+// =============================================
+// DELETE WITH TRASH
+// =============================================
+async function deleteRowsWithTrash(tab, ids) {
+  if (!ids.length) return;
+  const noun = tab === 'bookings' ? 'booking' : tab === 'deliveries' ? 'aflevering' : 'log-post';
+  if (!confirm(`Flytte ${ids.length} ${noun}${ids.length > 1 ? 'er' : ''} til skraldespanden?`)) return;
+  try {
+    if (tab === 'bookings') {
+      for (const b of adminData.bookings.filter(b => ids.includes(b.id))) {
+        addToTrash('booking', b, `${b.user_name} — ${b.cars?.name || ''} ${fmtDateTime(b.start_time)}`);
+      }
+      await db.from('bookings').delete().in('id', ids);
+      await loadBookingsForCurrentView(); renderCalendarGrid();
+      await loadAllBookingsAdmin();
+    } else if (tab === 'deliveries') {
+      for (const d of adminData.deliveries.filter(d => ids.includes(d.id))) {
+        addToTrash('delivery', d, `${d.bookings?.user_name || '–'} — ${d.cars?.name || ''} ${fmtDateTime(d.created_at)}`);
+      }
+      await db.from('deliveries').delete().in('id', ids);
+      await loadAllDeliveriesAdmin();
+    } else {
+      for (const l of adminData.log.filter(l => ids.includes(l.id))) {
+        addToTrash('log', l, `${actionBadge(l.action_type).label} — ${fmtDateTime(l.created_at)}`);
+      }
+      await db.from('activity_log').delete().in('id', ids);
+      await loadLog();
+    }
+    editState[tab].selected.clear();
+    updateSelCount(tab);
+    toast(`${ids.length} post${ids.length > 1 ? 'er' : ''} flyttet til skraldespanden`, 'info');
+  } catch (err) {
+    toast('Fejl: ' + (err.message || 'Ukendt'), 'error');
+  }
+}
+
+// Edit-bar button wiring (runs after DOM ready, called from initAdminFilters)
+function initEditBars() {
+  // Bookings
+  document.getElementById('ab-edit-toggle').addEventListener('click', () => toggleEditMode('bookings'));
+  document.getElementById('ab-select-all').addEventListener('click', () => {
+    adminData.bookings.forEach(b => editState.bookings.selected.add(b.id));
+    loadAllBookingsAdmin();
+  });
+  document.getElementById('ab-edit-selected').addEventListener('click', () => {
+    const ids = [...editState.bookings.selected];
+    if (ids.length !== 1) return;
+    adminEditBooking(ids[0]);
+  });
+  document.getElementById('ab-delete-selected').addEventListener('click', () =>
+    deleteRowsWithTrash('bookings', [...editState.bookings.selected]));
+  document.getElementById('ab-delete-all').addEventListener('click', () => {
+    if (!confirm(`Flytte ALLE ${adminData.bookings.length} synlige bookinger til skraldespanden?`)) return;
+    deleteRowsWithTrash('bookings', adminData.bookings.map(b => b.id));
+  });
+
+  // Deliveries
+  document.getElementById('ad-edit-toggle').addEventListener('click', () => toggleEditMode('deliveries'));
+  document.getElementById('ad-select-all').addEventListener('click', () => {
+    adminData.deliveries.forEach(d => editState.deliveries.selected.add(d.id));
+    loadAllDeliveriesAdmin();
+  });
+  document.getElementById('ad-delete-selected').addEventListener('click', () =>
+    deleteRowsWithTrash('deliveries', [...editState.deliveries.selected]));
+  document.getElementById('ad-delete-all').addEventListener('click', () => {
+    if (!confirm(`Flytte ALLE ${adminData.deliveries.length} afleveringer til skraldespanden?`)) return;
+    deleteRowsWithTrash('deliveries', adminData.deliveries.map(d => d.id));
+  });
+
+  // Log
+  document.getElementById('log-edit-toggle').addEventListener('click', () => toggleEditMode('log'));
+  document.getElementById('log-select-all').addEventListener('click', () => {
+    adminData.log.forEach(l => editState.log.selected.add(l.id));
+    loadLog();
+  });
+  document.getElementById('log-delete-selected').addEventListener('click', () =>
+    deleteRowsWithTrash('log', [...editState.log.selected]));
+  document.getElementById('log-delete-all').addEventListener('click', () => {
+    if (!confirm(`Flytte ALLE ${adminData.log.length} log-poster til skraldespanden?`)) return;
+    deleteRowsWithTrash('log', adminData.log.map(l => l.id));
+  });
+}
+
+// =============================================
+// EXPORT
+// =============================================
+function downloadCSV(headers, rows, filename) {
+  const BOM = '﻿';
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = BOM + [headers, ...rows].map(r => r.map(esc).join(',')).join('\r\n');
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
+    download: filename,
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function downloadJSON(data, filename) {
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })),
+    download: filename,
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+function exportAdminData(tab, fmt) {
+  document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
+  if (tab === 'bookings') {
+    const rows = adminData.bookings.map(b => [
+      b.cars?.name || '', b.user_name, b.phone,
+      fmtDateTime(b.start_time), fmtDateTime(b.end_time), b.expected_km,
+      { active: 'Aktiv', completed: 'Afsluttet', cancelled: 'Annulleret' }[b.status] || b.status,
+      b.notes || '',
+    ]);
+    if (fmt === 'csv') downloadCSV(['Bil','Bruger','Telefon','Start','Slut','Forv. km','Status','Bemærkninger'], rows, `bookinger-${todayStr()}.csv`);
+    else downloadJSON(adminData.bookings, `bookinger-${todayStr()}.json`);
+  } else if (tab === 'deliveries') {
+    const rows = adminData.deliveries.map(d => {
+      const h = Math.floor(d.duration_quarters / 4), m = (d.duration_quarters % 4) * 15;
+      return [d.cars?.name || '', d.bookings?.user_name || '', fmtDateTime(d.created_at),
+              d.start_km, d.end_km, d.km_driven, `${h}t${m ? ` ${m}min` : ''}`, d.comments || ''];
+    });
+    if (fmt === 'csv') downloadCSV(['Bil','Bruger','Tidspunkt','Start km','Slut km','Km kørt','Varighed','Kommentarer'], rows, `afleveringer-${todayStr()}.csv`);
+    else downloadJSON(adminData.deliveries, `afleveringer-${todayStr()}.json`);
+  } else {
+    const rows = adminData.log.map(l => [
+      fmtDateTime(l.created_at), actionBadge(l.action_type).label,
+      l.cars?.name || '', l.user_name || '', formatLogDetails(l.action_type, l.details),
+    ]);
+    if (fmt === 'csv') downloadCSV(['Tidspunkt','Handling','Bil','Bruger','Detaljer'], rows, `log-${todayStr()}.csv`);
+    else downloadJSON(adminData.log, `log-${todayStr()}.json`);
+  }
+}
+
+function exportTrashData(fmt) {
+  document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
+  const items = getTrash();
+  if (!items.length) return toast('Skraldespanden er tom', 'info');
+  if (fmt === 'csv') {
+    const rows = items.map(t => [t.type, t.label, fmtDateTime(t.deletedAt), JSON.stringify(t.data)]);
+    downloadCSV(['Type','Beskrivelse','Slettet','Data (JSON)'], rows, `skraldespand-${todayStr()}.csv`);
+  } else {
+    downloadJSON(items, `skraldespand-${todayStr()}.json`);
+  }
+}
+
+// Export dropdown toggle (close-on-outside-click)
+function initExportDropdowns() {
+  ['ab','ad','log','trash'].forEach(pfx => {
+    const btn  = document.getElementById(`${pfx}-export-btn`);
+    const menu = document.getElementById(`${pfx}-export-menu`);
+    if (!btn || !menu) return;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const wasHidden = menu.classList.contains('hidden');
+      document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
+      if (wasHidden) menu.classList.remove('hidden');
+    });
+  });
+  document.addEventListener('click', () =>
+    document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden')));
+}
+
+// =============================================
+// TRASH (localStorage)
+// =============================================
+const TRASH_KEY = 'bilbooking_trash';
+function getTrash() { return JSON.parse(localStorage.getItem(TRASH_KEY) || '[]'); }
+function saveTrash(t) { localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
+
+function addToTrash(type, data, label) {
+  const trash = getTrash();
+  trash.unshift({ id: crypto.randomUUID(), type, data, label, deletedAt: new Date().toISOString() });
+  saveTrash(trash);
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTrash() {
+  const items   = getTrash();
+  const container = document.getElementById('trash-content');
+  if (!items.length) {
+    container.innerHTML = `<div class="trash-empty">&#128465; Skraldespanden er tom</div>`;
+    return;
+  }
+  const groups  = { booking: [], delivery: [], log: [] };
+  items.forEach(item => { (groups[item.type] = groups[item.type] || []).push(item); });
+  const labels  = { booking: '&#128197; Bookinger', delivery: '&#9989; Afleveringer', log: '&#128221; Log-poster' };
+  let html = '';
+  for (const [type, group] of Object.entries(groups)) {
+    if (!group?.length) continue;
+    html += `<div class="trash-section">
+      <div class="trash-section-header">${labels[type] || type} &mdash; ${group.length} post${group.length > 1 ? 'er' : ''}</div>
+      ${group.map(item => `
+        <div class="trash-item">
+          <div class="trash-item-label">
+            <div>${escHtml(item.label)}</div>
+            <div class="trash-item-meta">Slettet ${fmtDateTime(item.deletedAt)}</div>
+          </div>
+          <div class="trash-item-actions">
+            <button class="btn-sm" onclick="restoreFromTrash('${item.id}')">&#8629; Gendan</button>
+            <button class="btn-sm btn-danger" onclick="permanentDeleteTrashItem('${item.id}')">&#10005; Slet</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function permanentDeleteTrashItem(trashId) {
+  if (!confirm('Slette permanent? Dette kan IKKE fortrydes.')) return;
+  saveTrash(getTrash().filter(t => t.id !== trashId));
+  renderTrash();
+  toast('Permanent slettet', 'info');
+}
+
+document.getElementById('trash-empty-all').addEventListener('click', () => {
+  const items = getTrash();
+  if (!items.length) return toast('Skraldespanden er allerede tom', 'info');
+  if (!confirm(`Slette alle ${items.length} elementer PERMANENT? Dette kan ikke fortrydes.`)) return;
+  saveTrash([]);
+  renderTrash();
+  toast('Skraldespand tømt', 'info');
+});
+
+async function restoreFromTrash(trashId) {
+  const trash = getTrash();
+  const item  = trash.find(t => t.id === trashId);
+  if (!item) return;
+  if (!confirm(`Gendanne "${escHtml(item.label)}"?`)) return;
+
+  try {
+    if (item.type === 'booking') {
+      const b = item.data;
+      // Reload state.bookings for accurate conflict detection
+      await loadBookingsForCurrentView();
+      const conflict = findConflictInfo(b.car_id, b.start_time, b.end_time, null);
+      if (conflict) {
+        const { first, nextFree } = conflict;
+        alert(`Kan ikke gendanne — konflikt med booking af ${first.user_name}\n(${fmtDateTime(first.start_time)} – ${fmtTime(first.end_time)})\n\nLedig fra: ${fmtDateTime(nextFree)}`);
+        return;
+      }
+      const { error } = await db.from('bookings').insert({
+        id: b.id, car_id: b.car_id, user_name: b.user_name, phone: b.phone,
+        start_time: b.start_time, end_time: b.end_time,
+        expected_km: b.expected_km, start_km: b.start_km || 0,
+        notes: b.notes || null, status: b.status || 'active',
+      });
+      if (error) throw error;
+      await loadBookingsForCurrentView(); renderCalendarGrid();
+    } else if (item.type === 'delivery') {
+      const d = item.data;
+      const { error } = await db.from('deliveries').insert({
+        id: d.id, booking_id: d.booking_id || null, car_id: d.car_id,
+        start_km: d.start_km, end_km: d.end_km,
+        duration_quarters: d.duration_quarters, comments: d.comments || null,
+        delivered_at: d.delivered_at || d.created_at,
+      });
+      if (error) throw error;
+    } else if (item.type === 'log') {
+      const l = item.data;
+      const { error } = await db.from('activity_log').insert({
+        id: l.id, car_id: l.car_id || null, action_type: l.action_type,
+        user_name: l.user_name || null, details: l.details || null,
+        created_at: l.created_at,
+      });
+      if (error) throw error;
+    }
+
+    saveTrash(trash.filter(t => t.id !== trashId));
+    renderTrash();
+    toast('Gendannet', 'success');
+
+    // Reload relevant tab if active
+    const activeTab = document.querySelector('.admin-tab.active')?.dataset.tab;
+    if (activeTab === 'bookings')   loadAllBookingsAdmin();
+    if (activeTab === 'deliveries') loadAllDeliveriesAdmin();
+    if (activeTab === 'log')        loadLog();
+  } catch (err) {
+    toast('Fejl ved gendannelse: ' + (err.message || 'Ukendt'), 'error');
+  }
 }
 
 function initAdminFilters() {
@@ -1009,6 +1386,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     if (tab.dataset.tab === 'log')         loadLog();
     if (tab.dataset.tab === 'bookings')    loadAllBookingsAdmin();
     if (tab.dataset.tab === 'deliveries')  loadAllDeliveriesAdmin();
+    if (tab.dataset.tab === 'trash')       renderTrash();
   });
 });
 
@@ -1024,24 +1402,43 @@ async function loadLog() {
   if (actionFilter) query = query.eq('action_type', actionFilter);
   const { data, error } = await query;
   if (error) { toast('Fejl ved indlæsning af log', 'error'); return; }
-
+  adminData.log = data || [];
+  const st = editState.log;
   const tbody = document.getElementById('log-body');
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Ingen log-poster endnu.</td></tr>`;
+  const theadRow = document.getElementById('log-thead-row');
+  if (st.active) {
+    theadRow.innerHTML = `<th class="check-col"></th><th>Tidspunkt</th><th>Handling</th><th>Bil</th><th>Bruger</th><th>Detaljer</th>`;
+  } else {
+    theadRow.innerHTML = `<th>Tidspunkt</th><th>Handling</th><th>Bil</th><th>Bruger</th><th>Detaljer</th>`;
+  }
+  if (!adminData.log.length) {
+    tbody.innerHTML = `<tr><td colspan="${st.active?6:5}" style="text-align:center;padding:24px;color:var(--muted)">Ingen log-poster endnu.</td></tr>`;
     return;
   }
-  tbody.innerHTML = data.map(row => {
-    const car = row.cars;
+  const carDot = car => car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–';
+  tbody.innerHTML = adminData.log.map(row => {
     const badge = actionBadge(row.action_type);
-    return `
-      <tr>
-        <td style="white-space:nowrap;color:var(--muted)">${fmtDateTime(row.created_at)}</td>
-        <td><span class="badge ${badge.cls}">${badge.label}</span></td>
-        <td>${car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–'}</td>
-        <td>${row.user_name || '–'}</td>
-        <td class="log-details">${formatLogDetails(row.action_type, row.details)}</td>
-      </tr>`;
+    const checked = st.selected.has(row.id);
+    return `<tr data-id="${row.id}" class="${checked ? 'row-selected' : ''}">
+      ${st.active ? `<td class="check-col"><input type="checkbox" class="row-check" data-id="${row.id}" ${checked?'checked':''}></td>` : ''}
+      <td style="white-space:nowrap;color:var(--muted)">${fmtDateTime(row.created_at)}</td>
+      <td><span class="badge ${badge.cls}">${badge.label}</span></td>
+      <td>${carDot(row.cars)}</td>
+      <td>${row.user_name || '–'}</td>
+      <td class="log-details">${formatLogDetails(row.action_type, row.details)}</td>
+    </tr>`;
   }).join('');
+  if (st.active) {
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) st.selected.add(cb.dataset.id);
+        else st.selected.delete(cb.dataset.id);
+        cb.closest('tr').classList.toggle('row-selected', cb.checked);
+        updateSelCount('log');
+      });
+    });
+  }
+  updateSelCount('log');
 }
 
 function actionBadge(type) {
@@ -1092,6 +1489,7 @@ document.getElementById('admin-pw-btn').addEventListener('click', () => {
     document.getElementById('admin-panel').classList.remove('hidden');
     state.adminUnlocked = true;
     renderAdminCars(); loadAdminBookings(); initAdminFilters(); initLogFilters();
+    initEditBars(); initExportDropdowns();
   } else {
     document.getElementById('admin-pw-error').classList.remove('hidden');
   }
