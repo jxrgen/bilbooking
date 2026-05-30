@@ -75,6 +75,45 @@ function toLocal(date) {
   return d.toISOString().slice(0, 16);
 }
 
+function roundTo15(date) {
+  const d = new Date(date);
+  d.setMinutes(Math.round(d.getMinutes() / 15) * 15, 0, 0);
+  return d;
+}
+
+// Finder konflikter og næste ledige tidspunkt for en bil
+function findConflictInfo(carId, startTime, endTime, excludeId = null) {
+  const s = new Date(startTime);
+  const e = new Date(endTime);
+
+  const conflicts = state.bookings
+    .filter(b =>
+      b.car_id === carId && b.status === 'active' &&
+      (!excludeId || b.id !== excludeId) &&
+      new Date(b.start_time) < e && new Date(b.end_time) > s
+    )
+    .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+  if (!conflicts.length) return null;
+
+  const first = conflicts[0];
+
+  // Rykker "ledig fra" fremad så længe der er sammenhængende bookinger
+  let nextFree = new Date(first.end_time);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const b of state.bookings) {
+      if (b.car_id !== carId || b.status !== 'active') continue;
+      if (excludeId && b.id === excludeId) continue;
+      const bs = new Date(b.start_time), be = new Date(b.end_time);
+      if (bs <= nextFree && be > nextFree) { nextFree = be; changed = true; }
+    }
+  }
+
+  return { first, nextFree };
+}
+
 function cap(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -566,8 +605,8 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   kmInput.dataset.original = currentKm;
   document.getElementById('bm-km-warning').classList.add('hidden');
 
-  document.getElementById('bm-start').value   = toLocal(editingBooking ? new Date(editingBooking.start_time) : suggestedStart);
-  document.getElementById('bm-end').value     = toLocal(editingBooking ? new Date(editingBooking.end_time)   : suggestedEnd);
+  document.getElementById('bm-start').value   = toLocal(editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
+  document.getElementById('bm-end').value     = toLocal(editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
   document.getElementById('bm-name').value    = editingBooking ? editingBooking.user_name : '';
   document.getElementById('bm-phone').value   = editingBooking ? editingBooking.phone     : '';
   document.getElementById('bm-exp-km').value  = editingBooking ? editingBooking.expected_km : '';
@@ -627,8 +666,17 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   if (!state.editingBookingId && startTime < new Date())
     return showError('bm-error', 'Du kan ikke booke i fortiden.');
 
-  if (bookingsOverlap(state.bookings, carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId))
-    return showError('bm-error', 'Bilen er allerede optaget i dette tidsrum.');
+  const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
+  if (conflict) {
+    const { first, nextFree } = conflict;
+    const el = document.getElementById('bm-error');
+    el.innerHTML =
+      `Bilen er optaget <strong>${fmtDateTime(first.start_time)} – ${fmtTime(first.end_time)}</strong>` +
+      ` (booket af ${first.user_name}).<br>` +
+      `<strong>Ledig fra: ${fmtDateTime(nextFree)}</strong>`;
+    el.classList.remove('hidden');
+    return;
+  }
 
   const btn = document.getElementById('bm-submit');
   btn.disabled = true;
@@ -1051,7 +1099,7 @@ async function deleteCarPrompt(carId) {
 function showError(id, msg) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.textContent = msg;
+  el.innerHTML = msg;
   el.classList.toggle('hidden', !msg);
 }
 
