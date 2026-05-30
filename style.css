@@ -354,6 +354,9 @@ body {
 .field input[readonly]     { background: var(--bg); cursor: default; }
 .field-row { display: flex; gap: 10px; }
 .field-row .field { flex: 1; }
+.dt-wrap { display: flex; gap: 6px; }
+.dt-wrap .dt-date { flex: 3; min-width: 0; }
+.dt-wrap .dt-time { flex: 2; min-width: 0; }
 
 .info-box {
   background: #EFF6FF; border: 1px solid #BFDBFE;

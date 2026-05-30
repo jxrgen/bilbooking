@@ -372,11 +372,17 @@
       <div class="field-row">
         <div class="field">
           <label>Starttidspunkt <span class="required">*</span></label>
-          <input type="datetime-local" id="bm-start" step="900">
+          <div class="dt-wrap">
+            <input type="date" id="bm-start-date" class="dt-date">
+            <select id="bm-start-time" class="dt-time"></select>
+          </div>
         </div>
         <div class="field">
           <label>Sluttidspunkt <span class="required">*</span></label>
-          <input type="datetime-local" id="bm-end" step="900">
+          <div class="dt-wrap">
+            <input type="date" id="bm-end-date" class="dt-date">
+            <select id="bm-end-time" class="dt-time"></select>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -417,7 +423,10 @@
       <div id="dlm-booking-info" class="info-box"></div>
       <div class="field">
         <label>Faktisk afleveringstidspunkt <span class="required">*</span></label>
-        <input type="datetime-local" id="dlm-end-time" step="900">
+        <div class="dt-wrap">
+          <input type="date" id="dlm-end-date" class="dt-date">
+          <select id="dlm-end-time" class="dt-time"></select>
+        </div>
       </div>
       <div class="field">
         <label>Start km <span class="muted">(bilens aktuelle stand)</span></label>

@@ -81,6 +81,41 @@ function roundTo15(date) {
   return d;
 }
 
+// Fyld et <select>-element med tidsintervaller á 15 min (00:00 – 23:45)
+function buildTimeSelect(id) {
+  const sel = document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const v = `${pad(h)}:${pad(m)}`;
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = v;
+      sel.appendChild(opt);
+    }
+  }
+}
+['bm-start-time', 'bm-end-time', 'dlm-end-time'].forEach(buildTimeSelect);
+
+// Sæt dato+tid-inputs fra et Date-objekt (local time)
+function setDT(dateId, timeId, date) {
+  const local = toLocal(new Date(date)); // "YYYY-MM-DDTHH:MM" i lokaltid
+  document.getElementById(dateId).value = local.slice(0, 10);
+  const totalMins = parseInt(local.slice(11, 13)) * 60 + parseInt(local.slice(14, 16));
+  const snapped = Math.round(totalMins / 15) * 15;
+  const sh = Math.floor(snapped / 60) % 24;
+  const sm = snapped % 60;
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById(timeId).value = `${pad(sh)}:${pad(sm)}`;
+}
+
+// Læs Date fra dato+tid-inputs (local time)
+function getDT(dateId, timeId) {
+  const d = document.getElementById(dateId).value;
+  const t = document.getElementById(timeId).value;
+  if (!d || !t) return null;
+  return new Date(`${d}T${t}`);
+}
+
 // Finder konflikter og næste ledige tidspunkt for en bil
 function findConflictInfo(carId, startTime, endTime, excludeId = null) {
   const s = new Date(startTime);
@@ -587,8 +622,8 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 
   document.getElementById('bm-start-km').value = car.current_km || 0;
 
-  document.getElementById('bm-start').value   = toLocal(editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
-  document.getElementById('bm-end').value     = toLocal(editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
+  setDT('bm-start-date', 'bm-start-time', editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
+  setDT('bm-end-date',   'bm-end-time',   editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
   document.getElementById('bm-name').value    = editingBooking ? editingBooking.user_name : '';
   document.getElementById('bm-phone').value   = editingBooking ? editingBooking.phone     : '';
   document.getElementById('bm-exp-km').value  = editingBooking ? editingBooking.expected_km : '';
@@ -603,26 +638,18 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 }
 
 
-function snapStartInput() {
-  const raw = document.getElementById('bm-start').value;
-  if (!raw) return;
-  const snapped = roundTo15(new Date(raw));
-  document.getElementById('bm-start').value = toLocal(snapped);
-  const endInput = document.getElementById('bm-end');
-  if (!endInput.value || new Date(endInput.value) <= snapped) {
-    const newEnd = new Date(snapped);
+function onStartChange() {
+  const start = getDT('bm-start-date', 'bm-start-time');
+  if (!start) return;
+  const end = getDT('bm-end-date', 'bm-end-time');
+  if (!end || end <= start) {
+    const newEnd = new Date(start);
     newEnd.setHours(newEnd.getHours() + 1);
-    endInput.value = toLocal(newEnd);
+    setDT('bm-end-date', 'bm-end-time', newEnd);
   }
 }
-function snapEndInput() {
-  const raw = document.getElementById('bm-end').value;
-  if (raw) document.getElementById('bm-end').value = toLocal(roundTo15(new Date(raw)));
-}
-document.getElementById('bm-start').addEventListener('change', snapStartInput);
-document.getElementById('bm-start').addEventListener('blur',   snapStartInput);
-document.getElementById('bm-end').addEventListener('change',   snapEndInput);
-document.getElementById('bm-end').addEventListener('blur',     snapEndInput);
+['bm-start-date', 'bm-start-time'].forEach(id =>
+  document.getElementById(id).addEventListener('change', onStartChange));
 
 function closeBookingModal() {
   document.getElementById('booking-modal').classList.add('hidden');
@@ -637,17 +664,15 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   const phone    = document.getElementById('bm-phone').value.trim();
   const expKm    = parseInt(document.getElementById('bm-exp-km').value, 10);
   const startKm  = parseInt(document.getElementById('bm-start-km').value, 10);
-  const startVal = document.getElementById('bm-start').value;
-  const endVal   = document.getElementById('bm-end').value;
   const notes    = document.getElementById('bm-notes').value.trim();
 
   if (!name)   return showError('bm-error', 'Indtast dit navn.');
   if (!phone)  return showError('bm-error', 'Indtast dit telefonnummer.');
   if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
-  if (!startVal || !endVal) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
 
-  const startTime = roundTo15(new Date(startVal));
-  const endTime   = roundTo15(new Date(endVal));
+  const startTime = getDT('bm-start-date', 'bm-start-time');
+  const endTime   = getDT('bm-end-date', 'bm-end-time');
+  if (!startTime || !endTime) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
 
   if (endTime <= startTime) return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
   if (!state.adminUnlocked && !state.editingBookingId && startTime < new Date(Date.now() - 15 * 60 * 1000))
@@ -816,7 +841,7 @@ function openDeliveryModal(bookingId) {
     `Forventet: ${b.expected_km} km`;
 
   // Default end time: now rounded to 15 min
-  document.getElementById('dlm-end-time').value = toLocal(roundTo15(new Date()));
+  setDT('dlm-end-date', 'dlm-end-time', roundTo15(new Date()));
   document.getElementById('dlm-start-km').value = car?.current_km || 0;
   document.getElementById('dlm-end-km').value   = '';
   document.getElementById('dlm-km-driven').value = '';
@@ -827,13 +852,6 @@ function openDeliveryModal(bookingId) {
   document.getElementById('delivery-modal').classList.remove('hidden');
   document.getElementById('dlm-end-km').focus();
 }
-
-function snapDeliveryTime() {
-  const raw = document.getElementById('dlm-end-time').value;
-  if (raw) document.getElementById('dlm-end-time').value = toLocal(roundTo15(new Date(raw)));
-}
-document.getElementById('dlm-end-time').addEventListener('change', snapDeliveryTime);
-document.getElementById('dlm-end-time').addEventListener('blur',   snapDeliveryTime);
 
 document.getElementById('dlm-end-km').addEventListener('input', function () {
   const startKm = parseInt(document.getElementById('dlm-start-km').value, 10);
@@ -855,14 +873,12 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   const car     = state.cars.find(c => c.id === b.car_id);
   const startKm = car?.current_km || 0;
   const endKm   = parseInt(document.getElementById('dlm-end-km').value, 10);
-  const endTimeVal = document.getElementById('dlm-end-time').value;
+  const endTime = getDT('dlm-end-date', 'dlm-end-time');
   const comments   = document.getElementById('dlm-comments').value.trim();
 
-  if (!endTimeVal)             return showError('dlm-error', 'Vælg afleveringstidspunkt.');
+  if (!endTime)               return showError('dlm-error', 'Vælg afleveringstidspunkt.');
   if (isNaN(endKm) || endKm < 0) return showError('dlm-error', 'Indtast en gyldig km-stand.');
   if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end bilens aktuelle km (${startKm}).`);
-
-  const endTime  = new Date(endTimeVal);
   const startTime = new Date(b.start_time);
   if (!state.adminUnlocked && endTime <= startTime)
     return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
