@@ -874,4 +874,6 @@ th.act-col,  td.act-col  { width: 50px; padding: 6px 4px !important; }
   .form-card   { margin: 12px; padding: 18px; }
   .field-row   { flex-direction: column; }
   #week-label  { min-width: 100px; font-size: 11px; }
+  #nav-regnskab { font-size: 0; padding: 6px 8px; }
+  #nav-regnskab::before { content: '📊'; font-size: 16px; }
 }
