@@ -18,7 +18,7 @@ CREATE POLICY "anon_insert_members" ON members FOR INSERT WITH CHECK (true);
 CREATE POLICY "anon_update_members" ON members FOR UPDATE USING (true);
 CREATE POLICY "anon_delete_members" ON members FOR DELETE USING (true);
 
--- Insert all 39 members
+-- Insert all 43 members (from medlemsliste_240510.csv)
 INSERT INTO members (navn, adresse, bogruppe, telefon) VALUES
   ('Aksel Striim', 'Hj. Møllevej 138', '4', '52444333'),
   ('Alexandra Hasdorf', 'Hj. Møllevej 174', '2', '25306626'),
@@ -33,14 +33,16 @@ INSERT INTO members (navn, adresse, bogruppe, telefon) VALUES
   ('Christina Adolph', 'Gl. Kirkevej 46B', '1', '61666218'),
   ('Else Mikel Jensen', 'Gl. Kirkevej 150', '8', '61688486'),
   ('Grethe Thomsen', 'Østergårdstoften 27', '5', '40341558'),
-  ('Gunnar Olesen', 'Gl. Kirkevej 72', '3', '86220192/24269933'),
+  ('Gunnar Olesen', 'Gl. Kirkevej 72', '3', '24269933'),
   ('Henrik Hermind', 'Østergårdstoften 27', '5', '23982538'),
   ('Henrik Kjærsgaard', 'Gl. Kirkevej 38', '1', '28939873'),
   ('Ina Graneberg', 'Hj. Møllevej 164', '2', '30297633'),
   ('Jon Lehner', 'Gl. Kirkevej 124', '5', '28747364'),
   ('Jonathan Carl', 'Gl. Kirkevej 52', '1', '27618563'),
+  ('Jørgen Holm', 'Gl. Kirkevej 62', '3', '42520000'),
   ('Jørn Heckmann', 'Hj. Møllevej 156', '2', '22958095'),
   ('Kasper Friis', 'Gl. Kirkevej 146', '8', '29661178'),
+  ('Landbrug', '-', '-', '12345678'),
   ('Leif Lüdemann', 'Hj. Møllevej 144', '4', '40352158'),
   ('Margrete Madsen', 'Gl. Kirkevej 45', 'Ekstern', '28715699'),
   ('Marie Lottrup', 'Gl. Kirkevej 124', '5', '26360166'),
@@ -52,6 +54,7 @@ INSERT INTO members (navn, adresse, bogruppe, telefon) VALUES
   ('Preben Stentoft', 'Gl. Kirkevej 142', '7', '28352402'),
   ('Randi Pisani + Jørgen', 'Gl. Kirkevej 62', '3', '40626926'),
   ('Rasmus Ejrnæs', 'Gl. Kirkevej 74', '3', '20205829'),
+  ('Service', '-', '-', '12345678'),
   ('Simon Jeppesen', 'Hj. Møllevej 180', '2', '26284474'),
   ('Simon Larsen', 'Gl. Kirkevej 45', 'Ekstern', '21601862'),
   ('Soffi Olesen', 'Gl. Kirkevej 72', '3', '28777192'),

@@ -1564,19 +1564,49 @@ function renderMembers() {
     return;
   }
   const editMode = state.editMode && state.editMode['brugere'];
+  const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   let html = '<table class="admin-table"><thead><tr>';
   if (editMode) html += '<th style="width:32px"><input type="checkbox" id="mbr-check-all"></th>';
-  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th></tr></thead><tbody>';
+  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th>';
+  if (editMode) html += '<th style="width:60px"></th>';
+  html += '</tr></thead><tbody>';
   members.forEach(m => {
     html += `<tr data-id="${m.id}">`;
-    if (editMode) html += `<td><input type="checkbox" class="mbr-check" data-id="${m.id}"></td>`;
-    html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td>${m.active ? '✓' : '–'}</td></tr>`;
+    if (editMode) {
+      html += `<td><input type="checkbox" class="mbr-check" data-id="${m.id}"></td>`;
+      html += `<td><input class="mbr-inp" data-field="navn"     value="${esc(m.navn)}"          style="width:100%"></td>`;
+      html += `<td><input class="mbr-inp" data-field="adresse"  value="${esc(m.adresse || '')}"  style="width:100%"></td>`;
+      html += `<td><input class="mbr-inp" data-field="bogruppe" value="${esc(m.bogruppe || '')}" style="width:60px"></td>`;
+      html += `<td><input class="mbr-inp" data-field="telefon"  value="${esc(m.telefon || '')}"  style="width:100%"></td>`;
+      html += `<td style="text-align:center"><input type="checkbox" class="mbr-inp-active" ${m.active ? 'checked' : ''}></td>`;
+      html += `<td><button class="btn-sm mbr-save-btn" data-id="${m.id}">Gem</button></td>`;
+    } else {
+      html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td style="text-align:center">${m.active ? '✓' : '–'}</td>`;
+    }
+    html += '</tr>';
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
+
   if (editMode) {
     document.getElementById('mbr-check-all')?.addEventListener('change', e => {
       document.querySelectorAll('.mbr-check').forEach(cb => cb.checked = e.target.checked);
+    });
+    wrap.querySelectorAll('.mbr-save-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const row = this.closest('tr');
+        const id = this.dataset.id;
+        const updates = {};
+        row.querySelectorAll('.mbr-inp').forEach(inp => {
+          if (inp.dataset.field) updates[inp.dataset.field] = inp.value.trim();
+        });
+        updates.active = row.querySelector('.mbr-inp-active')?.checked ?? true;
+        const { error } = await db.from('members').update(updates).eq('id', id);
+        if (error) { toast('Fejl: ' + error.message, 'error'); return; }
+        await loadMembers();
+        renderMembers();
+        toast('Bruger opdateret', 'success');
+      });
     });
   }
 }
@@ -1627,8 +1657,12 @@ function initMembersTab() {
     const file = this.files[0];
     if (!file) return;
     const text = await file.text();
-    const rows = text.trim().split('\n').map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-    if (!rows.length) return;
+    const sep = text.includes(';') ? ';' : ',';
+    let rows = text.trim().split(/\r?\n/).map(r => r.split(sep).map(c => c.trim().replace(/^"|"$/g, '')));
+    // Skip header row if first cell looks like a column name (not a person's phone/name pattern)
+    if (rows.length && isNaN(rows[0][rows[0].length - 1])) rows = rows.slice(1);
+    rows = rows.filter(r => r[0] && r[0].trim());
+    if (!rows.length) { toast('Ingen brugere fundet i filen', 'error'); return; }
     if (!confirm(`Importér ${rows.length} brugere? Dette sletter alle eksisterende brugere (de flyttes til Skraldespand).`)) return;
     // Move all to trash first
     window.membersCache.forEach(m => addToTrash('member', m, m.navn));

@@ -612,6 +612,13 @@ body {
 .admin-table td { padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .admin-table tr:hover td { background: var(--bg); }
 #mbr-table-wrap { overflow: auto; padding: 14px 20px; }
+.admin-table .mbr-inp {
+  padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 13px; font-family: inherit; background: var(--surface);
+  min-width: 0;
+}
+.admin-table .mbr-inp:focus { border-color: var(--primary); outline: none; }
+.admin-table td:has(.mbr-inp) { padding: 4px 6px; }
 
 .car-admin-row {
   display: flex; align-items: center; justify-content: space-between;
