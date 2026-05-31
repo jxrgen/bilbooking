@@ -129,6 +129,12 @@ function calcTimeCost(durationMins) {
 function fmtKr(amount) {
   return amount.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr.';
 }
+function lightenHex(hex, whiteMix = 0.62) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgb(${Math.round(r*(1-whiteMix)+255*whiteMix)},${Math.round(g*(1-whiteMix)+255*whiteMix)},${Math.round(b*(1-whiteMix)+255*whiteMix)})`;
+}
 
 // =============================================
 // USER PREFERENCES (localStorage)
@@ -529,7 +535,7 @@ function buildDayCol(day, enabledCars) {
       ? `<span class="bb-dur">${fmtDur(Math.round((bEnd - bStart) / 60000))}</span>` : '';
     return `
       <div class="booking-block${isCompleted ? ' completed' : ''}${spanCls}"
-        style="top:${clampS}px;height:${h}px;left:calc(${lPct}% + 1px);width:calc(${wPct}% - 2px);${isCompleted ? '' : `background:${car.color};`}"
+        style="top:${clampS}px;height:${h}px;left:calc(${lPct}% + 1px);width:calc(${wPct}% - 2px);${isCompleted ? `background:${lightenHex(car.color)};color:#1e293b;border-left:3px solid ${car.color};` : `background:${car.color};`}"
         data-booking-id="${b.id}">
         <span class="bb-name">${b.user_name}</span>
         ${timeLabel}
@@ -583,7 +589,8 @@ function buildMonthView(enabledCars) {
 
       const bars = bkgs.slice(0,3).map(b => {
         const car = enabledCars.find(c => c.id === b.car_id);
-        return `<div class="month-event" style="background:${car?.color}">${car?.name}: ${b.user_name}</div>`;
+        const mCompleted = b.status === 'completed';
+        return `<div class="month-event" style="background:${mCompleted ? lightenHex(car?.color || '#94A3B8') : (car?.color || '#94A3B8')};${mCompleted ? 'color:#1e293b;' : ''}">${car?.name}: ${b.user_name}</div>`;
       }).join('');
       const more = bkgs.length > 3 ? `<div class="month-more">+${bkgs.length-3}</div>` : '';
 
@@ -995,6 +1002,7 @@ function openDeliveryModal(bookingId) {
   document.getElementById('dlm-end-km').value   = '';
   document.getElementById('dlm-km-driven').value = '';
   document.getElementById('dlm-comments').value  = '';
+  document.getElementById('dlm-personal-note').value = b.personal_note || '';
   showError('dlm-error', '');
 
   document.getElementById('detail-modal').classList.add('hidden');
@@ -1024,6 +1032,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   const endKm   = parseInt(document.getElementById('dlm-end-km').value, 10);
   const endTime = getDT('dlm-end-date', 'dlm-end-time');
   const comments   = document.getElementById('dlm-comments').value.trim();
+  const personalNote = document.getElementById('dlm-personal-note').value.trim();
 
   if (!endTime)               return showError('dlm-error', 'Vælg afleveringstidspunkt.');
   if (isNaN(endKm) || endKm < 0) return showError('dlm-error', 'Indtast en gyldig km-stand.');
@@ -1049,7 +1058,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
     if (delErr) throw delErr;
 
     await db.from('cars').update({ current_km: endKm }).eq('id', b.car_id);
-    await db.from('bookings').update({ status: 'completed', end_time: safeEndTime.toISOString() }).eq('id', b.id);
+    await db.from('bookings').update({ status: 'completed', end_time: safeEndTime.toISOString(), personal_note: personalNote || null }).eq('id', b.id);
 
     await logActivity('aflevering', b.car_id, b.id, b.user_name, {
       end_km: endKm, start_km: startKm, km_driven: endKm - startKm,
@@ -1572,7 +1581,7 @@ async function loadRegnskab(memberNavn) {
 
   // Fetch bookings with delivery data
   let q = db.from('bookings')
-    .select('*, cars(id,name), deliveries(booking_id, km_driven, end_km, start_km, duration_quarters)')
+    .select('*, cars(id,name), deliveries(booking_id, km_driven, end_km, start_km, duration_quarters, comments)')
     .eq('user_name', memberNavn)
     .order('start_time', { ascending: false });
   if (fra)   q = q.gte('start_time', fra);
@@ -1629,6 +1638,7 @@ async function loadRegnskab(memberNavn) {
     const totalCell    = kmCost != null ? `<strong>${fmtKr(kmCost + timeCost)}</strong>` : '–';
     const statusCell   = del ? '<span style="color:#16a34a">✓ Afleveret</span>' : '<span style="color:var(--muted,#6b7280)">Aktiv</span>';
     const noteCell     = b.personal_note ? `<span style="color:var(--muted,#6b7280);font-style:italic">${b.personal_note}</span>` : '';
+    const commentsCell = del?.comments ? `<span style="font-size:11px">${del.comments}</span>` : '';
     return `<tr>
       <td style="white-space:nowrap">${dateStr}</td>
       <td>${carName || '–'}</td>
@@ -1640,6 +1650,7 @@ async function loadRegnskab(memberNavn) {
       <td style="text-align:right">${totalCell}</td>
       <td>${statusCell}</td>
       <td>${noteCell}</td>
+      <td>${commentsCell}</td>
     </tr>`;
   }).join('');
 
@@ -1647,7 +1658,7 @@ async function loadRegnskab(memberNavn) {
     <th>Dato</th><th>Bil</th><th>Tid</th><th style="text-align:right">Varighed</th>
     <th style="text-align:right">Km kørt</th><th style="text-align:right">Km-pris</th>
     <th style="text-align:right">Tids-pris</th><th style="text-align:right">I alt</th>
-    <th>Status</th><th>Personlig note</th>
+    <th>Status</th><th>Personlig note</th><th>Kommentarer</th>
   </tr>`;
 
   const totalRow = `<tr style="background:var(--bg);border-top:2px solid var(--border)">
@@ -1656,7 +1667,7 @@ async function loadRegnskab(memberNavn) {
     <td style="text-align:right"><strong>${fmtKr(totalKmCost)}</strong></td>
     <td style="text-align:right"><strong>${fmtKr(totalTimeCost)}</strong></td>
     <td style="text-align:right"><strong>${fmtKr(totalKmCost + totalTimeCost)}</strong></td>
-    <td colspan="2"></td>
+    <td colspan="3"></td>
   </tr>`;
 
   document.getElementById('rsk-list').innerHTML =
