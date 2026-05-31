@@ -586,9 +586,11 @@
       <thead><tr><th>Funktion</th><th>Beskrivelse</th></tr></thead>
       <tbody>
         <tr><td><strong>Kalender</strong></td><td>Visuelt overblik over alle bookinger — dag, uge eller måned</td></tr>
-        <tr><td><strong>Booking</strong></td><td>Reserver en bil med navn, tlf., tidspunkt og forventet km</td></tr>
+        <tr><td><strong>Booking</strong></td><td>Reserver en bil ved at vælge navn fra brugerlisten, angive tidspunkt og forventet km</td></tr>
         <tr><td><strong>Aflever bil</strong></td><td>Registrer aflevering med faktisk km-stand og køretid</td></tr>
-        <tr><td><strong>Admin-panel</strong></td><td>Fuldt overblik over biler, bookinger, afleveringer og log</td></tr>
+        <tr><td><strong>Brugerdatabase</strong></td><td>Administrer medlemslisten — tilføj, rediger, slet og importér via CSV</td></tr>
+        <tr><td><strong>Mit regnskab</strong></td><td>Personlig oversigt med kilometeromkostninger og tidspris pr. tur med filtre</td></tr>
+        <tr><td><strong>Admin-panel</strong></td><td>Fuldt overblik over biler, bookinger, afleveringer, brugere og log</td></tr>
         <tr><td><strong>Km-tracking</strong></td><td>Automatisk beregning af kørte km og opdatering af km-tæller</td></tr>
         <tr><td><strong>Aktivitetslog</strong></td><td>Komplet historik over alle handlinger i systemet</td></tr>
       </tbody>
@@ -791,8 +793,8 @@
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <strong>Udfyld dine oplysninger</strong>
-          Navn, telefonnummer, forventet antal km og tidsrum (start og slut). Bemærkninger er valgfrit.
+          <strong>Vælg dit navn på listen</strong>
+          Vælg dit navn i rullemenuen — telefonnummer udfyldes automatisk. Angiv forventet antal km og tidsrum (start og slut). Bemærkninger og personlig note er valgfri.
         </div>
       </div>
       <div class="step">
@@ -808,11 +810,11 @@
       <div class="field-row">
         <div class="field">
           <label>Dit navn *</label>
-          <input-mock>Peter Hansen</input-mock>
+          <input-mock>▾ Peter Hansen</input-mock>
         </div>
         <div class="field">
-          <label>Telefonnummer *</label>
-          <input-mock>42 33 55 66</input-mock>
+          <label>Telefonnummer</label>
+          <input-mock style="color:#94A3B8">Hentes automatisk</input-mock>
         </div>
       </div>
       <div class="field">
@@ -832,6 +834,10 @@
       <div class="field">
         <label>Bemærkninger</label>
         <input-mock style="color:#94A3B8">Valgfrit...</input-mock>
+      </div>
+      <div class="field">
+        <label>Personlig note <span style="font-weight:400;color:var(--muted)">(kun synlig i Mit regnskab)</span></label>
+        <input-mock style="color:#94A3B8">F.eks. Erhvervskørsel eller Tur til Mormor...</input-mock>
       </div>
     </div>
 
@@ -853,7 +859,14 @@
       <div class="callout-icon">💾</div>
       <div class="callout-body">
         <strong>Husk mig</strong>
-        <p>I bookingformularen kan brugeren sætte hak i <em>Husk mit navn og telefonnummer</em>. Oplysningerne gemmes i browseren og udfyldes automatisk næste gang — ingen login kræves.</p>
+        <p>I bookingformularen kan brugeren sætte hak i <em>Husk mit valg</em>. Det valgte navn gemmes i browseren og forudfyldes automatisk næste gang formularen åbnes — ingen login kræves.</p>
+      </div>
+    </div>
+    <div class="callout tip">
+      <div class="callout-icon">📝</div>
+      <div class="callout-body">
+        <strong>Personlig note</strong>
+        <p>Feltet <em>Personlig note</em> er valgfrit og kun synligt for bookeren under <strong>📊 Mit regnskab</strong>. Brug det til f.eks. "Erhvervskørsel" eller "Ferie" for nemmere at holde styr på dine ture.</p>
       </div>
     </div>
 
@@ -899,17 +912,10 @@
     <p class="section-lead">Aflevering sker direkte fra kalenderen — ingen separat fane. Brugeren klikker på sin aktive booking og trykker på "Aflever bil". Knappen er kun aktiv, når bookingen er gået i gang.</p>
 
     <div class="callout tip">
-      <div class="callout-icon">🔑</div>
-      <div class="callout-body">
-        <strong>Admin har udvidede rettigheder ved aflevering</strong>
-        <p>Som administrator er "Aflever bil"-knappen <em>altid</em> aktiv for aktive bookinger — uanset om bookingen er gået i gang eller ej. Det giver mulighed for at registrere afleveringer i særlige situationer.</p>
-      </div>
-    </div>
-    <div class="callout tip">
       <div class="callout-icon">🕐</div>
       <div class="callout-body">
-        <strong>Tidsbetinget aktivering for brugere</strong>
-        <p>For almindelige brugere er knappen aktiv fra bookingperiodens starttidspunkt. Den er også aktiv hvis bookingperiodens sluttidspunkt er overskredet — brugere kan altså altid aflevere en overskreden booking.</p>
+        <strong>Tidsbetinget aktivering</strong>
+        <p>"Aflever bil"-knappen bliver aktiv fra bookingperiodens starttidspunkt — for alle brugere, inkl. administratorer. Knappen er også aktiv, hvis bookingperiodens sluttidspunkt er overskredet, så en overskreden booking altid kan afleveres.</p>
       </div>
     </div>
 
@@ -1003,7 +1009,8 @@
         <div class="admin-tab-mock">📅 Bookinger</div>
         <div class="admin-tab-mock">✅ Afleveringer</div>
         <div class="admin-tab-mock">📋 Log</div>
-        <div class="admin-tab-mock">🗑 Skraldespand</div>
+        <div class="admin-tab-mock">👥 Brugere</div>
+        <div class="admin-tab-mock">🗑️ Skraldespand</div>
       </div>
       <div class="mockup-body" style="padding-top:12px">
         <p style="font-size:9pt;color:var(--muted)">← Vælg en fane for at se de tilsvarende data</p>
@@ -1086,13 +1093,27 @@
       <div class="callout-icon">⚠️</div>
       <div class="callout-body">
         <strong>Slettede poster gemmes i Skraldespanden</strong>
-        <p>Poster der slettes via redigeringstilstand havner i fanen Skraldespand og kan gendannes. Se afsnit 6.5.</p>
+        <p>Poster der slettes via redigeringstilstand havner i fanen Skraldespand og kan gendannes. Se afsnit 6.6.</p>
       </div>
     </div>
 
     <h3>6.3 Afleveringer</h3>
     <p>Fanen <strong>Afleveringer</strong> viser alle registrerede afleveringer med start km, slut km, kørte km, <strong>varighed</strong> (T:MM-format, f.eks. 2:45) og eventuelle kommentarer.</p>
     <p>Brug bilfilter og opdateringsknappen på samme måde som under Bookinger. Eksport og redigeringstilstand fungerer på samme vis — se afsnit 6.2.</p>
+
+    <h4>📊 Regnskab</h4>
+    <p>Klik på knappen <strong>📊 Regnskab</strong> under fanen Afleveringer for at åbne regnskabsoversigten. Vælg et kvartal i menuen, og systemet beregner automatisk km-omkostninger og tidsomkostninger for alle brugere i den valgte periode — baseret på de aktuelle priser (se afsnit Priser i brugerguiden).</p>
+    <table class="no-break">
+      <thead><tr><th>Kolonne</th><th>Beskrivelse</th></tr></thead>
+      <tbody>
+        <tr><td>Bruger</td><td>Navn på den der har kørt</td></tr>
+        <tr><td>Ture</td><td>Antal afleveringer i perioden</td></tr>
+        <tr><td>Km kørt</td><td>Samlet antal kørte km</td></tr>
+        <tr><td>Km-pris</td><td>Beregnet ud fra bilens priskategori og km-tærskel</td></tr>
+        <tr><td>Tidspris</td><td>Beregnet som hele døgn × 150 kr. + resterende timer × 15 kr.</td></tr>
+        <tr><td>Total</td><td>Km-pris + tidspris</td></tr>
+      </tbody>
+    </table>
 
     <h3>6.4 Aktivitetslog</h3>
     <p>Loggen er en komplet kronologisk historik over alle handlinger i systemet. Den kan ikke slettes eller redigeres.</p>
@@ -1112,8 +1133,31 @@
 
     <p>Loggen viser altid de 200 seneste poster. Brug filtrene <em>Bil</em> og <em>Handling</em> til at indsnævre søgningen. Eksport og redigeringstilstand er tilgængelig på samme vis som under Bookinger (se afsnit 6.2).</p>
 
-    <h3>6.5 Skraldespand — gendan og slet</h3>
-    <p>Fanen <strong>Skraldespand</strong> indeholder alle poster der er slettet via redigeringstilstand i fanerne Bookinger, Afleveringer og Log. Data opbevares lokalt i browseren og går ikke tabt ved genindlæsning.</p>
+    <h3>6.5 Brugere — administrer medlemslisten</h3>
+    <p>Fanen <strong>Brugere</strong> viser alle registrerede medlemmer med navn, adresse, bogruppe og telefonnummer. Herfra kan du tilføje, redigere og slette brugere.</p>
+
+    <h4>Tilføj ny bruger</h4>
+    <p>Klik på <strong>+ Ny bruger</strong>. En ny tom række vises i tabellen. Udfyld navn, adresse, bogruppe og telefon, og klik <strong>Gem</strong> for at gemme til databasen.</p>
+
+    <h4>Rediger eksisterende bruger</h4>
+    <p>Klik på <strong>✏ Rediger</strong> for at aktivere redigeringstilstand. Alle felter i tabellen bliver redigerbare. Klik <strong>Gem</strong> ud for den ønskede række for at gemme ændringerne.</p>
+
+    <h4>Slet bruger</h4>
+    <p>Markér en eller flere brugere i redigeringstilstand og klik <strong>Slet valgte</strong>. De slettede brugere flyttes til Skraldespanden og kan gendannes derfra.</p>
+
+    <h4>Importér fra CSV</h4>
+    <p>Klik på <strong>⬆ Importér CSV</strong> og vælg en CSV-fil med kolonner <em>Navn, Adresse, Bogruppe, Telefon</em>. Systemet accepterer både komma- og semikolon-adskilt format og springer automatisk over en eventuel kolonneoverskrift. Eksisterende brugere slettes ikke — filen føjes til den nuværende liste.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Brugere bruges i bookingformularen</strong>
+        <p>Alle aktive brugere i brugerdatabasen vises i rullemenuen i bookingformularen. Telefonnummeret udfyldes automatisk, når et navn vælges.</p>
+      </div>
+    </div>
+
+    <h3>6.6 Skraldespand — gendan og slet</h3>
+    <p>Fanen <strong>Skraldespand</strong> indeholder alle poster der er slettet via redigeringstilstand i fanerne Bookinger, Afleveringer, Log og Brugere. Data opbevares lokalt i browseren og går ikke tabt ved genindlæsning.</p>
 
     <h4>Gendan en post</h4>
     <div class="steps">
