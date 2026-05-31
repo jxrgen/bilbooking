@@ -699,11 +699,7 @@ body {
   padding: 10px 13px;
   font-size: 12.5px;
   color: var(--muted);
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
 }
-.help-tip-icon { flex-shrink: 0; }
 
 .help-cars-section { padding-bottom: 22px; }
 .help-cars-grid {
