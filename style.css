@@ -799,10 +799,13 @@ th.act-col,  td.act-col  { width: 50px; padding: 6px 4px !important; }
 .trash-empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 15px; }
 
 /* ===================== MIT REGNSKAB ===================== */
-.regnskab-member-row {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+.field-hint { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+.regnskab-member-row, .regnskab-filter-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
 }
-.regnskab-member-row label { white-space: nowrap; font-weight: 500; }
+.regnskab-member-row label, .regnskab-filter-row label { white-space: nowrap; font-weight: 500; font-size: 13px; }
+.regnskab-filter-row input[type="date"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
 .rsk-summary-box {
   display: flex; gap: 32px; padding: 16px 20px;
   background: var(--surface, #f8f9fa); border: 1px solid var(--border, #e5e7eb);

@@ -102,6 +102,35 @@ function getISOWeek(date) {
 }
 
 // =============================================
+// =============================================
+// PRICING HELPERS
+// =============================================
+const PRICES = {
+  standard: { low: 3.0,  high: 2.0,  threshold: 100 },
+  electric:  { low: 2.5,  high: 1.5,  threshold: 100 },
+  hourRate:  15,
+  dayRate:   150,
+};
+function carPriceCategory(carName) {
+  const n = (carName || '').toLowerCase();
+  return (n.includes('zoe') || n.includes('buzz')) ? 'electric' : 'standard';
+}
+function calcKmCost(km, carName) {
+  if (!km || km <= 0) return 0;
+  const p = PRICES[carPriceCategory(carName)];
+  return km <= p.threshold ? km * p.low : p.threshold * p.low + (km - p.threshold) * p.high;
+}
+function calcTimeCost(durationMins) {
+  const hours = durationMins / 60;
+  const fullDays = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return fullDays * PRICES.dayRate + remHours * PRICES.hourRate;
+}
+function fmtKr(amount) {
+  return amount.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr.';
+}
+
+// =============================================
 // USER PREFERENCES (localStorage)
 // =============================================
 const PREFS_KEY      = 'bilbooking_prefs';
@@ -724,6 +753,7 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 
   document.getElementById('bm-exp-km').value = editingBooking ? editingBooking.expected_km : '';
   document.getElementById('bm-notes').value  = editingBooking ? (editingBooking.notes || '') : '';
+  document.getElementById('bm-personal-note').value = editingBooking ? (editingBooking.personal_note || '') : '';
 
   // Show warning if editing a completed booking
   document.getElementById('bm-completed-warn')?.classList.toggle(
@@ -776,7 +806,8 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   const phone    = member?.telefon || '';
   const expKm    = parseInt(document.getElementById('bm-exp-km').value, 10);
   const startKm  = parseInt(document.getElementById('bm-start-km').value, 10);
-  const notes    = document.getElementById('bm-notes').value.trim();
+  const notes        = document.getElementById('bm-notes').value.trim();
+  const personalNote = document.getElementById('bm-personal-note').value.trim();
 
   if (!member) return showError('bm-error', 'Vælg dit navn på listen.');
   if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
@@ -807,6 +838,7 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
       car_id: carId, user_name: name, phone,
       expected_km: expKm, start_km: startKm,
       start_time: startTime.toISOString(), end_time: endTime.toISOString(), notes,
+      personal_note: personalNote || null,
     };
 
     if (state.editingBookingId) {
@@ -879,7 +911,7 @@ async function openDetailModal(bookingId) {
   const now        = new Date();
   const hasStarted = now >= new Date(b.start_time);
   const hasExpired = now > new Date(b.end_time);
-  const canDeliver = state.adminUnlocked || hasStarted || hasExpired;
+  const canDeliver = hasStarted || hasExpired;
 
   const deliverBtn = document.getElementById('dm-deliver-btn');
   const editBtn    = document.getElementById('dm-edit-btn');
@@ -1492,6 +1524,8 @@ async function restoreFromTrash(trashId) {
 // =============================================
 async function openRegnskab() {
   document.getElementById('regnskab-overlay').classList.remove('hidden');
+
+  // Populate member dropdown
   const sel = document.getElementById('rsk-member');
   sel.innerHTML = '<option value="">Vælg bruger...</option>';
   (window.membersCache || []).forEach(m => {
@@ -1501,6 +1535,20 @@ async function openRegnskab() {
     opt.textContent = m.navn;
     sel.appendChild(opt);
   });
+
+  // Populate car filter
+  const carSel = document.getElementById('rsk-car');
+  if (carSel) {
+    carSel.innerHTML = '<option value="">Alle biler</option>';
+    (state.cars || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      carSel.appendChild(opt);
+    });
+  }
+
+  // Pre-select from Husk mig
   const prefs = loadPrefs();
   if (prefs?.memberId) {
     sel.value = prefs.memberId;
@@ -1515,41 +1563,110 @@ async function loadRegnskab(memberNavn) {
     document.getElementById('rsk-list').innerHTML = '';
     return;
   }
-  document.getElementById('rsk-summary').innerHTML = '<p style="padding:8px;color:var(--text-muted,#6b7280)">Henter...</p>';
+  document.getElementById('rsk-summary').innerHTML = '<p style="padding:8px;color:var(--muted,#6b7280)">Henter...</p>';
   document.getElementById('rsk-list').innerHTML = '';
 
-  const { data: bookings } = await db.from('bookings').select('*, cars(name)').eq('user_name', memberNavn).order('start_time', { ascending: false });
-  const { data: deliveries } = await db.from('deliveries').select('booking_id');
-  const deliveredIds = new Set((deliveries || []).map(d => d.booking_id));
+  const fra    = document.getElementById('rsk-fra')?.value;
+  const til    = document.getElementById('rsk-til')?.value;
+  const carId  = document.getElementById('rsk-car')?.value;
+
+  // Fetch bookings with delivery data
+  let q = db.from('bookings')
+    .select('*, cars(id,name), deliveries(booking_id, km_driven, end_km, start_km, duration_quarters)')
+    .eq('user_name', memberNavn)
+    .order('start_time', { ascending: false });
+  if (fra)   q = q.gte('start_time', fra);
+  if (til)   q = q.lte('start_time', til + 'T23:59:59');
+  if (carId) q = q.eq('car_id', carId);
+
+  const { data: bookings } = await q;
 
   if (!bookings || bookings.length === 0) {
     document.getElementById('rsk-summary').innerHTML = '';
-    document.getElementById('rsk-list').innerHTML = `<p style="padding:16px;color:var(--text-muted,#6b7280)">Ingen bookinger fundet for ${memberNavn}.</p>`;
+    document.getElementById('rsk-list').innerHTML = `<p style="padding:16px;color:var(--muted,#6b7280)">Ingen bookinger fundet for ${memberNavn}${fra||til||carId ? ' med de valgte filtre' : ''}.</p>`;
     return;
   }
 
-  let totalMins = 0;
-  bookings.forEach(b => { totalMins += (new Date(b.end_time) - new Date(b.start_time)) / 60000; });
   const fmtMins = m => { const h = Math.floor(m / 60); const min = Math.round(m % 60); return h + ' t' + (min ? ' ' + min + ' min' : ''); };
 
+  let totalMins = 0, totalKm = 0, totalKmCost = 0, totalTimeCost = 0;
+  const delivered = [], active = [];
+
+  bookings.forEach(b => {
+    const dur = Math.round((new Date(b.end_time) - new Date(b.start_time)) / 60000);
+    totalMins += dur;
+    const del = b.deliveries?.[0];
+    const isDelivered = !!del;
+    const km = del ? (del.km_driven ?? (del.end_km - del.start_km)) : null;
+    const durationMins = del ? (del.duration_quarters || 0) * 15 : dur;
+    const carName = b.cars?.name || '';
+    const kmCost   = isDelivered && km != null ? calcKmCost(km, carName) : null;
+    const timeCost = isDelivered ? calcTimeCost(durationMins) : null;
+    if (km != null) totalKm += km;
+    if (kmCost != null)   totalKmCost   += kmCost;
+    if (timeCost != null) totalTimeCost += timeCost;
+    (isDelivered ? delivered : active).push({ b, del, dur, km, kmCost, timeCost, carName });
+  });
+
+  const deliveredCount = delivered.length;
   document.getElementById('rsk-summary').innerHTML = `
     <div class="rsk-summary-box">
       <div class="rsk-stat"><span class="rsk-stat-val">${bookings.length}</span><span class="rsk-stat-lbl">bookinger</span></div>
-      <div class="rsk-stat"><span class="rsk-stat-val">${fmtMins(totalMins)}</span><span class="rsk-stat-lbl">total tid</span></div>
+      <div class="rsk-stat"><span class="rsk-stat-val">${deliveredCount}</span><span class="rsk-stat-lbl">afleveret</span></div>
+      <div class="rsk-stat"><span class="rsk-stat-val">${totalKm.toLocaleString('da-DK')} km</span><span class="rsk-stat-lbl">km kørt</span></div>
+      <div class="rsk-stat"><span class="rsk-stat-val">${fmtMins(totalMins)}</span><span class="rsk-stat-lbl">reserveret tid</span></div>
+      <div class="rsk-stat"><span class="rsk-stat-val">${fmtKr(totalKmCost + totalTimeCost)}</span><span class="rsk-stat-lbl">variabel i alt</span></div>
     </div>`;
 
-  let html = '<table class="admin-table" style="margin-top:12px"><thead><tr><th>Dato</th><th>Bil</th><th>Tid</th><th>Varighed</th><th>Status</th></tr></thead><tbody>';
-  bookings.forEach(b => {
-    const start = new Date(b.start_time), end = new Date(b.end_time);
-    const dur = Math.round((end - start) / 60000);
+  const buildRows = (list) => list.map(({ b, del, dur, km, kmCost, timeCost, carName }) => {
+    const start = new Date(b.start_time);
     const dateStr = start.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
-    const timeStr = start.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) + '–' + end.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
-    const carName = b.cars ? b.cars.name : '–';
-    const status = deliveredIds.has(b.id) ? '<span style="color:#16a34a">Afleveret</span>' : '<span style="color:var(--text-muted,#6b7280)">Aktiv</span>';
-    html += `<tr><td>${dateStr}</td><td>${carName}</td><td>${timeStr}</td><td>${fmtMins(dur)}</td><td>${status}</td></tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('rsk-list').innerHTML = html;
+    const timeStr = start.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) + '–' +
+      new Date(b.end_time).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+    const kmCell       = km != null ? km.toLocaleString('da-DK') + ' km' : '–';
+    const kmCostCell   = kmCost != null ? fmtKr(kmCost) : '–';
+    const timeCostCell = timeCost != null ? fmtKr(timeCost) : '–';
+    const totalCell    = kmCost != null ? `<strong>${fmtKr(kmCost + timeCost)}</strong>` : '–';
+    const statusCell   = del ? '<span style="color:#16a34a">✓ Afleveret</span>' : '<span style="color:var(--muted,#6b7280)">Aktiv</span>';
+    const noteCell     = b.personal_note ? `<span style="color:var(--muted,#6b7280);font-style:italic">${b.personal_note}</span>` : '';
+    return `<tr>
+      <td style="white-space:nowrap">${dateStr}</td>
+      <td>${carName || '–'}</td>
+      <td style="white-space:nowrap;font-size:11px">${timeStr}</td>
+      <td style="text-align:right">${fmtMins(dur)}</td>
+      <td style="text-align:right">${kmCell}</td>
+      <td style="text-align:right">${kmCostCell}</td>
+      <td style="text-align:right">${timeCostCell}</td>
+      <td style="text-align:right">${totalCell}</td>
+      <td>${statusCell}</td>
+      <td>${noteCell}</td>
+    </tr>`;
+  }).join('');
+
+  const thead = `<tr>
+    <th>Dato</th><th>Bil</th><th>Tid</th><th style="text-align:right">Varighed</th>
+    <th style="text-align:right">Km kørt</th><th style="text-align:right">Km-pris</th>
+    <th style="text-align:right">Tids-pris</th><th style="text-align:right">I alt</th>
+    <th>Status</th><th>Personlig note</th>
+  </tr>`;
+
+  const totalRow = `<tr style="background:var(--bg);border-top:2px solid var(--border)">
+    <td colspan="4"><strong>Total (afleverede ture)</strong></td>
+    <td style="text-align:right"><strong>${totalKm.toLocaleString('da-DK')} km</strong></td>
+    <td style="text-align:right"><strong>${fmtKr(totalKmCost)}</strong></td>
+    <td style="text-align:right"><strong>${fmtKr(totalTimeCost)}</strong></td>
+    <td style="text-align:right"><strong>${fmtKr(totalKmCost + totalTimeCost)}</strong></td>
+    <td colspan="2"></td>
+  </tr>`;
+
+  document.getElementById('rsk-list').innerHTML =
+    `<table class="admin-table" style="margin-top:12px"><thead>${thead}</thead><tbody>
+      ${buildRows([...delivered, ...active])}
+      ${totalRow}
+    </tbody></table>
+    <p style="font-size:11px;color:var(--muted,#6b7280);margin-top:8px">
+      Berlingo/ID.3: 3,00 kr./km (2,00 over 100 km) · Zoe/ID Buzz: 2,50 kr./km (1,50 over 100 km) · 15 kr./t · 150 kr./døgn
+    </p>`;
 }
 
 // =============================================
@@ -1688,6 +1805,99 @@ function initAdminFilters() {
   document.getElementById('ab-filter-status').addEventListener('change', loadAllBookingsAdmin);
   document.getElementById('ad-refresh').addEventListener('click', loadAllDeliveriesAdmin);
   document.getElementById('ad-filter-car').addEventListener('change', loadAllDeliveriesAdmin);
+
+  // Populate regnskab period dropdown dynamically
+  const periodSel = document.getElementById('ad-regnskab-period');
+  if (periodSel) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const quarters = ['Q1 (jan–mar)', 'Q2 (apr–jun)', 'Q3 (jul–sep)', 'Q4 (okt–dec)'];
+    // Show last 8 quarters
+    for (let i = 0; i < 8; i++) {
+      const q = ((now.getMonth() / 3 | 0) - i + 16) % 4;
+      const y = year - Math.floor((i - (now.getMonth() / 3 | 0) + 16) / 4 - 3);
+      const opt = document.createElement('option');
+      opt.value = `${y}-${q + 1}`;
+      opt.textContent = `${quarters[q]} ${y}`;
+      periodSel.appendChild(opt);
+    }
+  }
+
+  document.getElementById('ad-regnskab-toggle')?.addEventListener('click', () => {
+    document.getElementById('ad-regnskab-panel').classList.toggle('hidden');
+  });
+  document.getElementById('ad-regnskab-calc')?.addEventListener('click', loadAdminRegnskab);
+}
+
+async function loadAdminRegnskab() {
+  const content = document.getElementById('ad-regnskab-content');
+  content.innerHTML = '<p style="color:var(--muted)">Beregner...</p>';
+
+  const periodVal = document.getElementById('ad-regnskab-period')?.value;
+  let query = db.from('deliveries')
+    .select('*, cars(name), bookings(user_name, start_time)');
+
+  if (periodVal) {
+    const [y, q] = periodVal.split('-').map(Number);
+    const from = new Date(y, (q - 1) * 3, 1).toISOString();
+    const to   = new Date(y, q * 3, 1).toISOString();
+    query = query.gte('created_at', from).lt('created_at', to);
+  }
+
+  const { data, error } = await query;
+  if (error) { content.innerHTML = `<p style="color:var(--danger)">Fejl: ${error.message}</p>`; return; }
+  if (!data?.length) { content.innerHTML = '<p style="color:var(--muted)">Ingen afleveringer i den valgte periode.</p>'; return; }
+
+  const members = {};
+  data.forEach(d => {
+    const user = d.bookings?.user_name || 'Ukendt';
+    const km   = d.km_driven ?? (d.end_km - d.start_km);
+    const durationMins = (d.duration_quarters || 0) * 15;
+    const kmCost   = calcKmCost(km, d.cars?.name || '');
+    const timeCost = calcTimeCost(durationMins);
+    if (!members[user]) members[user] = { ture: 0, km: 0, kmCost: 0, timeCost: 0 };
+    members[user].ture++;
+    members[user].km      += km;
+    members[user].kmCost   += kmCost;
+    members[user].timeCost += timeCost;
+  });
+
+  const rows = Object.entries(members).sort((a, b) => a[0].localeCompare(b[0], 'da'));
+  let totTure = 0, totKm = 0, totKmCost = 0, totTimeCost = 0;
+  rows.forEach(([, m]) => { totTure += m.ture; totKm += m.km; totKmCost += m.kmCost; totTimeCost += m.timeCost; });
+
+  content.innerHTML = `
+    <table class="admin-table">
+      <thead><tr>
+        <th>Bruger</th>
+        <th style="text-align:right">Ture</th>
+        <th style="text-align:right">Km kørt</th>
+        <th style="text-align:right">Km-pris</th>
+        <th style="text-align:right">Tids-pris</th>
+        <th style="text-align:right">Variabel i alt</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(([user, m]) => `<tr>
+          <td>${user}</td>
+          <td style="text-align:right">${m.ture}</td>
+          <td style="text-align:right">${m.km.toLocaleString('da-DK')} km</td>
+          <td style="text-align:right">${fmtKr(m.kmCost)}</td>
+          <td style="text-align:right">${fmtKr(m.timeCost)}</td>
+          <td style="text-align:right;font-weight:600">${fmtKr(m.kmCost + m.timeCost)}</td>
+        </tr>`).join('')}
+        <tr style="background:var(--bg);border-top:2px solid var(--border)">
+          <td><strong>I alt</strong></td>
+          <td style="text-align:right"><strong>${totTure}</strong></td>
+          <td style="text-align:right"><strong>${totKm.toLocaleString('da-DK')} km</strong></td>
+          <td style="text-align:right"><strong>${fmtKr(totKmCost)}</strong></td>
+          <td style="text-align:right"><strong>${fmtKr(totTimeCost)}</strong></td>
+          <td style="text-align:right"><strong>${fmtKr(totKmCost + totTimeCost)}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">
+      Berlingo/ID.3: 3,00 kr./km (2,00 over 100 km) · Zoe/ID Buzz: 2,50 kr./km (1,50 over 100 km) · 15 kr./t · 150 kr./døgn. Fast månedsbidrag (75 kr./kvartal) er ikke inkluderet.
+    </p>`;
 }
 
 // Admin tab switching
@@ -1955,15 +2165,20 @@ document.querySelectorAll('.nav-btn').forEach(btn =>
     }
   }));
 
-// Regnskab nav button
+// Regnskab nav button + filters
 document.getElementById('nav-regnskab')?.addEventListener('click', openRegnskab);
 document.getElementById('regnskab-close')?.addEventListener('click', () => {
   document.getElementById('regnskab-overlay').classList.add('hidden');
 });
-document.getElementById('rsk-member')?.addEventListener('change', function() {
-  const opt = this.options[this.selectedIndex];
-  loadRegnskab(opt ? (opt.dataset.navn || '') : '');
-});
+function rskCurrentNavn() {
+  const sel = document.getElementById('rsk-member');
+  const opt = sel?.options[sel.selectedIndex];
+  return opt ? (opt.dataset.navn || '') : '';
+}
+document.getElementById('rsk-member')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
+document.getElementById('rsk-fra')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
+document.getElementById('rsk-til')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
+document.getElementById('rsk-car')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
 
 // Logo: enkelt klik → kalender; 5 hurtige klik → admin
 (function () {

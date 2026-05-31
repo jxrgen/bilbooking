@@ -553,9 +553,19 @@
           <button class="modal-close" id="regnskab-close">&#10005;</button>
         </div>
         <div class="regnskab-member-row">
-          <label>Vis regnskab for:</label>
+          <label>Bruger:</label>
           <select id="rsk-member" style="flex:1">
             <option value="">Vælg bruger...</option>
+          </select>
+        </div>
+        <div class="regnskab-filter-row">
+          <label>Fra:</label>
+          <input type="date" id="rsk-fra">
+          <label>Til:</label>
+          <input type="date" id="rsk-til">
+          <label>Bil:</label>
+          <select id="rsk-car">
+            <option value="">Alle biler</option>
           </select>
         </div>
         <div id="rsk-summary"></div>
@@ -675,6 +685,7 @@
             <button id="ad-edit-toggle" class="btn-sm">&#9998; Rediger</button>
             <select id="ad-filter-car"><option value="">Alle biler</option></select>
             <button id="ad-refresh" class="btn-sm">&#8635; Opdater</button>
+            <button id="ad-regnskab-toggle" class="btn-sm">&#128202; Regnskab</button>
           </div>
         </div>
         <div id="ad-edit-bar" class="edit-bar hidden">
@@ -691,6 +702,18 @@
             </tr></thead>
             <tbody id="ad-body"></tbody>
           </table>
+        </div>
+
+        <!-- Regnskabspanel -->
+        <div id="ad-regnskab-panel" class="hidden" style="border-top:2px solid var(--border);padding:14px 20px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <strong>📊 Komplet regnskab</strong>
+            <select id="ad-regnskab-period" style="flex:1;max-width:220px">
+              <option value="">Alle perioder</option>
+            </select>
+            <button id="ad-regnskab-calc" class="btn-sm btn-primary">Beregn</button>
+          </div>
+          <div id="ad-regnskab-content"></div>
         </div>
       </div>
 
@@ -830,8 +853,12 @@
         </div>
       </div>
       <div class="field">
-        <label>Bemærkninger</label>
+        <label>Bemærkninger <span class="field-hint">(synlig for alle)</span></label>
         <textarea id="bm-notes" rows="2" placeholder="Valgfrit..."></textarea>
+      </div>
+      <div class="field">
+        <label>Personlig note <span class="field-hint">(kun synlig i Mit regnskab)</span></label>
+        <textarea id="bm-personal-note" rows="1" placeholder="fx Erhvervskørsel, Tur til mormor..."></textarea>
       </div>
       <div id="bm-past-warn" class="warning-box hidden">
         &#9888; Du booker mere end 30 minutter tilbage i tiden — er du sikker?
