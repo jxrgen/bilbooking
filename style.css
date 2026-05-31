@@ -508,6 +508,14 @@ body {
   box-shadow: 0 0 0 3px rgba(0,0,0,.25);
   transform: translateY(-1px);
 }
+.car-select-btn.occupied {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.car-select-btn:disabled {
+  pointer-events: none;
+}
 
 /* ===================== LOG ===================== */
 .log-toolbar {

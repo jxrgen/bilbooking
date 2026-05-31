@@ -723,12 +723,13 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
         const selectedId  = btn.dataset.carId;
         const selectedCar = state.cars.find(c => c.id === selectedId);
         document.getElementById('bm-car-id').value = selectedId;
-        // Opdater start-km til den valgte bils seneste km-stand
         if (selectedCar) {
           document.getElementById('bm-start-km').value = selectedCar.current_km || 0;
         }
       });
     });
+
+    refreshCarButtons();
   }
 
   document.getElementById('bm-start-km').value = car.current_km || 0;
@@ -776,6 +777,34 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
 }
 
 
+function refreshCarButtons() {
+  const selector = document.getElementById('bm-car-selector');
+  if (!selector || document.getElementById('bm-car-selector-wrap').classList.contains('hidden')) return;
+  const start = getDT('bm-start-date', 'bm-start-time');
+  const end   = getDT('bm-end-date',   'bm-end-time');
+  if (!start || !end || end <= start) return;
+  const startISO = start.toISOString();
+  const endISO   = end.toISOString();
+  selector.querySelectorAll('.car-select-btn').forEach(btn => {
+    const cId = btn.dataset.carId;
+    const occupied = !!findConflictInfo(cId, startISO, endISO, state.editingBookingId);
+    btn.disabled = occupied;
+    btn.classList.toggle('occupied', occupied);
+    if (occupied && btn.classList.contains('selected')) {
+      btn.classList.remove('selected');
+      const firstFree = selector.querySelector('.car-select-btn:not([disabled])');
+      if (firstFree) {
+        firstFree.classList.add('selected');
+        document.getElementById('bm-car-id').value = firstFree.dataset.carId;
+        const fc = state.cars.find(c => c.id === firstFree.dataset.carId);
+        if (fc) document.getElementById('bm-start-km').value = fc.current_km || 0;
+      } else {
+        document.getElementById('bm-car-id').value = '';
+      }
+    }
+  });
+}
+
 function onStartChange() {
   const start = getDT('bm-start-date', 'bm-start-time');
   if (!start) return;
@@ -792,6 +821,10 @@ function onStartChange() {
 }
 ['bm-start-date', 'bm-start-time'].forEach(id =>
   document.getElementById(id).addEventListener('change', onStartChange));
+
+['bm-start-date','bm-start-time','bm-end-date','bm-end-time'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', refreshCarButtons);
+});
 
 document.getElementById('bm-member')?.addEventListener('change', function() {
   const m = (window.membersCache || []).find(mb => mb.id === this.value);
@@ -1624,7 +1657,7 @@ async function loadRegnskab(memberNavn) {
       <div class="rsk-stat"><span class="rsk-stat-val">${deliveredCount}</span><span class="rsk-stat-lbl">afleveret</span></div>
       <div class="rsk-stat"><span class="rsk-stat-val">${totalKm.toLocaleString('da-DK')} km</span><span class="rsk-stat-lbl">km kørt</span></div>
       <div class="rsk-stat"><span class="rsk-stat-val">${fmtMins(totalMins)}</span><span class="rsk-stat-lbl">reserveret tid</span></div>
-      <div class="rsk-stat"><span class="rsk-stat-val">${fmtKr(totalKmCost + totalTimeCost)}</span><span class="rsk-stat-lbl">variabel i alt</span></div>
+      <div class="rsk-stat"><span class="rsk-stat-val">${fmtKr(totalKmCost + totalTimeCost)}</span><span class="rsk-stat-lbl">beløb i alt</span></div>
     </div>`;
 
   const buildRows = (list) => list.map(({ b, del, dur, km, kmCost, timeCost, carName }) => {
@@ -1885,7 +1918,7 @@ async function loadAdminRegnskab() {
         <th style="text-align:right">Km kørt</th>
         <th style="text-align:right">Km-pris</th>
         <th style="text-align:right">Tids-pris</th>
-        <th style="text-align:right">Variabel i alt</th>
+        <th style="text-align:right">Beløb i alt</th>
       </tr></thead>
       <tbody>
         ${rows.map(([user, m]) => `<tr>
