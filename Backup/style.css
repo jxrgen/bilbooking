@@ -596,23 +596,6 @@ body {
 .admin-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow: auto; }
 @media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } }
 
-.admin-toolbar {
-  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-  padding: 14px 20px; border-bottom: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0;
-}
-
-.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.admin-table th {
-  text-align: left; padding: 7px 11px;
-  background: var(--bg); border-bottom: 2px solid var(--border);
-  font-weight: 700; color: var(--muted);
-  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
-}
-.admin-table td { padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
-.admin-table tr:hover td { background: var(--bg); }
-#mbr-table-wrap { overflow: auto; padding: 14px 20px; }
-
 .car-admin-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 9px 0; border-bottom: 1px solid var(--border);
@@ -790,40 +773,6 @@ th.act-col,  td.act-col  { width: 50px; padding: 6px 4px !important; }
 .trash-item-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
 .trash-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .trash-empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 15px; }
-
-/* ===================== MIT REGNSKAB ===================== */
-.regnskab-member-row {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-}
-.regnskab-member-row label { white-space: nowrap; font-weight: 500; }
-.rsk-summary-box {
-  display: flex; gap: 32px; padding: 16px 20px;
-  background: var(--surface, #f8f9fa); border: 1px solid var(--border, #e5e7eb);
-  border-radius: 10px; margin-bottom: 4px; flex-wrap: wrap;
-}
-.rsk-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.rsk-stat-val { font-size: 1.6rem; font-weight: 700; color: var(--primary, #2563eb); }
-.rsk-stat-lbl { font-size: 0.78rem; color: var(--muted, #6b7280); text-transform: uppercase; letter-spacing: 0.04em; }
-
-/* ===================== HELP TABS ===================== */
-#view-help { display: flex; flex-direction: column; }
-.help-tabs {
-  display: flex; gap: 2px; padding: 8px 12px 0;
-  background: var(--surface, #fff); border-bottom: 1px solid var(--border, #e5e7eb);
-  flex-shrink: 0; flex-wrap: wrap;
-}
-.help-tab-btn {
-  padding: 7px 14px; border: 1px solid transparent; background: transparent;
-  color: var(--muted, #6b7280); cursor: pointer; border-radius: 6px 6px 0 0;
-  font-size: 0.85rem; font-weight: 500; white-space: nowrap;
-}
-.help-tab-btn.active {
-  background: var(--bg, white); color: var(--primary, #2563eb);
-  border-color: var(--border, #e5e7eb); border-bottom-color: var(--bg, white);
-}
-.help-tab-btn:hover:not(.active) { background: var(--hover, #f3f4f6); }
-.help-tab-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.help-tab-content.hidden { display: none !important; }
 
 /* ===================== MISC ===================== */
 .hidden { display: none !important; }

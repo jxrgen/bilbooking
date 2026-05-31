@@ -28,8 +28,6 @@ const state = {
   editingBookingId: null,      // null = ny booking, string = redigering
 };
 
-window.membersCache = [];
-
 // =============================================
 // UTILS
 // =============================================
@@ -108,7 +106,7 @@ const PREFS_KEY      = 'bilbooking_prefs';
 const CAR_FILTER_KEY = 'bilbooking_car_filter';
 
 function loadPrefs() { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null'); }
-function savePrefs(memberId, navn, telefon) { localStorage.setItem(PREFS_KEY, JSON.stringify({ memberId, navn, telefon })); }
+function savePrefs(name, phone) { localStorage.setItem(PREFS_KEY, JSON.stringify({ name, phone })); }
 function clearPrefs() { localStorage.removeItem(PREFS_KEY); }
 
 // Fyld et <select>-element med tidsintervaller á 15 min (00:00 – 23:45)
@@ -240,12 +238,6 @@ async function loadBookings(from, to) {
   state.bookings = data;
 }
 
-
-async function loadMembers() {
-  const { data, error } = await db.from('members').select('*').order('navn');
-  if (error) { console.error('loadMembers', error); return; }
-  window.membersCache = data || [];
-}
 
 async function logActivity(actionType, carId, bookingId, userName, details) {
   const { error } = await db.from('activity_log').insert({
@@ -700,25 +692,14 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   setDT('bm-start-date', 'bm-start-time', editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
   setDT('bm-end-date',   'bm-end-time',   editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
 
-  // Populate member dropdown
-  const memberSel = document.getElementById('bm-member');
-  if (memberSel) {
-    memberSel.innerHTML = '<option value="">Vælg dit navn...</option>';
-    (window.membersCache || []).forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.id;
-      opt.textContent = m.navn;
-      memberSel.appendChild(opt);
-    });
+  if (editingBooking) {
+    document.getElementById('bm-name').value   = editingBooking.user_name;
+    document.getElementById('bm-phone').value  = editingBooking.phone;
+    document.getElementById('bm-remember').checked = !!loadPrefs();
+  } else {
     const prefs = loadPrefs();
-    if (editingBooking) {
-      const match = (window.membersCache || []).find(m => m.navn === editingBooking.user_name);
-      if (match) memberSel.value = match.id;
-    } else if (prefs?.memberId) {
-      memberSel.value = prefs.memberId;
-    }
-    const selMember = (window.membersCache || []).find(m => m.id === memberSel.value);
-    document.getElementById('bm-phone').value = selMember ? selMember.telefon : (editingBooking?.phone || '');
+    document.getElementById('bm-name').value   = prefs?.name  || '';
+    document.getElementById('bm-phone').value  = prefs?.phone || '';
     document.getElementById('bm-remember').checked = !!prefs;
   }
 
@@ -735,7 +716,7 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   showError('bm-error', '');
   onStartChange(); // trigger past-date warning if needed
   document.getElementById('booking-modal').classList.remove('hidden');
-  document.getElementById('bm-member')?.focus();
+  document.getElementById('bm-name').focus();
 }
 
 
@@ -756,11 +737,6 @@ function onStartChange() {
 ['bm-start-date', 'bm-start-time'].forEach(id =>
   document.getElementById(id).addEventListener('change', onStartChange));
 
-document.getElementById('bm-member')?.addEventListener('change', function() {
-  const m = (window.membersCache || []).find(mb => mb.id === this.value);
-  document.getElementById('bm-phone').value = m ? m.telefon : '';
-});
-
 function closeBookingModal() {
   document.getElementById('booking-modal').classList.add('hidden');
   state.editingBookingId = null;
@@ -770,15 +746,14 @@ document.getElementById('bm-cancel').addEventListener('click', closeBookingModal
 
 document.getElementById('bm-submit').addEventListener('click', async () => {
   const carId    = document.getElementById('bm-car-id').value;
-  const memberId = document.getElementById('bm-member')?.value;
-  const member   = (window.membersCache || []).find(m => m.id === memberId);
-  const name     = member?.navn  || '';
-  const phone    = member?.telefon || '';
+  const name     = document.getElementById('bm-name').value.trim();
+  const phone    = document.getElementById('bm-phone').value.trim();
   const expKm    = parseInt(document.getElementById('bm-exp-km').value, 10);
   const startKm  = parseInt(document.getElementById('bm-start-km').value, 10);
   const notes    = document.getElementById('bm-notes').value.trim();
 
-  if (!member) return showError('bm-error', 'Vælg dit navn på listen.');
+  if (!name)   return showError('bm-error', 'Indtast dit navn.');
+  if (!phone)  return showError('bm-error', 'Indtast dit telefonnummer.');
   if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
 
   const startTime = getDT('bm-start-date', 'bm-start-time');
@@ -817,7 +792,7 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
       toast(`Booking oprettet for ${state.cars.find(c=>c.id===carId)?.name}`, 'success');
     }
 
-    if (document.getElementById('bm-remember').checked && member) savePrefs(member.id, member.navn, member.telefon);
+    if (document.getElementById('bm-remember').checked) savePrefs(name, phone);
     else clearPrefs();
 
     closeBookingModal();
@@ -1378,9 +1353,9 @@ function renderTrash() {
     container.innerHTML = `<div class="trash-empty">&#128465; Skraldespanden er tom</div>`;
     return;
   }
-  const groups  = { booking: [], delivery: [], log: [], member: [] };
+  const groups  = { booking: [], delivery: [], log: [] };
   items.forEach(item => { (groups[item.type] = groups[item.type] || []).push(item); });
-  const labels  = { booking: '&#128197; Bookinger', delivery: '&#9989; Afleveringer', log: '&#128221; Log-poster', member: '👥 Brugere' };
+  const labels  = { booking: '&#128197; Bookinger', delivery: '&#9989; Afleveringer', log: '&#128221; Log-poster' };
   let html = '';
   for (const [type, group] of Object.entries(groups)) {
     if (!group?.length) continue;
@@ -1460,17 +1435,6 @@ async function restoreFromTrash(trashId) {
         created_at: l.created_at,
       });
       if (error) throw error;
-    } else if (item.type === 'member') {
-      const m = item.data;
-      const { error } = await db.from('members').insert({
-        id: m.id, navn: m.navn, adresse: m.adresse || null,
-        bogruppe: m.bogruppe || null, telefon: m.telefon || null,
-        active: m.active !== undefined ? m.active : true,
-        created_at: m.created_at,
-      });
-      if (error) throw error;
-      await loadMembers();
-      renderMembers();
     }
 
     saveTrash(trash.filter(t => t.id !== trashId));
@@ -1485,163 +1449,6 @@ async function restoreFromTrash(trashId) {
   } catch (err) {
     toast('Fejl ved gendannelse: ' + (err.message || 'Ukendt'), 'error');
   }
-}
-
-// =============================================
-// MIT REGNSKAB
-// =============================================
-async function openRegnskab() {
-  document.getElementById('regnskab-overlay').classList.remove('hidden');
-  const sel = document.getElementById('rsk-member');
-  sel.innerHTML = '<option value="">Vælg bruger...</option>';
-  (window.membersCache || []).forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.id;
-    opt.dataset.navn = m.navn;
-    opt.textContent = m.navn;
-    sel.appendChild(opt);
-  });
-  const prefs = loadPrefs();
-  if (prefs?.memberId) {
-    sel.value = prefs.memberId;
-    const opt = sel.options[sel.selectedIndex];
-    if (opt) await loadRegnskab(opt.dataset.navn || prefs.navn || '');
-  }
-}
-
-async function loadRegnskab(memberNavn) {
-  if (!memberNavn) {
-    document.getElementById('rsk-summary').innerHTML = '';
-    document.getElementById('rsk-list').innerHTML = '';
-    return;
-  }
-  document.getElementById('rsk-summary').innerHTML = '<p style="padding:8px;color:var(--text-muted,#6b7280)">Henter...</p>';
-  document.getElementById('rsk-list').innerHTML = '';
-
-  const { data: bookings } = await db.from('bookings').select('*, cars(name)').eq('user_name', memberNavn).order('start_time', { ascending: false });
-  const { data: deliveries } = await db.from('deliveries').select('booking_id');
-  const deliveredIds = new Set((deliveries || []).map(d => d.booking_id));
-
-  if (!bookings || bookings.length === 0) {
-    document.getElementById('rsk-summary').innerHTML = '';
-    document.getElementById('rsk-list').innerHTML = `<p style="padding:16px;color:var(--text-muted,#6b7280)">Ingen bookinger fundet for ${memberNavn}.</p>`;
-    return;
-  }
-
-  let totalMins = 0;
-  bookings.forEach(b => { totalMins += (new Date(b.end_time) - new Date(b.start_time)) / 60000; });
-  const fmtMins = m => { const h = Math.floor(m / 60); const min = Math.round(m % 60); return h + ' t' + (min ? ' ' + min + ' min' : ''); };
-
-  document.getElementById('rsk-summary').innerHTML = `
-    <div class="rsk-summary-box">
-      <div class="rsk-stat"><span class="rsk-stat-val">${bookings.length}</span><span class="rsk-stat-lbl">bookinger</span></div>
-      <div class="rsk-stat"><span class="rsk-stat-val">${fmtMins(totalMins)}</span><span class="rsk-stat-lbl">total tid</span></div>
-    </div>`;
-
-  let html = '<table class="admin-table" style="margin-top:12px"><thead><tr><th>Dato</th><th>Bil</th><th>Tid</th><th>Varighed</th><th>Status</th></tr></thead><tbody>';
-  bookings.forEach(b => {
-    const start = new Date(b.start_time), end = new Date(b.end_time);
-    const dur = Math.round((end - start) / 60000);
-    const dateStr = start.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
-    const timeStr = start.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) + '–' + end.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
-    const carName = b.cars ? b.cars.name : '–';
-    const status = deliveredIds.has(b.id) ? '<span style="color:#16a34a">Afleveret</span>' : '<span style="color:var(--text-muted,#6b7280)">Aktiv</span>';
-    html += `<tr><td>${dateStr}</td><td>${carName}</td><td>${timeStr}</td><td>${fmtMins(dur)}</td><td>${status}</td></tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('rsk-list').innerHTML = html;
-}
-
-// =============================================
-// MEMBERS (Brugere tab)
-// =============================================
-function renderMembers() {
-  const wrap = document.getElementById('mbr-table-wrap');
-  if (!wrap) return;
-  const members = window.membersCache;
-  if (!members.length) {
-    wrap.innerHTML = '<p style="padding:16px;color:var(--text-muted,#6b7280)">Ingen brugere fundet. Kør SQL-migrationen i Supabase Dashboard.</p>';
-    return;
-  }
-  const editMode = state.editMode && state.editMode['brugere'];
-  let html = '<table class="admin-table"><thead><tr>';
-  if (editMode) html += '<th style="width:32px"><input type="checkbox" id="mbr-check-all"></th>';
-  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th></tr></thead><tbody>';
-  members.forEach(m => {
-    html += `<tr data-id="${m.id}">`;
-    if (editMode) html += `<td><input type="checkbox" class="mbr-check" data-id="${m.id}"></td>`;
-    html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td>${m.active ? '✓' : '–'}</td></tr>`;
-  });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
-  if (editMode) {
-    document.getElementById('mbr-check-all')?.addEventListener('change', e => {
-      document.querySelectorAll('.mbr-check').forEach(cb => cb.checked = e.target.checked);
-    });
-  }
-}
-
-function initMembersTab() {
-  if (!state.editMode) state.editMode = {};
-
-  document.getElementById('mbr-edit-btn')?.addEventListener('click', function() {
-    state.editMode['brugere'] = !state.editMode['brugere'];
-    this.textContent = state.editMode['brugere'] ? 'Færdig' : 'Rediger';
-    document.getElementById('mbr-new-btn').style.display = state.editMode['brugere'] ? '' : 'none';
-    document.getElementById('mbr-delete-btn').style.display = state.editMode['brugere'] ? '' : 'none';
-    document.getElementById('mbr-import-btn').style.display = state.editMode['brugere'] ? '' : 'none';
-    renderMembers();
-  });
-
-  document.getElementById('mbr-new-btn')?.addEventListener('click', async () => {
-    const navn = prompt('Navn:');
-    if (!navn) return;
-    const adresse = prompt('Adresse:') || '';
-    const bogruppe = prompt('Bogruppe:') || '';
-    const telefon = prompt('Telefon:') || '';
-    const { error } = await db.from('members').insert({ navn, adresse, bogruppe, telefon, active: true });
-    if (error) { toast('Fejl: ' + error.message, 'error'); return; }
-    await loadMembers();
-    renderMembers();
-    toast('Bruger oprettet', 'success');
-  });
-
-  document.getElementById('mbr-delete-btn')?.addEventListener('click', async () => {
-    const checked = [...document.querySelectorAll('.mbr-check:checked')].map(cb => cb.dataset.id);
-    if (!checked.length) { toast('Vælg mindst én bruger', 'info'); return; }
-    if (!confirm(`Slet ${checked.length} bruger(e)? De flyttes til Skraldespand.`)) return;
-    const toDelete = window.membersCache.filter(m => checked.includes(m.id));
-    toDelete.forEach(m => addToTrash('member', m, m.navn));
-    const { error } = await db.from('members').delete().in('id', checked);
-    if (error) { toast('Fejl: ' + error.message, 'error'); return; }
-    await loadMembers();
-    renderMembers();
-    toast(`${checked.length} bruger(e) slettet`, 'info');
-  });
-
-  document.getElementById('mbr-import-btn')?.addEventListener('click', () => {
-    document.getElementById('mbr-csv-input')?.click();
-  });
-
-  document.getElementById('mbr-csv-input')?.addEventListener('change', async function() {
-    const file = this.files[0];
-    if (!file) return;
-    const text = await file.text();
-    const rows = text.trim().split('\n').map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-    if (!rows.length) return;
-    if (!confirm(`Importér ${rows.length} brugere? Dette sletter alle eksisterende brugere (de flyttes til Skraldespand).`)) return;
-    // Move all to trash first
-    window.membersCache.forEach(m => addToTrash('member', m, m.navn));
-    await db.from('members').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    // Insert new members
-    const newMembers = rows.map(r => ({ navn: r[0] || '', adresse: r[1] || '', bogruppe: r[2] || '', telefon: r[3] || '', active: true })).filter(m => m.navn);
-    const { error } = await db.from('members').insert(newMembers);
-    if (error) { toast('Fejl ved import: ' + error.message, 'error'); return; }
-    await loadMembers();
-    renderMembers();
-    toast(`${newMembers.length} brugere importeret`, 'success');
-    this.value = '';
-  });
 }
 
 function initAdminFilters() {
@@ -1667,7 +1474,6 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     if (tab.dataset.tab === 'bookings')    loadAllBookingsAdmin();
     if (tab.dataset.tab === 'deliveries')  loadAllDeliveriesAdmin();
     if (tab.dataset.tab === 'trash')       renderTrash();
-    if (tab.dataset.tab === 'brugere')     renderMembers();
   });
 });
 
@@ -1770,7 +1576,7 @@ document.getElementById('admin-pw-btn').addEventListener('click', () => {
     document.getElementById('admin-panel').classList.remove('hidden');
     state.adminUnlocked = true;
     renderAdminCars(); loadAdminBookings(); initAdminFilters(); initLogFilters();
-    initEditBars(); initExportDropdowns(); initMembersTab(); loadMembers();
+    initEditBars(); initExportDropdowns();
   } else {
     document.getElementById('admin-pw-error').classList.remove('hidden');
   }
@@ -1901,16 +1707,6 @@ function setView(view) {
   const helpBtn = document.querySelector('.nav-btn[data-view="help"]');
   if (helpBtn) helpBtn.textContent = (view === 'help') ? 'Kalender' : 'Vejledning';
 }
-// Help sub-tab switching
-document.addEventListener('click', e => {
-  const btn = e.target.closest('.help-tab-btn');
-  if (!btn) return;
-  document.querySelectorAll('.help-tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.help-tab-content').forEach(c => c.classList.add('hidden'));
-  btn.classList.add('active');
-  document.getElementById('htab-' + btn.dataset.htab)?.classList.remove('hidden');
-});
-
 document.querySelectorAll('.nav-btn').forEach(btn =>
   btn.addEventListener('click', () => {
     // Help-knappen fungerer som toggle: åbner vejledning eller vender tilbage til kalender
@@ -1920,16 +1716,6 @@ document.querySelectorAll('.nav-btn').forEach(btn =>
       setView(btn.dataset.view);
     }
   }));
-
-// Regnskab nav button
-document.getElementById('nav-regnskab')?.addEventListener('click', openRegnskab);
-document.getElementById('regnskab-close')?.addEventListener('click', () => {
-  document.getElementById('regnskab-overlay').classList.add('hidden');
-});
-document.getElementById('rsk-member')?.addEventListener('change', function() {
-  const opt = this.options[this.selectedIndex];
-  loadRegnskab(opt ? (opt.dataset.navn || '') : '');
-});
 
 // Logo: enkelt klik → kalender; 5 hurtige klik → admin
 (function () {
@@ -2024,7 +1810,7 @@ function initPullToRefresh(scrollEl, onRefresh) {
 async function init() {
   try {
     await loadCars();
-    await Promise.all([loadBookingsForCurrentView(), loadMembers()]);
+    await loadBookingsForCurrentView();
     renderCalendar();
 
     initPullToRefresh(document.querySelector('.cal-scroll'), async () => {
