@@ -129,7 +129,7 @@ function calcTimeCost(durationMins) {
 function fmtKr(amount) {
   return amount.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr.';
 }
-function lightenHex(hex, whiteMix = 0.62) {
+function lightenHex(hex, whiteMix = 0.82) {
   const r = parseInt(hex.slice(1,3), 16);
   const g = parseInt(hex.slice(3,5), 16);
   const b = parseInt(hex.slice(5,7), 16);
