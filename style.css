@@ -19,6 +19,33 @@
   --shadow-lg:0 12px 28px rgba(0,0,0,.14);
 }
 
+body.dark {
+  --bg:         #1E293B;
+  --surface:    #0F172A;
+  --border:     #334155;
+  --border2:    #475569;
+  --text:       #F1F5F9;
+  --muted:      #94A3B8;
+  --warning-bg: #422006;
+  --warning-br: #92400E;
+  --shadow:     0 1px 3px rgba(0,0,0,.3);
+  --shadow-lg:  0 12px 28px rgba(0,0,0,.5);
+}
+body.dark .callout.tip    { background: #172554; border-color: #3B82F6; }
+body.dark .callout.tip .callout-body p { color: #CBD5E1; }
+body.dark .callout.warn   { background: #422006; border-color: #D97706; }
+body.dark .callout.warn .callout-body p { color: #FDE68A; }
+body.dark .callout.danger { background: #450A0A; border-color: #DC2626; }
+body.dark .callout.danger .callout-body p { color: #FECACA; }
+body.dark .callout.secret { background: #2E1065; border-color: #7C3AED; }
+body.dark .callout.secret .callout-body p { color: #DDD6FE; }
+body.dark .help-tip { background: #1E293B; border: 1px solid var(--border); }
+body.dark .warning-box { background: #422006; border-color: #92400E; color: #FDE68A; }
+body.dark .rsk-summary-box { background: #1E293B; border-color: var(--border); }
+body.dark .admin-table tr:nth-child(even) td { background: #172032; }
+body.dark .admin-table thead th { background: #172032; }
+body.dark .field input[readonly] { background: var(--bg); }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg);

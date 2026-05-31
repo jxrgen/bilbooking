@@ -141,6 +141,21 @@ function lightenHex(hex, whiteMix = 0.82) {
 // =============================================
 const PREFS_KEY      = 'bilbooking_prefs';
 const CAR_FILTER_KEY = 'bilbooking_car_filter';
+const DARK_KEY       = 'bilbooking_dark';
+
+(function () {
+  const btn = document.getElementById('dark-mode-btn');
+  function applyDark(on) {
+    document.body.classList.toggle('dark', on);
+    btn.textContent = on ? '☀️' : '🌙';
+  }
+  applyDark(localStorage.getItem(DARK_KEY) === '1');
+  btn.addEventListener('click', () => {
+    const on = !document.body.classList.contains('dark');
+    applyDark(on);
+    localStorage.setItem(DARK_KEY, on ? '1' : '0');
+  });
+})();
 
 function loadPrefs() { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null'); }
 function savePrefs(memberId, navn, telefon) { localStorage.setItem(PREFS_KEY, JSON.stringify({ memberId, navn, telefon })); }
