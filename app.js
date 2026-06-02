@@ -3,7 +3,6 @@
 // =============================================
 const SUPABASE_URL = 'https://fdwiooogkophykysbbrh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4';
-const ADMIN_PASSWORD = 'bilklub2024';
 const DAY_START_H  = 0;
 const DAY_END_H    = 24;
 const DAY_MINUTES  = (DAY_END_H - DAY_START_H) * 60; // 1440
@@ -2052,19 +2051,35 @@ function initLogFilters() {
 // =============================================
 // ADMIN VIEW
 // =============================================
-document.getElementById('admin-pw-btn').addEventListener('click', () => {
-  if (document.getElementById('admin-pw').value === ADMIN_PASSWORD) {
-    document.getElementById('admin-gate').classList.add('hidden');
-    document.getElementById('admin-panel').classList.remove('hidden');
-    state.adminUnlocked = true;
-    renderAdminCars(); loadAdminBookings(); initAdminFilters(); initLogFilters();
-    initEditBars(); initExportDropdowns(); initMembersTab(); loadMembers();
+function unlockAdminPanel() {
+  document.getElementById('admin-gate').classList.add('hidden');
+  document.getElementById('admin-panel').classList.remove('hidden');
+  state.adminUnlocked = true;
+  renderAdminCars(); loadAdminBookings(); initAdminFilters(); initLogFilters();
+  initEditBars(); initExportDropdowns(); initMembersTab(); loadMembers();
+}
+
+document.getElementById('admin-pw-btn').addEventListener('click', async () => {
+  const input = document.getElementById('admin-pw').value;
+  const errorEl = document.getElementById('admin-pw-error');
+  errorEl.classList.add('hidden');
+  const { data } = await db.from('settings').select('value').eq('key', 'admin_password').single();
+  if (data && input === data.value) {
+    unlockAdminPanel();
   } else {
-    document.getElementById('admin-pw-error').classList.remove('hidden');
+    errorEl.classList.remove('hidden');
   }
 });
+
 document.getElementById('admin-pw').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('admin-pw-btn').click();
+});
+
+document.getElementById('admin-logout-btn').addEventListener('click', () => {
+  state.adminUnlocked = false;
+  document.getElementById('admin-panel').classList.add('hidden');
+  document.getElementById('admin-gate').classList.remove('hidden');
+  document.getElementById('admin-pw').value = '';
 });
 
 function renderAdminCars() {
