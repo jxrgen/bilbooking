@@ -1672,6 +1672,7 @@ async function loadRegnskab(memberNavn) {
 
   const deliveredCount = delivered.length;
   document.getElementById('rsk-summary').innerHTML = `
+    <p style="font-size:15px;font-weight:600;margin-bottom:10px">${memberNavn}</p>
     <div class="rsk-summary-box">
       <div class="rsk-stat"><span class="rsk-stat-val">${bookings.length}</span><span class="rsk-stat-lbl">bookinger</span></div>
       <div class="rsk-stat"><span class="rsk-stat-val">${deliveredCount}</span><span class="rsk-stat-lbl">afleveret</span></div>
