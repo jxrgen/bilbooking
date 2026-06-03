@@ -988,21 +988,36 @@ document.getElementById('dm-edit-btn').addEventListener('click', async function 
     : 'Vil du ændre bookingen?';
   if (!confirm(msg)) return;
 
-  document.getElementById('detail-modal').classList.add('hidden');
-  openBookingModal(b.car_id, new Date(b.start_time), b);
+  const owner = findMemberByName(b.user_name);
+  requirePin(owner?.id, () => {
+    document.getElementById('detail-modal').classList.add('hidden');
+    openBookingModal(b.car_id, new Date(b.start_time), b);
+  });
 });
 
 document.getElementById('dm-cancel-booking').addEventListener('click', async function () {
-  if (!confirm('Er du sikker på, at du vil annullere denne booking?')) return;
-  try {
-    await cancelBooking(this.dataset.bookingId);
-    document.getElementById('detail-modal').classList.add('hidden');
-    toast('Booking annulleret', 'info');
-    await loadBookingsForCurrentView();
-    renderCalendarGrid();
-  } catch (err) {
-    toast('Fejl: ' + err.message, 'error');
+  const bookingId = this.dataset.bookingId;
+  let b = state.bookings.find(x => x.id === bookingId);
+  if (!b) {
+    const res = await db.from('bookings').select('*').eq('id', bookingId).single();
+    b = res.data;
   }
+  if (!b) return;
+
+  if (!confirm('Er du sikker på, at du vil annullere denne booking?')) return;
+
+  const owner = findMemberByName(b.user_name);
+  requirePin(owner?.id, async () => {
+    try {
+      await cancelBooking(bookingId);
+      document.getElementById('detail-modal').classList.add('hidden');
+      toast('Booking annulleret', 'info');
+      await loadBookingsForCurrentView();
+      renderCalendarGrid();
+    } catch (err) {
+      toast('Fejl: ' + err.message, 'error');
+    }
+  });
 });
 
 document.getElementById('dm-deliver-btn').addEventListener('click', function () {
@@ -2234,8 +2249,12 @@ function clearPinContainer(containerId) {
   document.querySelectorAll(`#${containerId} .pin-digit`).forEach(i => { i.value = ''; });
 }
 
+function findMemberByName(navn) {
+  return (window.membersCache || []).find(m => m.navn === navn);
+}
+
 function requirePin(memberId, onSuccess) {
-  if (!memberId) { onSuccess(); return; }
+  if (!memberId || state.adminUnlocked) { onSuccess(); return; }
   const member = (window.membersCache || []).find(m => m.id === memberId);
   if (!member?.pin_code) { onSuccess(); return; }
   if (sessionStorage.getItem('pin_verified_' + memberId) === '1') { onSuccess(); return; }
@@ -2479,6 +2498,7 @@ function showError(id, msg) {
 // NAVIGATION
 // =============================================
 function setView(view) {
+  if (!view) return;
   state.currentView = view;
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   document.getElementById(`view-${view}`)?.classList.remove('hidden');
@@ -2514,6 +2534,7 @@ document.querySelectorAll('.nav-btn').forEach(btn =>
 document.getElementById('nav-regnskab')?.addEventListener('click', openRegnskab);
 document.getElementById('regnskab-close')?.addEventListener('click', () => {
   document.getElementById('regnskab-overlay').classList.add('hidden');
+  if (!['calendar', 'help', 'admin'].includes(state.currentView)) setView('calendar');
 });
 function rskCurrentNavn() {
   const sel = document.getElementById('rsk-member');
