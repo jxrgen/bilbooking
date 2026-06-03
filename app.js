@@ -1581,6 +1581,7 @@ async function restoreFromTrash(trashId) {
 // MIT REGNSKAB
 // =============================================
 async function openRegnskab() {
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   document.getElementById('regnskab-overlay').classList.remove('hidden');
 
   // Populate member dropdown
