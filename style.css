@@ -850,3 +850,69 @@ th.act-col,  td.act-col  { width: 50px; padding: 6px 4px !important; }
   #week-label  { min-width: 100px; font-size: 11px; }
 
 }
+
+/* ===================== PIN ===================== */
+.pin-lock-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.92);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.pin-lock-overlay.hidden { display: none; }
+
+.pin-lock-card {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 36px 28px 28px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,.45);
+}
+
+.pin-lock-welcome {
+  font-size: 17px;
+  margin-bottom: 4px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.pin-inputs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 18px 0;
+}
+
+.pin-digit {
+  width: 54px;
+  height: 64px;
+  font-size: 28px;
+  text-align: center;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -moz-appearance: textfield;
+}
+.pin-digit::-webkit-outer-spin-button,
+.pin-digit::-webkit-inner-spin-button { -webkit-appearance: none; }
+.pin-digit:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+  background: var(--surface);
+}
+
+.pin-lock-other-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 6px;
+  padding: 4px 8px;
+}

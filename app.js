@@ -1727,10 +1727,13 @@ function renderMembers() {
   const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   let html = '<table class="admin-table"><thead><tr>';
   if (editMode) html += '<th style="width:32px"><input type="checkbox" id="mbr-check-all"></th>';
-  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th>';
+  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th><th>PIN</th>';
   if (editMode) html += '<th style="width:60px"></th>';
   html += '</tr></thead><tbody>';
   members.forEach(m => {
+    const pinCell = m.pin_code
+      ? `<span style="color:var(--success);font-size:12px">✓ Sat</span> <button class="btn-sm btn-danger mbr-pin-del-btn" data-id="${m.id}" data-navn="${esc(m.navn)}" style="font-size:10px;padding:1px 5px;margin-left:4px">Slet</button>`
+      : '<span style="color:var(--muted)">–</span>';
     html += `<tr data-id="${m.id}">`;
     if (editMode) {
       html += `<td><input type="checkbox" class="mbr-check" data-id="${m.id}"></td>`;
@@ -1739,9 +1742,10 @@ function renderMembers() {
       html += `<td><input class="mbr-inp" data-field="bogruppe" value="${esc(m.bogruppe || '')}" style="width:60px"></td>`;
       html += `<td><input class="mbr-inp" data-field="telefon"  value="${esc(m.telefon || '')}"  style="width:100%"></td>`;
       html += `<td style="text-align:center"><input type="checkbox" class="mbr-inp-active" ${m.active ? 'checked' : ''}></td>`;
+      html += `<td>${pinCell}</td>`;
       html += `<td><button class="btn-sm mbr-save-btn" data-id="${m.id}">Gem</button></td>`;
     } else {
-      html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td style="text-align:center">${m.active ? '✓' : '–'}</td>`;
+      html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td style="text-align:center">${m.active ? '✓' : '–'}</td><td>${pinCell}</td>`;
     }
     html += '</tr>';
   });
@@ -1769,6 +1773,19 @@ function renderMembers() {
       });
     });
   }
+
+  // PIN delete buttons — visible in both normal and edit mode
+  wrap.querySelectorAll('.mbr-pin-del-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const navn = this.dataset.navn || 'brugeren';
+      if (!confirm(`Slet PIN-kode for ${navn}?`)) return;
+      const { error } = await db.from('members').update({ pin_code: null }).eq('id', this.dataset.id);
+      if (error) { toast('Fejl: ' + error.message, 'error'); return; }
+      await loadMembers();
+      renderMembers();
+      toast(`PIN-kode for ${navn} slettet`, 'info');
+    });
+  });
 }
 
 function initMembersTab() {
@@ -2180,6 +2197,189 @@ async function deleteCarPrompt(carId) {
 }
 
 // =============================================
+// PIN — HELPERS & LOCK OVERLAY
+// =============================================
+function setupPinDigitInputs(inputs) {
+  inputs.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(-1);
+      if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+    });
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+      text.split('').slice(0, 4 - i).forEach((digit, j) => {
+        if (inputs[i + j]) inputs[i + j].value = digit;
+      });
+      const nextEmpty = [...inputs].findIndex(inp => !inp.value);
+      (nextEmpty >= 0 ? inputs[nextEmpty] : inputs[inputs.length - 1]).focus();
+    });
+  });
+}
+
+function getPinFromContainer(containerId) {
+  return [...document.querySelectorAll(`#${containerId} .pin-digit`)].map(i => i.value).join('');
+}
+
+function clearPinContainer(containerId) {
+  document.querySelectorAll(`#${containerId} .pin-digit`).forEach(i => { i.value = ''; });
+}
+
+async function checkPinOnLoad() {
+  const prefs = loadPrefs();
+  if (!prefs?.memberId) return;
+  if (sessionStorage.getItem('pin_verified') === '1') return;
+
+  const { data } = await db.from('members').select('pin_code, navn').eq('id', prefs.memberId).maybeSingle();
+  if (!data?.pin_code) return;
+
+  document.getElementById('pin-lock-name').textContent = data.navn || prefs.navn || '';
+  document.getElementById('pin-lock-overlay').classList.remove('hidden');
+  window._pinLockCode = data.pin_code;
+  document.querySelector('#pin-lock-inputs .pin-digit')?.focus();
+}
+
+function verifyPinLock() {
+  const pin = getPinFromContainer('pin-lock-inputs');
+  if (pin.length < 4) return;
+  if (pin === window._pinLockCode) {
+    sessionStorage.setItem('pin_verified', '1');
+    document.getElementById('pin-lock-overlay').classList.add('hidden');
+    document.getElementById('pin-lock-error').classList.add('hidden');
+    window._pinLockCode = null;
+  } else {
+    document.getElementById('pin-lock-error').classList.remove('hidden');
+    clearPinContainer('pin-lock-inputs');
+    document.querySelector('#pin-lock-inputs .pin-digit')?.focus();
+  }
+}
+
+function initPinLock() {
+  setupPinDigitInputs(document.querySelectorAll('#pin-lock-inputs .pin-digit'));
+
+  document.getElementById('pin-lock-submit').addEventListener('click', verifyPinLock);
+
+  document.getElementById('pin-lock-inputs').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyPinLock();
+  });
+
+  // Auto-submit when last digit filled
+  const lockDigits = document.querySelectorAll('#pin-lock-inputs .pin-digit');
+  lockDigits[3].addEventListener('input', () => {
+    if (lockDigits[3].value) setTimeout(verifyPinLock, 80);
+  });
+
+  document.getElementById('pin-lock-other').addEventListener('click', () => {
+    clearPrefs();
+    sessionStorage.removeItem('pin_verified');
+    window._pinLockCode = null;
+    document.getElementById('pin-lock-overlay').classList.add('hidden');
+  });
+}
+
+// =============================================
+// PIN — WIZARD
+// =============================================
+let _pinWizardMemberId = null;
+let _pinWizardHasPin   = false;
+
+function openPinWizard() {
+  const prefs = loadPrefs();
+  if (!prefs?.memberId) {
+    toast('Aktivér "Husk mig" ved en booking for at oprette en PIN-kode', 'info', 4000);
+    return;
+  }
+  _pinWizardMemberId = prefs.memberId;
+
+  const member = (window.membersCache || []).find(m => m.id === prefs.memberId);
+  _pinWizardHasPin = !!(member?.pin_code);
+
+  document.getElementById('pin-confirm-text').textContent = _pinWizardHasPin
+    ? 'Vil du ændre din PIN-kode?'
+    : 'Vil du oprette en PIN-kode?';
+  document.getElementById('pin-delete-section').classList.toggle('hidden', !_pinWizardHasPin);
+
+  document.getElementById('pin-step-confirm').classList.remove('hidden');
+  document.getElementById('pin-step-create').classList.add('hidden');
+  document.getElementById('pin-step-cancelled').classList.add('hidden');
+  clearPinContainer('pin-create-inputs');
+  clearPinContainer('pin-confirm-inputs');
+  showError('pin-create-error', '');
+
+  document.getElementById('pin-wizard-modal').classList.remove('hidden');
+}
+
+function initPinWizard() {
+  setupPinDigitInputs(document.querySelectorAll('#pin-create-inputs .pin-digit'));
+  setupPinDigitInputs(document.querySelectorAll('#pin-confirm-inputs .pin-digit'));
+
+  document.getElementById('nav-pin').addEventListener('click', openPinWizard);
+
+  document.getElementById('pin-wizard-close').addEventListener('click', () =>
+    document.getElementById('pin-wizard-modal').classList.add('hidden'));
+
+  document.getElementById('pin-wizard-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+
+  document.getElementById('pin-confirm-yes').addEventListener('click', () => {
+    document.getElementById('pin-step-confirm').classList.add('hidden');
+    document.getElementById('pin-step-create').classList.remove('hidden');
+    document.querySelector('#pin-create-inputs .pin-digit')?.focus();
+  });
+
+  document.getElementById('pin-confirm-no').addEventListener('click', () => {
+    document.getElementById('pin-step-confirm').classList.add('hidden');
+    document.getElementById('pin-step-cancelled').classList.remove('hidden');
+  });
+
+  document.getElementById('pin-cancelled-close').addEventListener('click', () =>
+    document.getElementById('pin-wizard-modal').classList.add('hidden'));
+
+  document.getElementById('pin-create-cancel').addEventListener('click', () =>
+    document.getElementById('pin-wizard-modal').classList.add('hidden'));
+
+  document.getElementById('pin-create-save').addEventListener('click', async () => {
+    const pin1 = getPinFromContainer('pin-create-inputs');
+    const pin2 = getPinFromContainer('pin-confirm-inputs');
+    if (pin1.length < 4) return showError('pin-create-error', 'Udfyld alle 4 cifre i det første felt.');
+    if (pin2.length < 4) return showError('pin-create-error', 'Bekræft PIN-koden i det andet felt.');
+    if (pin1 !== pin2)   return showError('pin-create-error', 'De to PIN-koder er ikke ens — prøv igen.');
+    const btn = document.getElementById('pin-create-save');
+    btn.disabled = true;
+    try {
+      const { error } = await db.from('members').update({ pin_code: pin1 }).eq('id', _pinWizardMemberId);
+      if (error) throw error;
+      await loadMembers();
+      sessionStorage.setItem('pin_verified', '1');
+      document.getElementById('pin-wizard-modal').classList.add('hidden');
+      toast(_pinWizardHasPin ? 'PIN-kode ændret' : 'PIN-kode oprettet', 'success');
+    } catch (err) {
+      showError('pin-create-error', err.message || 'Fejl ved gem');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('pin-delete-btn').addEventListener('click', async () => {
+    if (!confirm('Slet din PIN-kode? Du kan altid oprette en ny.')) return;
+    try {
+      const { error } = await db.from('members').update({ pin_code: null }).eq('id', _pinWizardMemberId);
+      if (error) throw error;
+      await loadMembers();
+      sessionStorage.removeItem('pin_verified');
+      document.getElementById('pin-wizard-modal').classList.add('hidden');
+      toast('PIN-kode slettet', 'info');
+    } catch (err) {
+      toast('Fejl: ' + err.message, 'error');
+    }
+  });
+}
+
+// =============================================
 // HELPERS
 // =============================================
 function showError(id, msg) {
@@ -2331,9 +2531,14 @@ function initPullToRefresh(scrollEl, onRefresh) {
 // =============================================
 async function init() {
   try {
+    initPinLock();
+    initPinWizard();
+
     await loadCars();
     await Promise.all([loadBookingsForCurrentView(), loadMembers()]);
     renderCalendar();
+
+    await checkPinOnLoad();
 
     initPullToRefresh(document.querySelector('.cal-scroll'), async () => {
       await loadBookingsForCurrentView();

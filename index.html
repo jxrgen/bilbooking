@@ -13,9 +13,28 @@
     <div class="logo" id="logo-btn">&#128663; Delebilsklub</div>
     <div class="nav-links">
       <button class="nav-btn" id="nav-regnskab">📊 Mit regnskab</button>
+      <button class="nav-btn" id="nav-pin">🔐 PIN</button>
       <button class="nav-btn" data-view="help">Vejledning</button>
     </div>
   </nav>
+
+  <!-- ===================== PIN LOCK OVERLAY ===================== -->
+  <div id="pin-lock-overlay" class="pin-lock-overlay hidden">
+    <div class="pin-lock-card">
+      <div style="font-size:40px;margin-bottom:12px">🔐</div>
+      <div class="pin-lock-welcome">Velkommen tilbage,<br><strong id="pin-lock-name"></strong></div>
+      <p style="color:var(--muted);font-size:13px;margin:10px 0 4px">Indtast din PIN-kode for at fortsætte</p>
+      <div class="pin-inputs" id="pin-lock-inputs">
+        <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+        <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+        <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+        <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+      </div>
+      <div id="pin-lock-error" class="error-msg hidden" style="text-align:center;margin-bottom:8px">Forkert PIN-kode — prøv igen</div>
+      <button id="pin-lock-submit" class="btn-primary" style="width:100%;margin-bottom:4px">Lås op</button>
+      <button id="pin-lock-other" class="pin-lock-other-btn">Jeg er en anden bruger</button>
+    </div>
+  </div>
 
   <!-- ===================== KALENDER ===================== -->
   <div id="view-calendar" class="view active">
@@ -1057,6 +1076,61 @@
       <div class="modal-actions">
         <button id="ecm-cancel" class="btn-secondary">Annuller</button>
         <button id="ecm-save" class="btn-primary">Gem</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PIN WIZARD MODAL ===================== -->
+  <div id="pin-wizard-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:380px">
+      <button class="modal-close" id="pin-wizard-close">&#10005;</button>
+      <h2>🔐 PIN-kode</h2>
+
+      <!-- Trin 1: Bekræft -->
+      <div id="pin-step-confirm">
+        <p id="pin-confirm-text" style="margin-bottom:10px">Vil du oprette en PIN-kode?</p>
+        <p class="muted" style="margin-bottom:20px">PIN-koden skal indtastes, hver gang du åbner appen, mens din bruger er husket via "Husk mig".</p>
+        <div style="display:flex;gap:8px">
+          <button id="pin-confirm-yes" class="btn-primary" style="flex:1">Ja</button>
+          <button id="pin-confirm-no" class="btn-secondary" style="flex:1">Nej</button>
+        </div>
+      </div>
+
+      <!-- Trin 2: Opret/skift -->
+      <div id="pin-step-create" class="hidden">
+        <div class="field">
+          <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:500">Vælg PIN (4 cifre)</label>
+          <div class="pin-inputs" id="pin-create-inputs">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+          </div>
+        </div>
+        <div class="field" style="margin-top:16px">
+          <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:500">Bekræft PIN</label>
+          <div class="pin-inputs" id="pin-confirm-inputs">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+          </div>
+        </div>
+        <div id="pin-create-error" class="error-msg hidden" style="margin-top:8px"></div>
+        <div class="modal-actions" style="margin-top:16px">
+          <button id="pin-create-cancel" class="btn-secondary">Annullér</button>
+          <button id="pin-create-save" class="btn-primary">Gem PIN</button>
+        </div>
+        <div id="pin-delete-section" class="hidden" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Slet din eksisterende PIN-kode:</p>
+          <button id="pin-delete-btn" class="btn-danger">Slet PIN-kode</button>
+        </div>
+      </div>
+
+      <!-- Trin 3: Annulleret -->
+      <div id="pin-step-cancelled" class="hidden">
+        <p style="color:var(--muted);margin-bottom:16px">PIN-kode ikke oprettet.</p>
+        <button id="pin-cancelled-close" class="btn-secondary">Luk</button>
       </div>
     </div>
   </div>
