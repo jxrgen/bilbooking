@@ -2325,6 +2325,10 @@ function openPinWizard() {
   document.getElementById('pin-step-cancelled').classList.add('hidden');
   clearPinContainer('pin-create-inputs');
   clearPinContainer('pin-confirm-inputs');
+  clearPinContainer('pin-delete-inputs');
+  document.getElementById('pin-delete-verify').classList.add('hidden');
+  document.getElementById('pin-delete-btn').classList.remove('hidden');
+  document.getElementById('pin-delete-error').classList.add('hidden');
   showError('pin-create-error', '');
 
   document.getElementById('pin-wizard-modal').classList.remove('hidden');
@@ -2392,8 +2396,35 @@ function initPinWizard() {
     }
   });
 
-  document.getElementById('pin-delete-btn').addEventListener('click', async () => {
-    if (!confirm('Slet din PIN-kode? Du kan altid oprette en ny.')) return;
+  setupPinDigitInputs(document.querySelectorAll('#pin-delete-inputs .pin-digit'));
+
+  document.getElementById('pin-delete-btn').addEventListener('click', () => {
+    document.getElementById('pin-delete-btn').classList.add('hidden');
+    document.getElementById('pin-delete-verify').classList.remove('hidden');
+    clearPinContainer('pin-delete-inputs');
+    document.getElementById('pin-delete-error').classList.add('hidden');
+    document.querySelector('#pin-delete-inputs .pin-digit')?.focus();
+  });
+
+  document.getElementById('pin-delete-cancel-verify').addEventListener('click', () => {
+    document.getElementById('pin-delete-verify').classList.add('hidden');
+    document.getElementById('pin-delete-btn').classList.remove('hidden');
+    clearPinContainer('pin-delete-inputs');
+    document.getElementById('pin-delete-error').classList.add('hidden');
+  });
+
+  const confirmDeletePin = async () => {
+    const entered = getPinFromContainer('pin-delete-inputs');
+    if (entered.length < 4) return;
+    const member = (window.membersCache || []).find(m => m.id === _pinWizardMemberId);
+    if (entered !== member?.pin_code) {
+      document.getElementById('pin-delete-error').classList.remove('hidden');
+      clearPinContainer('pin-delete-inputs');
+      document.querySelector('#pin-delete-inputs .pin-digit')?.focus();
+      return;
+    }
+    const btn = document.getElementById('pin-delete-confirm');
+    btn.disabled = true;
     try {
       const { error } = await db.from('members').update({ pin_code: null }).eq('id', _pinWizardMemberId);
       if (error) throw error;
@@ -2403,7 +2434,17 @@ function initPinWizard() {
       toast('PIN-kode slettet', 'info');
     } catch (err) {
       toast('Fejl: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
     }
+  };
+
+  document.getElementById('pin-delete-confirm').addEventListener('click', confirmDeletePin);
+
+  // Auto-submit på 4. ciffer
+  const delDigits = document.querySelectorAll('#pin-delete-inputs .pin-digit');
+  delDigits[3].addEventListener('input', () => {
+    if (delDigits[3].value) setTimeout(confirmDeletePin, 80);
   });
 }
 

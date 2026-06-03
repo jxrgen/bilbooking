@@ -1129,6 +1129,20 @@
         <div id="pin-delete-section" class="hidden" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
           <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Slet din eksisterende PIN-kode:</p>
           <button id="pin-delete-btn" class="btn-danger">Slet PIN-kode</button>
+          <div id="pin-delete-verify" class="hidden" style="margin-top:12px">
+            <p style="font-size:13px;margin-bottom:8px">Indtast din nuværende PIN for at bekræfte:</p>
+            <div class="pin-inputs" id="pin-delete-inputs">
+              <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+              <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+              <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+              <input type="tel" class="pin-digit" inputmode="numeric" maxlength="1" pattern="[0-9]">
+            </div>
+            <div id="pin-delete-error" class="error-msg hidden" style="margin-bottom:8px">Forkert PIN-kode</div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button id="pin-delete-confirm" class="btn-danger" style="flex:1">Bekræft sletning</button>
+              <button id="pin-delete-cancel-verify" class="btn-secondary" style="flex:1">Annullér</button>
+            </div>
+          </div>
         </div>
       </div>
 
