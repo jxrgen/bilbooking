@@ -838,69 +838,71 @@ document.getElementById('bm-close').addEventListener('click', closeBookingModal)
 document.getElementById('bm-cancel').addEventListener('click', closeBookingModal);
 
 document.getElementById('bm-submit').addEventListener('click', async () => {
-  const carId    = document.getElementById('bm-car-id').value;
   const memberId = document.getElementById('bm-member')?.value;
   const member   = (window.membersCache || []).find(m => m.id === memberId);
-  const name     = member?.navn  || '';
-  const phone    = member?.telefon || '';
-  const expKm    = parseInt(document.getElementById('bm-exp-km').value, 10);
-  const startKm  = parseInt(document.getElementById('bm-start-km').value, 10);
-  const notes        = document.getElementById('bm-notes').value.trim();
-  const personalNote = document.getElementById('bm-personal-note').value.trim();
-
   if (!member) return showError('bm-error', 'Vælg dit navn på listen.');
-  if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
 
-  const startTime = getDT('bm-start-date', 'bm-start-time');
-  const endTime   = getDT('bm-end-date', 'bm-end-time');
-  if (!startTime || !endTime) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
+  requirePin(memberId, async () => {
+    const carId        = document.getElementById('bm-car-id').value;
+    const name         = member.navn  || '';
+    const phone        = member.telefon || '';
+    const expKm        = parseInt(document.getElementById('bm-exp-km').value, 10);
+    const startKm      = parseInt(document.getElementById('bm-start-km').value, 10);
+    const notes        = document.getElementById('bm-notes').value.trim();
+    const personalNote = document.getElementById('bm-personal-note').value.trim();
 
-  if (endTime <= startTime) return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
+    if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
 
-  const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
-  if (conflict) {
-    const { first, nextFree } = conflict;
-    const el = document.getElementById('bm-error');
-    el.innerHTML =
-      `Bilen er optaget <strong>${fmtDateTime(first.start_time)} – ${fmtTime(first.end_time)}</strong>` +
-      ` (booket af ${first.user_name}).<br>` +
-      `<strong>Ledig fra: ${fmtDateTime(nextFree)}</strong>`;
-    el.classList.remove('hidden');
-    return;
-  }
+    const startTime = getDT('bm-start-date', 'bm-start-time');
+    const endTime   = getDT('bm-end-date', 'bm-end-time');
+    if (!startTime || !endTime) return showError('bm-error', 'Vælg start- og sluttidspunkt.');
+    if (endTime <= startTime)   return showError('bm-error', 'Sluttidspunkt skal være efter starttidspunkt.');
 
-  const btn = document.getElementById('bm-submit');
-  btn.disabled = true;
-
-  try {
-    const bookingData = {
-      car_id: carId, user_name: name, phone,
-      expected_km: expKm, start_km: startKm,
-      start_time: startTime.toISOString(), end_time: endTime.toISOString(), notes,
-      personal_note: personalNote || null,
-    };
-
-    if (state.editingBookingId) {
-      await updateBooking(state.editingBookingId, bookingData);
-      toast('Booking opdateret', 'success');
-    } else {
-      const created = await createBooking(bookingData);
-      toast(`Booking oprettet for ${state.cars.find(c=>c.id===carId)?.name}`, 'success');
+    const conflict = findConflictInfo(carId, startTime.toISOString(), endTime.toISOString(), state.editingBookingId);
+    if (conflict) {
+      const { first, nextFree } = conflict;
+      const el = document.getElementById('bm-error');
+      el.innerHTML =
+        `Bilen er optaget <strong>${fmtDateTime(first.start_time)} – ${fmtTime(first.end_time)}</strong>` +
+        ` (booket af ${first.user_name}).<br>` +
+        `<strong>Ledig fra: ${fmtDateTime(nextFree)}</strong>`;
+      el.classList.remove('hidden');
+      return;
     }
 
-    if (document.getElementById('bm-remember').checked && member) savePrefs(member.id, member.navn, member.telefon);
-    else clearPrefs();
+    const btn = document.getElementById('bm-submit');
+    btn.disabled = true;
 
-    closeBookingModal();
-    await loadBookingsForCurrentView();
-    renderCalendarGrid();
-    if (state.adminUnlocked) loadAllBookingsAdmin();
-  } catch (err) {
-    showError('bm-error', err.message || 'Fejl — prøv igen.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = state.editingBookingId ? 'Gem ændringer' : 'Book bil';
-  }
+    try {
+      const bookingData = {
+        car_id: carId, user_name: name, phone,
+        expected_km: expKm, start_km: startKm,
+        start_time: startTime.toISOString(), end_time: endTime.toISOString(), notes,
+        personal_note: personalNote || null,
+      };
+
+      if (state.editingBookingId) {
+        await updateBooking(state.editingBookingId, bookingData);
+        toast('Booking opdateret', 'success');
+      } else {
+        await createBooking(bookingData);
+        toast(`Booking oprettet for ${state.cars.find(c=>c.id===carId)?.name}`, 'success');
+      }
+
+      if (document.getElementById('bm-remember').checked && member) savePrefs(member.id, member.navn, member.telefon);
+      else clearPrefs();
+
+      closeBookingModal();
+      await loadBookingsForCurrentView();
+      renderCalendarGrid();
+      if (state.adminUnlocked) loadAllBookingsAdmin();
+    } catch (err) {
+      showError('bm-error', err.message || 'Fejl — prøv igen.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = state.editingBookingId ? 'Gem ændringer' : 'Book bil';
+    }
+  });
 });
 
 // =============================================
@@ -1594,7 +1596,10 @@ async function openRegnskab() {
   if (prefs?.memberId) {
     sel.value = prefs.memberId;
     const opt = sel.options[sel.selectedIndex];
-    if (opt) await loadRegnskab(opt.dataset.navn || prefs.navn || '');
+    if (opt) {
+      const navn = opt.dataset.navn || prefs.navn || '';
+      requirePin(prefs.memberId, () => loadRegnskab(navn));
+    }
   }
 }
 
@@ -1782,6 +1787,7 @@ function renderMembers() {
       const { error } = await db.from('members').update({ pin_code: null }).eq('id', this.dataset.id);
       if (error) { toast('Fejl: ' + error.message, 'error'); return; }
       await loadMembers();
+      sessionStorage.removeItem('pin_verified_' + this.dataset.id);
       renderMembers();
       toast(`PIN-kode for ${navn} slettet`, 'info');
     });
@@ -2228,28 +2234,40 @@ function clearPinContainer(containerId) {
   document.querySelectorAll(`#${containerId} .pin-digit`).forEach(i => { i.value = ''; });
 }
 
-async function checkPinOnLoad() {
+function requirePin(memberId, onSuccess) {
+  if (!memberId) { onSuccess(); return; }
+  const member = (window.membersCache || []).find(m => m.id === memberId);
+  if (!member?.pin_code) { onSuccess(); return; }
+  if (sessionStorage.getItem('pin_verified_' + memberId) === '1') { onSuccess(); return; }
+
+  document.getElementById('pin-lock-name').textContent = member.navn;
+  clearPinContainer('pin-lock-inputs');
+  document.getElementById('pin-lock-error').classList.add('hidden');
+  window._pinLockCode     = member.pin_code;
+  window._pinLockMemberId = memberId;
+  window._pinLockCallback = onSuccess;
+  document.getElementById('pin-lock-overlay').classList.remove('hidden');
+  document.querySelector('#pin-lock-inputs .pin-digit')?.focus();
+}
+
+function checkPinOnLoad() {
   const prefs = loadPrefs();
   if (!prefs?.memberId) return;
-  if (sessionStorage.getItem('pin_verified') === '1') return;
-
-  const { data } = await db.from('members').select('pin_code, navn').eq('id', prefs.memberId).maybeSingle();
-  if (!data?.pin_code) return;
-
-  document.getElementById('pin-lock-name').textContent = data.navn || prefs.navn || '';
-  document.getElementById('pin-lock-overlay').classList.remove('hidden');
-  window._pinLockCode = data.pin_code;
-  document.querySelector('#pin-lock-inputs .pin-digit')?.focus();
+  requirePin(prefs.memberId, () => {});
 }
 
 function verifyPinLock() {
   const pin = getPinFromContainer('pin-lock-inputs');
   if (pin.length < 4) return;
   if (pin === window._pinLockCode) {
-    sessionStorage.setItem('pin_verified', '1');
+    sessionStorage.setItem('pin_verified_' + window._pinLockMemberId, '1');
     document.getElementById('pin-lock-overlay').classList.add('hidden');
     document.getElementById('pin-lock-error').classList.add('hidden');
     window._pinLockCode = null;
+    const cb = window._pinLockCallback;
+    window._pinLockCallback = null;
+    window._pinLockMemberId = null;
+    if (cb) cb();
   } else {
     document.getElementById('pin-lock-error').classList.remove('hidden');
     clearPinContainer('pin-lock-inputs');
@@ -2266,17 +2284,16 @@ function initPinLock() {
     if (e.key === 'Enter') verifyPinLock();
   });
 
-  // Auto-submit when last digit filled
   const lockDigits = document.querySelectorAll('#pin-lock-inputs .pin-digit');
   lockDigits[3].addEventListener('input', () => {
     if (lockDigits[3].value) setTimeout(verifyPinLock, 80);
   });
 
   document.getElementById('pin-lock-other').addEventListener('click', () => {
-    clearPrefs();
-    sessionStorage.removeItem('pin_verified');
-    window._pinLockCode = null;
     document.getElementById('pin-lock-overlay').classList.add('hidden');
+    window._pinLockCode     = null;
+    window._pinLockCallback = null;
+    window._pinLockMemberId = null;
   });
 }
 
@@ -2386,7 +2403,7 @@ function initPinWizard() {
       const { error } = await db.from('members').update({ pin_code: pin1 }).eq('id', _pinWizardMemberId);
       if (error) throw error;
       await loadMembers();
-      sessionStorage.setItem('pin_verified', '1');
+      sessionStorage.setItem('pin_verified_' + _pinWizardMemberId, '1');
       document.getElementById('pin-wizard-modal').classList.add('hidden');
       toast(_pinWizardHasPin ? 'PIN-kode ændret' : 'PIN-kode oprettet', 'success');
     } catch (err) {
@@ -2429,7 +2446,7 @@ function initPinWizard() {
       const { error } = await db.from('members').update({ pin_code: null }).eq('id', _pinWizardMemberId);
       if (error) throw error;
       await loadMembers();
-      sessionStorage.removeItem('pin_verified');
+      sessionStorage.removeItem('pin_verified_' + _pinWizardMemberId);
       document.getElementById('pin-wizard-modal').classList.add('hidden');
       toast('PIN-kode slettet', 'info');
     } catch (err) {
@@ -2503,7 +2520,12 @@ function rskCurrentNavn() {
   const opt = sel?.options[sel.selectedIndex];
   return opt ? (opt.dataset.navn || '') : '';
 }
-document.getElementById('rsk-member')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
+document.getElementById('rsk-member')?.addEventListener('change', () => {
+  const sel = document.getElementById('rsk-member');
+  const memberId = sel.value;
+  if (!memberId) { loadRegnskab(''); return; }
+  requirePin(memberId, () => loadRegnskab(rskCurrentNavn()));
+});
 document.getElementById('rsk-fra')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
 document.getElementById('rsk-til')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
 document.getElementById('rsk-car')?.addEventListener('change', () => loadRegnskab(rskCurrentNavn()));
