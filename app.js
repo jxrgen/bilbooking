@@ -2286,21 +2286,39 @@ function initPinLock() {
 let _pinWizardMemberId = null;
 let _pinWizardHasPin   = false;
 
-function openPinWizard() {
-  const prefs = loadPrefs();
-  if (!prefs?.memberId) {
-    toast('Aktivér "Husk mig" ved en booking for at oprette en PIN-kode', 'info', 4000);
-    return;
-  }
-  _pinWizardMemberId = prefs.memberId;
-
-  const member = (window.membersCache || []).find(m => m.id === prefs.memberId);
+function updatePinWizardMember(memberId) {
+  _pinWizardMemberId = memberId;
+  const member = (window.membersCache || []).find(m => m.id === memberId);
   _pinWizardHasPin = !!(member?.pin_code);
-
   document.getElementById('pin-confirm-text').textContent = _pinWizardHasPin
-    ? 'Vil du ændre din PIN-kode?'
-    : 'Vil du oprette en PIN-kode?';
+    ? `${member?.navn || ''} har allerede en PIN-kode. Vil du ændre den?`
+    : `Vil du oprette en PIN-kode til ${member?.navn || ''}?`;
+  document.getElementById('pin-confirm-yes').disabled = false;
   document.getElementById('pin-delete-section').classList.toggle('hidden', !_pinWizardHasPin);
+}
+
+function openPinWizard() {
+  // Udfyld rullemenu
+  const sel = document.getElementById('pin-member-select');
+  sel.innerHTML = '<option value="">Vælg dit navn...</option>';
+  (window.membersCache || []).filter(m => m.active !== false).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.navn;
+    sel.appendChild(opt);
+  });
+
+  // Forhåndsvælg husket bruger
+  const prefs = loadPrefs();
+  _pinWizardMemberId = null;
+  _pinWizardHasPin   = false;
+  if (prefs?.memberId) {
+    sel.value = prefs.memberId;
+    if (sel.value) updatePinWizardMember(sel.value);
+  } else {
+    document.getElementById('pin-confirm-text').textContent = 'Vælg dit navn for at fortsætte.';
+    document.getElementById('pin-confirm-yes').disabled = true;
+  }
 
   document.getElementById('pin-step-confirm').classList.remove('hidden');
   document.getElementById('pin-step-create').classList.add('hidden');
@@ -2317,6 +2335,16 @@ function initPinWizard() {
   setupPinDigitInputs(document.querySelectorAll('#pin-confirm-inputs .pin-digit'));
 
   document.getElementById('nav-pin').addEventListener('click', openPinWizard);
+
+  document.getElementById('pin-member-select').addEventListener('change', function() {
+    if (this.value) {
+      updatePinWizardMember(this.value);
+    } else {
+      _pinWizardMemberId = null;
+      document.getElementById('pin-confirm-text').textContent = 'Vælg dit navn for at fortsætte.';
+      document.getElementById('pin-confirm-yes').disabled = true;
+    }
+  });
 
   document.getElementById('pin-wizard-close').addEventListener('click', () =>
     document.getElementById('pin-wizard-modal').classList.add('hidden'));

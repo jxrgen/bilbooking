@@ -1086,12 +1086,17 @@
       <button class="modal-close" id="pin-wizard-close">&#10005;</button>
       <h2>🔐 PIN-kode</h2>
 
-      <!-- Trin 1: Bekræft -->
+      <!-- Trin 1: Vælg bruger og bekræft -->
       <div id="pin-step-confirm">
-        <p id="pin-confirm-text" style="margin-bottom:10px">Vil du oprette en PIN-kode?</p>
-        <p class="muted" style="margin-bottom:20px">PIN-koden skal indtastes, hver gang du åbner appen, mens din bruger er husket via "Husk mig".</p>
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:500">Vælg dit navn</label>
+          <select id="pin-member-select" style="width:100%">
+            <option value="">Vælg dit navn...</option>
+          </select>
+        </div>
+        <p id="pin-confirm-text" style="margin-bottom:16px;color:var(--muted);font-size:13px">Vælg dit navn for at fortsætte.</p>
         <div style="display:flex;gap:8px">
-          <button id="pin-confirm-yes" class="btn-primary" style="flex:1">Ja</button>
+          <button id="pin-confirm-yes" class="btn-primary" style="flex:1" disabled>Ja</button>
           <button id="pin-confirm-no" class="btn-secondary" style="flex:1">Nej</button>
         </div>
       </div>
