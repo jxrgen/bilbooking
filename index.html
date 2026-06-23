@@ -712,6 +712,7 @@
         <button class="admin-tab" data-tab="deliveries">&#9989; Afleveringer</button>
         <button class="admin-tab" data-tab="log">&#128221; Log</button>
         <button class="admin-tab" data-tab="brugere">👥 Brugere</button>
+        <button class="admin-tab" data-tab="charging">🔌 Lader</button>
         <button class="admin-tab" data-tab="guide">📖 Vejledning</button>
         <button class="admin-tab" data-tab="trash">🗑️</button>
         <button id="admin-logout-btn" class="btn-sm" style="margin-left:auto;align-self:center;margin-right:8px">Log ud</button>
@@ -890,7 +891,49 @@
         <div id="mbr-table-wrap"></div>
       </div>
 
-      <!-- Tab: Skraldespand -->
+      <!-- Tab: Lader (Charging Simulator) -->
+      <div id="admin-tab-charging" class="admin-tab-content hidden">
+        <div class="form-card">
+          <h2>🔌 Smart Lader-Simulator</h2>
+          <p class="muted">Simulation af smart-lader med SIM-kort. Vil integreres med rigtig hardware når lader'en er operationel.</p>
+
+          <div style="margin-bottom: 20px;">
+            <h3>Tilgængelige ladere</h3>
+            <div id="chargers-list" style="display: grid; gap: 12px;">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h3>Aktive opladings-sessioner</h3>
+            <div id="charging-sessions" style="display: grid; gap: 12px;">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <div>
+            <h3>Historik</h3>
+            <table class="admin-table" style="width: 100%; font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>Bil</th>
+                  <th>Lader</th>
+                  <th>Bruger</th>
+                  <th>Starttid</th>
+                  <th>Varighed</th>
+                  <th>kWh</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="charging-history">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Vejledning -->
       <div id="admin-tab-guide" class="admin-tab-content hidden" style="padding:0">
         <iframe src="admin-vejledning.html" style="width:100%;height:100%;border:none;display:block"></iframe>
       </div>

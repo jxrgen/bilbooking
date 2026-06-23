@@ -1993,6 +1993,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     if (tab.dataset.tab === 'log')         loadLog();
     if (tab.dataset.tab === 'bookings')    loadAllBookingsAdmin();
     if (tab.dataset.tab === 'deliveries')  loadAllDeliveriesAdmin();
+    if (tab.dataset.tab === 'charging')    (async () => { await loadChargers(); await loadChargingHistory(); renderChargingTab(); })();
     if (tab.dataset.tab === 'trash')       renderTrash();
     if (tab.dataset.tab === 'brugere')     renderMembers();
   });
@@ -2638,6 +2639,180 @@ function initPullToRefresh(scrollEl, onRefresh) {
       indicator.classList.remove('visible');
     }
   }, { passive: true });
+}
+
+// =============================================
+// CHARGING SYSTEM (Simulator + Integration Ready)
+// =============================================
+
+const chargingState = {
+  chargers: [],
+  activeSessions: new Map(), // session.id -> {session, simulationTimer}
+  sessionHistory: [],
+};
+
+async function loadChargers() {
+  const { data, error } = await db.from('chargers').select('*').eq('is_active', true);
+  if (error) { console.error('loadChargers error:', error); return; }
+  chargingState.chargers = data || [];
+}
+
+async function loadChargingHistory() {
+  const { data, error } = await db
+    .from('charging_sessions')
+    .select('*, chargers(name), cars(name, color)')
+    .order('start_time', { ascending: false })
+    .limit(50);
+  if (error) { console.error('loadChargingHistory error:', error); return; }
+  chargingState.sessionHistory = data || [];
+}
+
+function renderChargingTab() {
+  // Render available chargers
+  const chargersList = document.getElementById('chargers-list');
+  chargersList.innerHTML = chargingState.chargers
+    .filter(c => !chargingState.activeSessions.values().some(s => s.charger_id === c.id))
+    .map(c => `
+      <div style="padding: 12px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #4CAF50;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>${c.name}</strong><br>
+            <small style="color: #666;">${c.location || ''} • Max ${c.max_power_kw} kW</small>
+          </div>
+          <button class="btn-sm" onclick="startChargingSimulation('${c.id}')">Start</button>
+        </div>
+      </div>
+    `).join('');
+
+  // Render active sessions
+  const sessionsList = document.getElementById('charging-sessions');
+  sessionsList.innerHTML = Array.from(chargingState.activeSessions.values())
+    .map(({ session, progress }) => {
+      const duration = Math.floor((Date.now() - new Date(session.start_time)) / 1000 / 60);
+      return `
+        <div style="padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
+          <div style="margin-bottom: 8px;">
+            <strong>${session.cars?.name || 'N/A'}</strong> på ${session.chargers?.name}<br>
+            <small style="color: #666;">Bruger: ${session.user_name}</small>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="background: #fff; height: 24px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc;">
+              <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #2196F3, #1976D2); transition: width 0.3s;"></div>
+            </div>
+            <small style="color: #666;">Lades: ${progress.toFixed(0)}% • ${(progress * 0.22).toFixed(1)} kWh • ${duration} min</small>
+          </div>
+          <button class="btn-sm" style="width: 100%; background: #d32f2f;" onclick="stopChargingSimulation('${session.id}')">Stop</button>
+        </div>
+      `;
+    }).join('');
+
+  // Render history
+  const historyTable = document.getElementById('charging-history');
+  historyTable.innerHTML = chargingState.sessionHistory
+    .slice(0, 10)
+    .map(s => {
+      const duration = s.end_time ? Math.floor((new Date(s.end_time) - new Date(s.start_time)) / 1000 / 60) : 0;
+      const endtime = s.end_time ? new Date(s.end_time).toLocaleTimeString('da-DK', {hour: '2-digit', minute: '2-digit'}) : '-';
+      return `
+        <tr>
+          <td>${s.cars?.name || '-'}</td>
+          <td>${s.chargers?.name || '-'}</td>
+          <td>${s.user_name}</td>
+          <td>${new Date(s.start_time).toLocaleTimeString('da-DK', {hour: '2-digit', minute: '2-digit'})}</td>
+          <td>${duration} min</td>
+          <td>${s.energy_consumed_kwh.toFixed(1)}</td>
+          <td><span style="padding: 2px 6px; background: ${s.status === 'completed' ? '#4CAF50' : s.status === 'active' ? '#2196F3' : '#f44336'}; color: white; border-radius: 3px; font-size: 10px;">${s.status}</span></td>
+        </tr>
+      `;
+    }).join('');
+}
+
+async function startChargingSimulation(chargerId) {
+  const charger = chargingState.chargers.find(c => c.id === chargerId);
+  if (!charger) return;
+
+  // Find selected car
+  const carId = state.enabledCars.values().next().value;
+  const car = state.cars.find(c => c.id === carId);
+  if (!car) {
+    toast('Vælg venligst en bil først', 'error', 3000);
+    return;
+  }
+
+  // Simple simulation: use first member or placeholder
+  const userName = window.membersCache?.[0]?.navn || 'Simulator';
+
+  // Create session in DB
+  const { data: session, error } = await db
+    .from('charging_sessions')
+    .insert({
+      car_id: carId,
+      charger_id: chargerId,
+      user_name: userName,
+      start_time: new Date().toISOString(),
+      status: 'active'
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Create session error:', error);
+    toast('Fejl ved opstart af simulator', 'error', 3000);
+    return;
+  }
+
+  // Start simulation: simulate 22 kWh charge over 60 minutes (in real app: actual telemetry data)
+  let progress = 0;
+  const timer = setInterval(async () => {
+    progress = Math.min(100, progress + 1.67); // 60 steps = 1% per step ≈ 1 min per step
+
+    if (progress >= 100) {
+      clearInterval(timer);
+      // Mark as completed
+      await db.from('charging_sessions')
+        .update({
+          end_time: new Date().toISOString(),
+          energy_consumed_kwh: 22,
+          status: 'completed'
+        })
+        .eq('id', session.id);
+
+      chargingState.activeSessions.delete(session.id);
+      await loadChargingHistory();
+      renderChargingTab();
+      toast('Opladning færdig! ✓', 'success', 3000);
+    }
+  }, 1000); // Update every second
+
+  chargingState.activeSessions.set(session.id, {
+    session: { ...session, chargers: charger, cars: car },
+    progress: progress,
+    timer: timer
+  });
+
+  renderChargingTab();
+  toast('Simulator startet — opladning simuleres i 60 sek', 'success', 3000);
+}
+
+async function stopChargingSimulation(sessionId) {
+  const active = chargingState.activeSessions.get(sessionId);
+  if (!active) return;
+
+  clearInterval(active.timer);
+  chargingState.activeSessions.delete(sessionId);
+
+  // Stop in DB
+  await db.from('charging_sessions')
+    .update({
+      end_time: new Date().toISOString(),
+      energy_consumed_kwh: (active.progress / 100) * 22,
+      status: 'completed'
+    })
+    .eq('id', sessionId);
+
+  await loadChargingHistory();
+  renderChargingTab();
+  toast('Opladning stoppet', 'info', 2000);
 }
 
 // =============================================
