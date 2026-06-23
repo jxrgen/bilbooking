@@ -2664,47 +2664,156 @@ async function loadChargingHistory() {
     .order('start_time', { ascending: false })
     .limit(50);
   if (error) { console.error('loadChargingHistory error:', error); return; }
+
+  chargingState.sessionHistory = data || [];
+
+  // If empty, generate demo data for testing
+  if (chargingState.sessionHistory.length === 0) {
+    await generateDemoChargingSessions();
+  }
+}
+
+async function generateDemoChargingSessions() {
+  const evCars = state.cars.filter(c => c.name !== 'Berlingo');
+  const demoSessions = [];
+  const now = new Date();
+
+  for (let i = 0; i < 10; i++) {
+    const car = evCars[Math.floor(Math.random() * evCars.length)];
+    const charger = chargingState.chargers[Math.floor(Math.random() * chargingState.chargers.length)];
+    const startTime = new Date(now);
+    startTime.setHours(startTime.getHours() - Math.floor(Math.random() * 72)); // Last 3 days
+    startTime.setMinutes(Math.floor(Math.random() * 60));
+
+    const endTime = new Date(startTime);
+    endTime.setMinutes(endTime.getMinutes() + 45 + Math.floor(Math.random() * 30));
+
+    demoSessions.push({
+      car_id: car.id,
+      charger_id: charger.id,
+      user_name: window.membersCache?.[i % (window.membersCache?.length || 1)]?.navn || `Bruger ${i+1}`,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      energy_consumed_kwh: 15 + Math.random() * 20,
+      status: 'completed'
+    });
+  }
+
+  const { data, error } = await db
+    .from('charging_sessions')
+    .insert(demoSessions)
+    .select('*, chargers(name), cars(name, color)');
+
+  if (error) {
+    console.error('Demo data error:', error);
+    return;
+  }
+
   chargingState.sessionHistory = data || [];
 }
 
 function renderChargingTab() {
-  // Render available chargers
-  const chargersList = document.getElementById('chargers-list');
-  chargersList.innerHTML = chargingState.chargers
-    .filter(c => !chargingState.activeSessions.values().some(s => s.charger_id === c.id))
-    .map(c => `
-      <div style="padding: 12px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #4CAF50;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <strong>${c.name}</strong><br>
-            <small style="color: #666;">${c.location || ''} • Max ${c.max_power_kw} kW</small>
-          </div>
-          <button class="btn-sm" onclick="startChargingSimulation('${c.id}')">Start</button>
-        </div>
-      </div>
-    `).join('');
+  // Get EV statistics (all cars except Berlingo)
+  const evCars = state.cars.filter(c => c.name !== 'Berlingo');
 
-  // Render active sessions
-  const sessionsList = document.getElementById('charging-sessions');
-  sessionsList.innerHTML = Array.from(chargingState.activeSessions.values())
-    .map(({ session, progress }) => {
-      const duration = Math.floor((Date.now() - new Date(session.start_time)) / 1000 / 60);
-      return `
-        <div style="padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
-          <div style="margin-bottom: 8px;">
-            <strong>${session.cars?.name || 'N/A'}</strong> på ${session.chargers?.name}<br>
-            <small style="color: #666;">Bruger: ${session.user_name}</small>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="background: #fff; height: 24px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc;">
-              <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #2196F3, #1976D2); transition: width 0.3s;"></div>
+  // Calculate stats for each EV
+  const carStats = evCars.map(car => {
+    const sessions = chargingState.sessionHistory.filter(s => s.car_id === car.id);
+    const todaySessions = sessions.filter(s => {
+      const date = new Date(s.start_time);
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    });
+    const totalKwh = sessions.reduce((sum, s) => sum + (s.energy_consumed_kwh || 0), 0);
+    const todayKwh = todaySessions.reduce((sum, s) => sum + (s.energy_consumed_kwh || 0), 0);
+    const lastCharge = sessions.length > 0 ? new Date(sessions[0].start_time) : null;
+
+    return {
+      car,
+      totalSessions: sessions.length,
+      todaySessions: todaySessions.length,
+      totalKwh: totalKwh,
+      todayKwh: todayKwh,
+      lastCharge
+    };
+  });
+
+  // Render EV statistics
+  const chargersList = document.getElementById('chargers-list');
+  chargersList.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #666;">El-biler statistik</h3>
+      ${carStats.map(stats => {
+        const lastChargeText = stats.lastCharge
+          ? `Sidst ladet: ${stats.lastCharge.toLocaleTimeString('da-DK', {hour: '2-digit', minute: '2-digit'})}`
+          : 'Aldrig ladet';
+        return `
+          <div style="padding: 12px; background: linear-gradient(135deg, ${stats.car.color}22 0%, ${stats.car.color}11 100%); border-radius: 8px; border-left: 4px solid ${stats.car.color}; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="flex: 1;">
+                <strong>${stats.car.name}</strong><br>
+                <small style="color: #666;">
+                  I dag: <strong>${stats.todayKwh.toFixed(1)} kWh</strong> (${stats.todaySessions} lader)<br>
+                  Total: <strong>${stats.totalKwh.toFixed(1)} kWh</strong> (${stats.totalSessions} lader)<br>
+                  <em>${lastChargeText}</em>
+                </small>
+              </div>
+              <div style="text-align: right; min-width: 80px;">
+                <div style="font-size: 24px; color: ${stats.car.color}; font-weight: bold;">${(Math.random() * 40 + 20).toFixed(0)}%</div>
+                <small style="color: #666;">Batteri</small>
+              </div>
             </div>
-            <small style="color: #666;">Lades: ${progress.toFixed(0)}% • ${(progress * 0.22).toFixed(1)} kWh • ${duration} min</small>
           </div>
-          <button class="btn-sm" style="width: 100%; background: #d32f2f;" onclick="stopChargingSimulation('${session.id}')">Stop</button>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Render available chargers
+  const availableChargers = chargingState.chargers
+    .filter(c => !Array.from(chargingState.activeSessions.values()).some(s => s.session.charger_id === c.id));
+
+  const sessionsList = document.getElementById('charging-sessions');
+  sessionsList.innerHTML = `
+    <div>
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #666;">Tilgængelige ladere</h3>
+      ${availableChargers.map(c => `
+        <div style="padding: 12px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #4CAF50; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+              <strong>${c.name}</strong><br>
+              <small style="color: #666;">${c.location || ''} • Max ${c.max_power_kw} kW</small>
+            </div>
+            <button class="btn-sm" onclick="startChargingSimulation('${c.id}')">Start</button>
+          </div>
         </div>
-      `;
-    }).join('');
+      `).join('')}
+
+      <h3 style="margin: 20px 0 12px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #666;">Aktive lader-sessioner</h3>
+      ${Array.from(chargingState.activeSessions.values()).length === 0
+        ? '<small style="color: #999;">Ingen aktive sessioner</small>'
+        : Array.from(chargingState.activeSessions.values())
+          .map(({ session, progress }) => {
+            const duration = Math.floor((Date.now() - new Date(session.start_time)) / 1000 / 60);
+            return `
+              <div style="padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3; margin-bottom: 10px;">
+                <div style="margin-bottom: 8px;">
+                  <strong>${session.cars?.name || 'N/A'}</strong> på ${session.chargers?.name}<br>
+                  <small style="color: #666;">Bruger: ${session.user_name}</small>
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <div style="background: #fff; height: 24px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc;">
+                    <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, #2196F3, #1976D2); transition: width 0.3s;"></div>
+                  </div>
+                  <small style="color: #666;">Lades: ${progress.toFixed(0)}% • ${(progress * 0.22).toFixed(1)} kWh • ${duration} min</small>
+                </div>
+                <button class="btn-sm" style="width: 100%; background: #d32f2f;" onclick="stopChargingSimulation('${session.id}')">Stop</button>
+              </div>
+            `;
+          }).join('')
+      }
+    </div>
+  `;
 
   // Render history
   const historyTable = document.getElementById('charging-history');
