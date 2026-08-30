@@ -1673,7 +1673,7 @@ async function loadMineBookinger(memberNavn) {
 document.getElementById('nav-mine-bookinger')?.addEventListener('click', openMineBookinger);
 const closeMineBookinger = () => {
   document.getElementById('mine-bookinger-overlay').classList.add('hidden');
-  if (!['calendar', 'help', 'admin'].includes(state.currentView)) setView('calendar');
+  setView(['calendar', 'help', 'admin'].includes(state.currentView) ? state.currentView : 'calendar');
 };
 document.getElementById('mb-close')?.addEventListener('click', closeMineBookinger);
 document.getElementById('mb-back')?.addEventListener('click', closeMineBookinger);
@@ -2652,7 +2652,7 @@ document.querySelectorAll('.nav-btn').forEach(btn =>
 document.getElementById('nav-regnskab')?.addEventListener('click', openRegnskab);
 const closeRegnskab = () => {
   document.getElementById('regnskab-overlay').classList.add('hidden');
-  if (!['calendar', 'help', 'admin'].includes(state.currentView)) setView('calendar');
+  setView(['calendar', 'help', 'admin'].includes(state.currentView) ? state.currentView : 'calendar');
 };
 document.getElementById('regnskab-close')?.addEventListener('click', closeRegnskab);
 document.getElementById('regnskab-back')?.addEventListener('click', closeRegnskab);
