@@ -575,6 +575,7 @@ body {
 .admin-tab:hover, .mb-tab:hover { color: var(--text); }
 .admin-tab.active, .mb-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
 .admin-tab-content, .mb-tab-content { flex: 1; overflow: auto; overscroll-behavior: contain; }
+.back-btn { margin-bottom: 12px; }
 
 
 /* ===================== FIELD NOTE ===================== */
