@@ -1,0 +1,43 @@
+name: Backup af bookinger
+
+on:
+  schedule:
+    # Hver mandag kl. 06:00 UTC. Selve scriptet afgør ud fra
+    # backup_frequency-indstillingen om der faktisk laves backup.
+    - cron: '0 6 * * 1'
+  workflow_dispatch: # Tillad manuel kørsel
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Hent repo
+        uses: actions/checkout@v4
+
+      - name: Opsæt Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installér afhængigheder
+        run: npm install nodemailer@6 --no-save
+
+      - name: Kør backup
+        env:
+          SUPABASE_URL: https://fdwiooogkophykysbbrh.supabase.co
+          SUPABASE_KEY: sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4
+        run: node backup/backup.mjs
+
+      - name: Commit backup-fil
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backups/
+          if git diff --staged --quiet; then
+            echo "Ingen ny backup at committe."
+          else
+            git commit -m "Automatisk backup af bookinger [skip ci]"
+            git push
+          fi
