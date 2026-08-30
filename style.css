@@ -577,6 +577,81 @@ body {
 .admin-tab-content, .mb-tab-content { flex: 1; overflow: auto; overscroll-behavior: contain; }
 .back-btn { margin-bottom: 12px; }
 
+/* Brugerens navn i toppen */
+.nav-user-badge {
+  font-size: 13px; font-weight: 600; color: var(--primary);
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  margin-left: 4px;
+}
+@media (max-width: 640px) { .nav-user-badge { display: none; } }
+
+/* Eksport-menu gruppeoverskrift */
+.export-menu-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); padding: 8px 12px 3px; font-weight: 600;
+}
+.export-menu-label:first-child { padding-top: 6px; }
+
+/* Komplet regnskab — fremhævet panel */
+.regnskab-panel {
+  margin: 18px 20px 40px; padding: 18px 20px;
+  background: var(--surface);
+  border: 2px solid var(--primary); border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+}
+.regnskab-panel-head {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.regnskab-panel-head h2 { font-size: 17px; }
+.regnskab-panel-head select {
+  flex: 1; min-width: 160px; padding: 7px 9px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg); color: var(--text); font-size: 14px;
+}
+
+/* Indstillinger-fanen */
+.settings-wrap { padding: 18px 20px 60px; max-width: 900px; }
+.settings-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;
+}
+.settings-card h2 { margin: 0 0 4px; font-size: 16px; }
+.settings-card .muted { font-size: 12px; margin: 0 0 12px; }
+.settings-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+.settings-grid label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.settings-grid label input, .settings-grid label select {
+  padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px;
+  font-size: 14px; background: var(--bg); color: var(--text);
+}
+.settings-grid label.settings-check {
+  flex-direction: row; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text); align-self: center;
+}
+.settings-grid label.settings-check input { width: auto; padding: 0; }
+.settings-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+  position: sticky; bottom: 0; background: var(--bg);
+  padding: 12px 0; border-top: 1px solid var(--border);
+}
+
+/* PRØVEVERSION-vandmærke */
+#trial-watermark {
+  position: fixed; inset: 0; z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; overflow: hidden;
+  font-size: 15vw; font-weight: 900; letter-spacing: .05em;
+  color: rgba(220, 38, 38, 0.13);
+  transform: rotate(-30deg); text-transform: uppercase;
+  white-space: nowrap; user-select: none;
+}
+
 
 /* ===================== FIELD NOTE ===================== */
 .field-note { font-size: 11px; color: var(--muted); margin-top: 4px; }

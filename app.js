@@ -101,32 +101,131 @@ function getISOWeek(date) {
 }
 
 // =============================================
+// SETTINGS (Supabase settings key/value-tabel)
+// =============================================
+window.appSettings = {};
+const SETTINGS_DEFAULTS = {
+  price_standard_low:       '3.0',
+  price_standard_high:      '2.0',
+  price_standard_threshold: '100',
+  price_electric_low:       '2.5',
+  price_electric_high:      '1.5',
+  price_electric_threshold: '100',
+  price_hour:               '15',
+  price_day:                '150',
+  price_monthly_fee:        '75',
+  backup_frequency:         'monthly',   // weekly | biweekly | monthly
+  backup_email:             '',
+  smtp_host:                '',
+  smtp_port:                '587',
+  smtp_user:                '',
+  smtp_pass:                '',
+  smtp_from:                '',
+  watermark_enabled:        '0',
+  watermark_text:           'PRØVEVERSION',
+  club_name:                'Delebilsklub',
+  booking_max_days:         '14',
+  contact_email:            '',
+};
+function getSetting(key)    { const v = window.appSettings[key]; return (v === undefined || v === null) ? (SETTINGS_DEFAULTS[key] ?? '') : v; }
+function getSettingNum(key) { return parseFloat(getSetting(key)) || 0; }
+async function loadSettings() {
+  const { data, error } = await db.from('settings').select('key, value');
+  if (error) { console.error('loadSettings', error); return; }
+  window.appSettings = {};
+  (data || []).forEach(r => { window.appSettings[r.key] = r.value; });
+}
+async function saveSetting(key, value) {
+  const { error } = await db.from('settings').upsert({ key, value: String(value) }, { onConflict: 'key' });
+  if (error) throw error;
+  window.appSettings[key] = String(value);
+}
+
+// Vandmærke (PRØVEVERSION) på alle sider
+function applyWatermark() {
+  let wm = document.getElementById('trial-watermark');
+  const enabled = getSetting('watermark_enabled') === '1';
+  const text    = getSetting('watermark_text') || 'PRØVEVERSION';
+  if (!enabled) { if (wm) wm.remove(); return; }
+  if (!wm) {
+    wm = document.createElement('div');
+    wm.id = 'trial-watermark';
+    document.body.appendChild(wm);
+  }
+  wm.textContent = text;
+}
+
+// Brugerens navn øverst ved menuen
+function renderUserBadge() {
+  const el = document.getElementById('nav-user-badge');
+  if (!el) return;
+  const prefs = loadPrefs();
+  if (prefs?.navn) {
+    el.textContent = '👤 ' + prefs.navn;
+    el.classList.remove('hidden');
+  } else {
+    el.textContent = '';
+    el.classList.add('hidden');
+  }
+}
+
+// Vejledning → Kalender: vis rigtige bilnavne og farver
+function renderHelpCars() {
+  const grid = document.getElementById('help-cars-grid');
+  if (grid) {
+    const cars = (state.cars || []).filter(c => c.active !== false);
+    grid.innerHTML = cars.length
+      ? cars.map(c => `<div class="help-car" style="background:${c.color}"><span>${c.name}</span></div>`).join('')
+      : '<p style="color:var(--muted)">Ingen biler oprettet endnu.</p>';
+  }
+  const tip = document.getElementById('help-cars-tip');
+  if (tip) {
+    const cars = (state.cars || []).filter(c => c.active !== false);
+    tip.innerHTML = cars.length
+      ? 'Farverne svarer til bilerne: ' + cars.map(c =>
+          `<strong style="color:${c.color}">${c.name}</strong>`).join(', ')
+      : 'Farverne i kalenderen svarer til de enkelte biler.';
+  }
+}
+
 // =============================================
 // PRICING HELPERS
 // =============================================
-const PRICES = {
-  standard: { low: 3.0,  high: 2.0,  threshold: 100 },
-  electric:  { low: 2.5,  high: 1.5,  threshold: 100 },
-  hourRate:  15,
-  dayRate:   150,
-};
+function getPrices() {
+  return {
+    standard: { low: getSettingNum('price_standard_low'),  high: getSettingNum('price_standard_high'),  threshold: getSettingNum('price_standard_threshold') },
+    electric: { low: getSettingNum('price_electric_low'),  high: getSettingNum('price_electric_high'),  threshold: getSettingNum('price_electric_threshold') },
+    hourRate: getSettingNum('price_hour'),
+    dayRate:  getSettingNum('price_day'),
+  };
+}
 function carPriceCategory(carName) {
   const n = (carName || '').toLowerCase();
   return (n.includes('zoe') || n.includes('buzz')) ? 'electric' : 'standard';
 }
 function calcKmCost(km, carName) {
   if (!km || km <= 0) return 0;
-  const p = PRICES[carPriceCategory(carName)];
+  const p = getPrices()[carPriceCategory(carName)];
   return km <= p.threshold ? km * p.low : p.threshold * p.low + (km - p.threshold) * p.high;
 }
 function calcTimeCost(durationMins) {
+  const p = getPrices();
   const hours = durationMins / 60;
   const fullDays = Math.floor(hours / 24);
   const remHours = hours % 24;
-  return fullDays * PRICES.dayRate + remHours * PRICES.hourRate;
+  return fullDays * p.dayRate + remHours * p.hourRate;
 }
 function fmtKr(amount) {
   return amount.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' kr.';
+}
+function priceFootnote() {
+  const p = getPrices();
+  const kr = n => n.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fee = getSettingNum('price_monthly_fee');
+  return `Standard (Berlingo/ID.3): ${kr(p.standard.low)} kr./km (${kr(p.standard.high)} over ${p.standard.threshold} km) · ` +
+    `El (Zoe/ID Buzz): ${kr(p.electric.low)} kr./km (${kr(p.electric.high)} over ${p.electric.threshold} km) · ` +
+    `${kr(p.hourRate)} kr./t · ${kr(p.dayRate)} kr./døgn` +
+    (fee ? ` · Fast bidrag ${kr(fee)} kr./md (ikke inkluderet)` : '');
 }
 function lightenHex(hex, whiteMix = 0.82) {
   const r = parseInt(hex.slice(1,3), 16);
@@ -142,8 +241,8 @@ const PREFS_KEY      = 'bilbooking_prefs';
 const CAR_FILTER_KEY = 'bilbooking_car_filter';
 
 function loadPrefs() { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null'); }
-function savePrefs(memberId, navn, telefon) { localStorage.setItem(PREFS_KEY, JSON.stringify({ memberId, navn, telefon })); }
-function clearPrefs() { localStorage.removeItem(PREFS_KEY); }
+function savePrefs(memberId, navn, telefon) { localStorage.setItem(PREFS_KEY, JSON.stringify({ memberId, navn, telefon })); if (typeof renderUserBadge === 'function') renderUserBadge(); }
+function clearPrefs() { localStorage.removeItem(PREFS_KEY); if (typeof renderUserBadge === 'function') renderUserBadge(); }
 
 // Fyld et <select>-element med tidsintervaller á 15 min (00:00 – 23:45)
 function buildTimeSelect(id) {
@@ -731,7 +830,11 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
     refreshCarButtons();
   }
 
-  document.getElementById('bm-start-km').value = car.current_km || 0;
+  // Ved redigering: vis km-stand på det bookede tidspunkt (bookingens start_km),
+  // ikke bilens aktuelle km-stand.
+  document.getElementById('bm-start-km').value = editingBooking
+    ? (editingBooking.start_km ?? 0)
+    : (car.current_km || 0);
 
   setDT('bm-start-date', 'bm-start-time', editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
   setDT('bm-end-date',   'bm-end-time',   editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
@@ -1133,7 +1236,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
 async function loadAllBookingsAdmin() {
   const carFilter    = document.getElementById('ab-filter-car').value;
   const statusFilter = document.getElementById('ab-filter-status').value;
-  let query = db.from('bookings').select('*, cars(name, color)')
+  let query = db.from('bookings').select('*, cars(name, color), deliveries(start_km, end_km, km_driven)')
     .order('start_time', { ascending: false }).limit(200);
   if (carFilter)    query = query.eq('car_id', carFilter);
   if (statusFilter) query = query.eq('status', statusFilter);
@@ -1143,26 +1246,35 @@ async function loadAllBookingsAdmin() {
   const st = editState.bookings;
   const tbody = document.getElementById('ab-body');
   const theadRow = document.getElementById('ab-thead-row');
+  const kmCols = `<th>Start km</th><th>Slut km</th><th>Forv. km</th>`;
   if (st.active) {
-    theadRow.innerHTML = `<th class="check-col"></th><th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th><th>Forv. km</th><th>Status</th><th class="act-col"></th>`;
+    theadRow.innerHTML = `<th class="check-col"></th><th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th>${kmCols}<th>Status</th><th class="act-col"></th>`;
   } else {
-    theadRow.innerHTML = `<th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th><th>Forv. km</th><th>Status</th>`;
+    theadRow.innerHTML = `<th>Bil</th><th>Bruger</th><th>Telefon</th><th>Start</th><th>Slut</th>${kmCols}<th>Status</th>`;
   }
   if (!adminData.bookings.length) {
-    tbody.innerHTML = `<tr><td colspan="${st.active?9:7}" style="text-align:center;padding:24px;color:var(--muted)">Ingen bookinger.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${st.active?11:9}" style="text-align:center;padding:24px;color:var(--muted)">Ingen bookinger.</td></tr>`;
     return;
   }
   const carDot = car => car ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${car.color};display:inline-block"></span>${car.name}</span>` : '–';
+  const kmFmt = v => (v || v === 0) ? Number(v).toLocaleString('da-DK') : '–';
   tbody.innerHTML = adminData.bookings.map(b => {
     const statusLabel = { active:'Aktiv', completed:'Afsluttet', cancelled:'Annulleret' }[b.status] || b.status;
     const statusCls   = { active:'badge-blue', completed:'badge-green', cancelled:'badge-red' }[b.status] || 'badge-gray';
     const checked     = st.selected.has(b.id);
+    const del         = b.deliveries?.[0];
+    // Start km: bookingens start_km (km-stand på det bookede tidspunkt).
+    // Slut km: fra afleveringen hvis den findes.
+    const startKm = del?.start_km ?? b.start_km;
+    const endKm   = del?.end_km;
     return `<tr data-id="${b.id}" class="${checked ? 'row-selected' : ''}">
       ${st.active ? `<td class="check-col"><input type="checkbox" class="row-check" data-id="${b.id}" ${checked?'checked':''}></td>` : ''}
       <td>${carDot(b.cars)}</td>
       <td>${b.user_name}</td><td>${b.phone}</td>
       <td style="white-space:nowrap">${fmtDateTime(b.start_time)}</td>
       <td style="white-space:nowrap">${fmtDateTime(b.end_time)}</td>
+      <td>${kmFmt(startKm)}</td>
+      <td>${kmFmt(endKm)}</td>
       <td>${b.expected_km}</td>
       <td><span class="badge ${statusCls}">${statusLabel}</span></td>
       ${st.active ? `<td class="act-col"><button class="btn-icon" onclick="adminEditBooking('${b.id}')">&#9998;</button></td>` : ''}
@@ -1390,13 +1502,17 @@ function todayStr() { return new Date().toISOString().slice(0, 10); }
 function exportAdminData(tab, fmt) {
   document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
   if (tab === 'bookings') {
-    const rows = adminData.bookings.map(b => [
-      b.cars?.name || '', b.user_name, b.phone,
-      fmtDateTime(b.start_time), fmtDateTime(b.end_time), b.expected_km,
-      { active: 'Aktiv', completed: 'Afsluttet', cancelled: 'Annulleret' }[b.status] || b.status,
-      b.notes || '',
-    ]);
-    if (fmt === 'csv') downloadCSV(['Bil','Bruger','Telefon','Start','Slut','Forv. km','Status','Bemærkninger'], rows, `bookinger-${todayStr()}.csv`);
+    const rows = adminData.bookings.map(b => {
+      const del = b.deliveries?.[0];
+      return [
+        b.cars?.name || '', b.user_name, b.phone,
+        fmtDateTime(b.start_time), fmtDateTime(b.end_time),
+        del?.start_km ?? b.start_km ?? '', del?.end_km ?? '', b.expected_km,
+        { active: 'Aktiv', completed: 'Afsluttet', cancelled: 'Annulleret' }[b.status] || b.status,
+        b.notes || '',
+      ];
+    });
+    if (fmt === 'csv') downloadCSV(['Bil','Bruger','Telefon','Start','Slut','Start km','Slut km','Forv. km','Status','Bemærkninger'], rows, `bookinger-${todayStr()}.csv`);
     else downloadJSON(adminData.bookings, `bookinger-${todayStr()}.json`);
   } else if (tab === 'deliveries') {
     const rows = adminData.deliveries.map(d => [
@@ -1427,9 +1543,27 @@ function exportTrashData(fmt) {
   }
 }
 
+// Eksportér brugerliste
+function exportMembers(fmt) {
+  document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
+  const members = window.membersCache || [];
+  if (!members.length) return toast('Ingen brugere at eksportere', 'info');
+  if (fmt === 'csv') {
+    const rows = members.map(m => [
+      m.navn || '', m.adresse || '', m.bogruppe || '', m.telefon || '',
+      m.active === false ? 'Nej' : 'Ja', m.pin_code ? 'Ja' : 'Nej',
+    ]);
+    downloadCSV(['Navn','Adresse','Bogruppe','Telefon','Aktiv','PIN'], rows, `brugere-${todayStr()}.csv`);
+  } else {
+    // Undlad at eksportere PIN-koder i klartekst
+    const safe = members.map(({ pin_code, ...rest }) => ({ ...rest, has_pin: !!pin_code }));
+    downloadJSON(safe, `brugere-${todayStr()}.json`);
+  }
+}
+
 // Export dropdown toggle (close-on-outside-click)
 function initExportDropdowns() {
-  ['ab','ad','log','trash'].forEach(pfx => {
+  ['ab','ad','log','trash','mbr'].forEach(pfx => {
     const btn  = document.getElementById(`${pfx}-export-btn`);
     const menu = document.getElementById(`${pfx}-export-menu`);
     if (!btn || !menu) return;
@@ -1845,7 +1979,7 @@ async function loadRegnskab(memberNavn) {
       ${totalRow}
     </tbody></table>
     <p style="font-size:11px;color:var(--muted,#6b7280);margin-top:8px">
-      Berlingo/ID.3: 3,00 kr./km (2,00 over 100 km) · Zoe/ID Buzz: 2,50 kr./km (1,50 over 100 km) · 15 kr./t · 150 kr./døgn
+      ${priceFootnote()}
     </p>`;
 }
 
@@ -2022,9 +2156,48 @@ function initAdminFilters() {
   }
 
   document.getElementById('ad-regnskab-toggle')?.addEventListener('click', () => {
-    document.getElementById('ad-regnskab-panel').classList.toggle('hidden');
+    const panel = document.getElementById('ad-regnskab-panel');
+    const nowHidden = panel.classList.toggle('hidden');
+    if (!nowHidden) {
+      loadAdminRegnskab();
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
   document.getElementById('ad-regnskab-calc')?.addEventListener('click', loadAdminRegnskab);
+}
+
+// Eksporter kun afleveringer i den valgte regnskabsperiode
+async function exportDeliveriesPeriod(fmt) {
+  document.querySelectorAll('.export-menu').forEach(m => m.classList.add('hidden'));
+  const periodSel = document.getElementById('ad-regnskab-period');
+  const periodVal = periodSel?.value;
+  if (!periodVal) {
+    toast('Vælg først en periode under 📊 Komplet regnskab', 'info');
+    const panel = document.getElementById('ad-regnskab-panel');
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  const [y, q] = periodVal.split('-').map(Number);
+  const from = new Date(y, (q - 1) * 3, 1).toISOString();
+  const to   = new Date(y, q * 3, 1).toISOString();
+  const { data, error } = await db.from('deliveries')
+    .select('*, cars(name, color), bookings(user_name)')
+    .gte('created_at', from).lt('created_at', to)
+    .order('created_at', { ascending: false });
+  if (error) { toast('Fejl ved eksport', 'error'); return; }
+  const list = data || [];
+  if (!list.length) { toast('Ingen afleveringer i den valgte periode', 'info'); return; }
+  const label = (periodSel.selectedOptions[0]?.textContent || periodVal).replace(/\s+/g, '_');
+  if (fmt === 'csv') {
+    const rows = list.map(d => [
+      d.cars?.name || '', d.bookings?.user_name || '', fmtDateTime(d.created_at),
+      d.start_km, d.end_km, d.km_driven, fmtDur(d.duration_quarters * 15), d.comments || '',
+    ]);
+    downloadCSV(['Bil','Bruger','Tidspunkt','Start km','Slut km','Km kørt','Varighed','Kommentarer'], rows, `afleveringer-${label}.csv`);
+  } else {
+    downloadJSON(list, `afleveringer-${label}.json`);
+  }
 }
 
 async function loadAdminRegnskab() {
@@ -2094,9 +2267,78 @@ async function loadAdminRegnskab() {
       </tbody>
     </table>
     <p style="font-size:11px;color:var(--muted);margin-top:8px">
-      Berlingo/ID.3: 3,00 kr./km (2,00 over 100 km) · Zoe/ID Buzz: 2,50 kr./km (1,50 over 100 km) · 15 kr./t · 150 kr./døgn. Fast månedsbidrag (75 kr./kvartal) er ikke inkluderet.
+      ${priceFootnote()}
     </p>`;
 }
+
+// =============================================
+// INDSTILLINGER-FANEN
+// =============================================
+const SETTINGS_TEXT_KEYS = [
+  'price_standard_low','price_standard_high','price_standard_threshold',
+  'price_electric_low','price_electric_high','price_electric_threshold',
+  'price_hour','price_day','price_monthly_fee',
+  'backup_frequency','backup_email',
+  'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from',
+  'watermark_text','club_name','contact_email','booking_max_days',
+];
+
+function renderSettingsForm() {
+  SETTINGS_TEXT_KEYS.forEach(k => {
+    const el = document.getElementById('set-' + k);
+    if (el) el.value = getSetting(k);
+  });
+  const wm = document.getElementById('set-watermark_enabled');
+  if (wm) wm.checked = getSetting('watermark_enabled') === '1';
+  const status = document.getElementById('set-status');
+  if (status) status.textContent = '';
+}
+
+async function saveSettingsForm() {
+  const btn    = document.getElementById('set-save');
+  const status = document.getElementById('set-status');
+  btn.disabled = true;
+  if (status) status.textContent = 'Gemmer...';
+  try {
+    for (const k of SETTINGS_TEXT_KEYS) {
+      const el = document.getElementById('set-' + k);
+      if (el) await saveSetting(k, el.value.trim());
+    }
+    const wm = document.getElementById('set-watermark_enabled');
+    await saveSetting('watermark_enabled', wm && wm.checked ? '1' : '0');
+    applyWatermark();
+    renderHelpCars();
+    if (status) status.textContent = 'Gemt ✓';
+    toast('Indstillinger gemt', 'success');
+  } catch (err) {
+    if (status) status.textContent = '';
+    toast('Fejl ved gem: ' + (err.message || 'Ukendt'), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function downloadBackupNow() {
+  try {
+    const { data, error } = await db.from('bookings')
+      .select('*, cars(name), deliveries(*)')
+      .order('start_time', { ascending: true });
+    if (error) throw error;
+    const payload = {
+      generated_at: new Date().toISOString(),
+      club: getSetting('club_name'),
+      count: (data || []).length,
+      bookings: data || [],
+    };
+    downloadJSON(payload, `backup-bookinger-${todayStr()}.json`);
+    toast(`Backup med ${payload.count} bookinger hentet`, 'success');
+  } catch (err) {
+    toast('Fejl ved backup: ' + (err.message || 'Ukendt'), 'error');
+  }
+}
+
+document.getElementById('set-save')?.addEventListener('click', saveSettingsForm);
+document.getElementById('set-backup-now')?.addEventListener('click', downloadBackupNow);
 
 // Admin tab switching
 document.querySelectorAll('.admin-tab').forEach(tab => {
@@ -2105,6 +2347,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
     document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
     tab.classList.add('active');
     document.getElementById(`admin-tab-${tab.dataset.tab}`)?.classList.remove('hidden');
+    if (tab.dataset.tab === 'settings')    renderSettingsForm();
     if (tab.dataset.tab === 'log')         loadLog();
     if (tab.dataset.tab === 'bookings')    loadAllBookingsAdmin();
     if (tab.dataset.tab === 'deliveries')  loadAllDeliveriesAdmin();
@@ -2284,7 +2527,7 @@ document.getElementById('new-car-btn').addEventListener('click', async () => {
     document.getElementById('new-car-name').value = '';
     document.getElementById('new-car-km').value = '0';
     showError('new-car-error', '');
-    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid();
+    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid(); renderHelpCars();
   } catch (err) { showError('new-car-error', err.message); }
 });
 
@@ -2319,7 +2562,7 @@ document.getElementById('ecm-save').addEventListener('click', async () => {
     if (Object.keys(changes).length) await logActivity('bil_aendret', carId, null, null, changes);
     document.getElementById('edit-car-modal').classList.add('hidden');
     toast(`${name} opdateret`, 'success');
-    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid();
+    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid(); renderHelpCars();
   } catch (err) { showError('ecm-error', err.message); }
 });
 
@@ -2331,7 +2574,7 @@ async function deleteCarPrompt(carId) {
     await logActivity('bil_slettet', carId, null, null, { name: car?.name });
     toast(`${car?.name} slettet`, 'info');
     state.enabledCars.delete(carId);
-    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid();
+    await loadCars(); renderAdminCars(); renderCarToggles(); renderCalendarGrid(); renderHelpCars();
   } catch (err) { toast('Fejl: ' + err.message, 'error'); }
 }
 
@@ -3049,9 +3292,13 @@ async function init() {
     initPinLock();
     initPinWizard();
 
+    await loadSettings();
+    applyWatermark();
     await loadCars();
     await Promise.all([loadBookingsForCurrentView(), loadMembers()]);
     renderCalendar();
+    renderHelpCars();
+    renderUserBadge();
 
     await checkPinOnLoad();
 

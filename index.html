@@ -11,6 +11,7 @@
   <!-- Navigation -->
   <nav class="topnav">
     <div class="logo" id="logo-btn">&#128663; Delebilsklub</div>
+    <span id="nav-user-badge" class="nav-user-badge hidden"></span>
     <div class="nav-links">
       <button class="nav-btn" id="nav-mine-bookinger">🗓️ Mine bookinger</button>
       <button class="nav-btn" id="nav-regnskab">📊 Mit regnskab</button>
@@ -104,8 +105,8 @@
               <div><strong>Filtrer biler</strong> — klik på bilknapperne øverst for at til- eller fravælge biler i visningen</div>
             </div>
           </div>
-          <div class="help-tip">
-            Farverne svarer til bilerne: <strong style="color:#1D4ED8">blå = ID3</strong>, <strong style="color:#047857">grøn = Renault Zoe</strong>, <strong style="color:#B45309">amber = Berlingo</strong>, <strong style="color:#6D28D9">lilla = ID Buzz</strong>
+          <div class="help-tip" id="help-cars-tip">
+            Farverne i kalenderen svarer til de enkelte biler.
           </div>
           <div class="help-tip" style="margin-top:8px">
             En booking over flere dage fylder hele søjlen på de dage den dækker — stiplede kanter viser at den fortsætter henover midnat. Afleverede bookinger vises i en lys udgave af bilens farve og viser varigheden, f.eks. <strong>2:45</strong>.
@@ -274,12 +275,7 @@
         <!-- BILER -->
         <div class="help-section help-cars-section">
           <h2 style="margin-bottom:14px">Klubbens biler</h2>
-          <div class="help-cars-grid">
-            <div class="help-car" style="background:#1D4ED8"><span>ID3</span></div>
-            <div class="help-car" style="background:#047857"><span>Renault Zoe</span></div>
-            <div class="help-car" style="background:#B45309"><span>Berlingo</span></div>
-            <div class="help-car" style="background:#6D28D9"><span>ID Buzz</span></div>
-          </div>
+          <div class="help-cars-grid" id="help-cars-grid"></div>
         </div>
 
       </div><!-- end help-content -->
@@ -744,6 +740,7 @@
         <button class="admin-tab" data-tab="log">&#128221; Log</button>
         <button class="admin-tab" data-tab="brugere">👥 Brugere</button>
         <button class="admin-tab" data-tab="charging">🔌 Lader</button>
+        <button class="admin-tab" data-tab="settings">⚙️ Indstillinger</button>
         <button class="admin-tab" data-tab="guide">📖 Vejledning</button>
         <button class="admin-tab" data-tab="trash">🗑️</button>
         <button id="admin-logout-btn" class="btn-sm" style="margin-left:auto;align-self:center;margin-right:8px">Log ud</button>
@@ -828,14 +825,18 @@
             <div class="export-wrap">
               <button id="ad-export-btn" class="btn-sm">&#8659; Eksporter</button>
               <div id="ad-export-menu" class="export-menu hidden">
+                <div class="export-menu-label">Samtlige afleveringer</div>
                 <button onclick="exportAdminData('deliveries','csv')">&#128196; CSV (Excel)</button>
                 <button onclick="exportAdminData('deliveries','json')">{ } JSON</button>
+                <div class="export-menu-label">Valgt regnskabsperiode</div>
+                <button onclick="exportDeliveriesPeriod('csv')">&#128196; CSV (Excel)</button>
+                <button onclick="exportDeliveriesPeriod('json')">{ } JSON</button>
               </div>
             </div>
             <button id="ad-edit-toggle" class="btn-sm">&#9998; Rediger</button>
             <select id="ad-filter-car"><option value="">Alle biler</option></select>
             <button id="ad-refresh" class="btn-sm">&#8635; Opdater</button>
-            <button id="ad-regnskab-toggle" class="btn-sm">&#128202; Regnskab</button>
+            <button id="ad-regnskab-toggle" class="btn-sm btn-primary">&#128202; Komplet regnskab</button>
           </div>
         </div>
         <div id="ad-edit-bar" class="edit-bar hidden">
@@ -855,13 +856,13 @@
         </div>
 
         <!-- Regnskabspanel -->
-        <div id="ad-regnskab-panel" class="hidden" style="border-top:2px solid var(--border);padding:14px 20px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-            <strong>📊 Komplet regnskab</strong>
-            <select id="ad-regnskab-period" style="flex:1;max-width:220px">
+        <div id="ad-regnskab-panel" class="regnskab-panel hidden">
+          <div class="regnskab-panel-head">
+            <h2 style="margin:0">📊 Komplet regnskab</h2>
+            <select id="ad-regnskab-period" style="max-width:220px">
               <option value="">Alle perioder</option>
             </select>
-            <button id="ad-regnskab-calc" class="btn-sm btn-primary">Beregn</button>
+            <button id="ad-regnskab-calc" class="btn-primary">Beregn</button>
           </div>
           <div id="ad-regnskab-content"></div>
         </div>
@@ -918,6 +919,13 @@
           <button id="mbr-delete-btn" class="btn-danger" style="display:none">Slet valgte</button>
           <button id="mbr-import-btn" class="btn-secondary" style="display:none">Importér CSV</button>
           <input type="file" id="mbr-csv-input" accept=".csv" style="display:none">
+          <div class="export-wrap">
+            <button id="mbr-export-btn" class="btn-secondary">&#8659; Eksportér</button>
+            <div id="mbr-export-menu" class="export-menu hidden">
+              <button onclick="exportMembers('csv')">&#128196; CSV (Excel)</button>
+              <button onclick="exportMembers('json')">{ } JSON</button>
+            </div>
+          </div>
         </div>
         <div id="mbr-table-wrap"></div>
       </div>
@@ -960,6 +968,79 @@
                 <!-- Populated by JavaScript -->
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Indstillinger -->
+      <div id="admin-tab-settings" class="admin-tab-content hidden">
+        <div class="settings-wrap">
+
+          <div class="settings-card">
+            <h2>💰 Priser</h2>
+            <p class="muted">Bruges i Mit regnskab og Komplet regnskab. Standard = Berlingo/ID.3-kategori, El = Zoe/ID Buzz-kategori.</p>
+            <div class="settings-grid">
+              <label>Standard km-pris (0–100 km)<input type="number" step="0.01" id="set-price_standard_low"></label>
+              <label>Standard km-pris (over 100 km)<input type="number" step="0.01" id="set-price_standard_high"></label>
+              <label>Standard km-grænse<input type="number" id="set-price_standard_threshold"></label>
+              <label>El km-pris (0–100 km)<input type="number" step="0.01" id="set-price_electric_low"></label>
+              <label>El km-pris (over 100 km)<input type="number" step="0.01" id="set-price_electric_high"></label>
+              <label>El km-grænse<input type="number" id="set-price_electric_threshold"></label>
+              <label>Timepris (kr./t)<input type="number" step="0.01" id="set-price_hour"></label>
+              <label>Døgnpris (kr./døgn)<input type="number" step="0.01" id="set-price_day"></label>
+              <label>Fast månedligt bidrag (kr.)<input type="number" step="0.01" id="set-price_monthly_fee"></label>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h2>🧪 Prøveversion</h2>
+            <p class="muted">Viser et stort vandmærke på alle sider.</p>
+            <div class="settings-grid">
+              <label class="settings-check"><input type="checkbox" id="set-watermark_enabled"> Vis vandmærke på alle sider</label>
+              <label>Vandmærke-tekst<input type="text" id="set-watermark_text"></label>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h2>💾 Backup</h2>
+            <p class="muted">Automatisk backup af alle bookinger. Kører via serverjob (GitHub Actions) og sender en fil til den angivne mail.</p>
+            <div class="settings-grid">
+              <label>Frekvens
+                <select id="set-backup_frequency">
+                  <option value="weekly">Hver uge</option>
+                  <option value="biweekly">Hver 14. dag</option>
+                  <option value="monthly">Hver måned</option>
+                </select>
+              </label>
+              <label>Modtager-email (backup sendes hertil)<input type="email" id="set-backup_email"></label>
+            </div>
+            <button id="set-backup-now" class="btn-sm" style="margin-top:10px">⬇ Download backup nu</button>
+          </div>
+
+          <div class="settings-card">
+            <h2>✉️ SMTP (afsendelse af email)</h2>
+            <p class="muted" style="color:var(--danger)">⚠️ Adgangskoden gemmes i databasen og er læsbar med appens offentlige nøgle. Brug en dedikeret afsender-konto med begrænsede rettigheder — ikke din private mailadgangskode.</p>
+            <div class="settings-grid">
+              <label>SMTP-server<input type="text" id="set-smtp_host" placeholder="smtp.gmail.com"></label>
+              <label>Port<input type="number" id="set-smtp_port" placeholder="587"></label>
+              <label>Brugernavn<input type="text" id="set-smtp_user"></label>
+              <label>Adgangskode<input type="password" id="set-smtp_pass" autocomplete="new-password"></label>
+              <label>Afsender-adresse (From)<input type="email" id="set-smtp_from"></label>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h2>🏷️ Generelt</h2>
+            <div class="settings-grid">
+              <label>Klubbens navn<input type="text" id="set-club_name"></label>
+              <label>Kontakt-email (vises i vejledning)<input type="email" id="set-contact_email"></label>
+              <label>Maks. bookinglængde (dage)<input type="number" id="set-booking_max_days"></label>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <span id="set-status" class="muted"></span>
+            <button id="set-save" class="btn-primary">Gem indstillinger</button>
           </div>
         </div>
       </div>
