@@ -559,22 +559,22 @@ body {
 #admin-panel {
   display: flex; flex-direction: column; flex: 1; overflow: hidden;
 }
-.admin-tabs {
+.admin-tabs, .mb-tabs {
   display: flex;
   border-bottom: 2px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
   overflow-x: auto;
 }
-.admin-tab {
+.admin-tab, .mb-tab {
   padding: 11px 18px; border: none; background: none;
   cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted);
   border-bottom: 3px solid transparent; margin-bottom: -2px;
   white-space: nowrap; transition: color .15s, border-color .15s;
 }
-.admin-tab:hover { color: var(--text); }
-.admin-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
-.admin-tab-content { flex: 1; overflow: auto; overscroll-behavior: contain; }
+.admin-tab:hover, .mb-tab:hover { color: var(--text); }
+.admin-tab.active, .mb-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.admin-tab-content, .mb-tab-content { flex: 1; overflow: auto; overscroll-behavior: contain; }
 
 
 /* ===================== FIELD NOTE ===================== */

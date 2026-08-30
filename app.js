@@ -1594,8 +1594,8 @@ async function openMineBookinger() {
     sel.appendChild(opt);
   });
 
-  document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('#mine-bookinger-overlay .admin-tab[data-mbtab="upcoming"]').classList.add('active');
+  document.querySelectorAll('#mine-bookinger-overlay .mb-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('#mine-bookinger-overlay .mb-tab[data-mbtab="upcoming"]').classList.add('active');
   document.getElementById('mb-tab-upcoming').classList.remove('hidden');
   document.getElementById('mb-tab-past').classList.add('hidden');
 
@@ -1681,10 +1681,10 @@ document.getElementById('mb-member')?.addEventListener('change', () => {
   if (!memberId) { loadMineBookinger(''); return; }
   requirePin(memberId, () => loadMineBookinger(mbCurrentNavn()));
 });
-document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(btn => {
+document.querySelectorAll('#mine-bookinger-overlay .mb-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('#mine-bookinger-overlay .admin-tab-content').forEach(c => c.classList.add('hidden'));
+    document.querySelectorAll('#mine-bookinger-overlay .mb-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#mine-bookinger-overlay .mb-tab-content').forEach(c => c.classList.add('hidden'));
     btn.classList.add('active');
     document.getElementById('mb-tab-' + btn.dataset.mbtab)?.classList.remove('hidden');
   });
