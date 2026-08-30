@@ -28,7 +28,7 @@ jobs:
         env:
           SUPABASE_URL: https://fdwiooogkophykysbbrh.supabase.co
           SUPABASE_KEY: sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4
-        run: node backup/backup.mjs
+        run: node scripts/backup.mjs
 
       - name: Commit backup-fil
         run: |
