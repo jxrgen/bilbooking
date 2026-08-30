@@ -1578,6 +1578,119 @@ async function restoreFromTrash(trashId) {
 }
 
 // =============================================
+// MINE BOOKINGER
+// =============================================
+async function openMineBookinger() {
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('mine-bookinger-overlay').classList.remove('hidden');
+
+  const sel = document.getElementById('mb-member');
+  sel.innerHTML = '<option value="">Vælg bruger...</option>';
+  (window.membersCache || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.dataset.navn = m.navn;
+    opt.textContent = m.navn;
+    sel.appendChild(opt);
+  });
+
+  document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('#mine-bookinger-overlay .admin-tab[data-mbtab="upcoming"]').classList.add('active');
+  document.getElementById('mb-tab-upcoming').classList.remove('hidden');
+  document.getElementById('mb-tab-past').classList.add('hidden');
+
+  const prefs = loadPrefs();
+  if (prefs?.memberId) {
+    sel.value = prefs.memberId;
+    const opt = sel.options[sel.selectedIndex];
+    if (opt) {
+      const navn = opt.dataset.navn || prefs.navn || '';
+      requirePin(prefs.memberId, () => loadMineBookinger(navn));
+    }
+  }
+}
+
+function mbCurrentNavn() {
+  const sel = document.getElementById('mb-member');
+  const opt = sel?.options[sel.selectedIndex];
+  return opt ? (opt.dataset.navn || '') : '';
+}
+
+async function loadMineBookinger(memberNavn) {
+  const upcomingEl = document.getElementById('mb-upcoming-list');
+  const pastEl     = document.getElementById('mb-past-list');
+  if (!memberNavn) {
+    upcomingEl.innerHTML = '';
+    pastEl.innerHTML = '';
+    return;
+  }
+  upcomingEl.innerHTML = '<p style="padding:8px;color:var(--muted,#6b7280)">Henter...</p>';
+  pastEl.innerHTML     = '<p style="padding:8px;color:var(--muted,#6b7280)">Henter...</p>';
+
+  const { data: bookings } = await db.from('bookings')
+    .select('*, cars(id,name)')
+    .eq('user_name', memberNavn)
+    .order('start_time', { ascending: true });
+
+  const now = new Date();
+  const all = bookings || [];
+  const upcoming = all
+    .filter(b => b.status !== 'cancelled' && new Date(b.end_time) >= now);
+  const past = all
+    .filter(b => b.status === 'cancelled' || new Date(b.end_time) < now)
+    .sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+
+  const statusLabel = b => {
+    if (b.status === 'cancelled') return '<span style="color:var(--danger,#dc2626)">Annulleret</span>';
+    if (new Date(b.end_time) < now) return '<span style="color:var(--muted,#6b7280)">Afsluttet</span>';
+    return '<span style="color:#16a34a">Aktiv</span>';
+  };
+
+  const renderList = (list, emptyMsg) => {
+    if (!list.length) return `<p style="padding:16px;color:var(--muted,#6b7280)">${emptyMsg}</p>`;
+    return `<table class="admin-table" style="margin-top:8px"><thead><tr>
+      <th>Dato</th><th>Bil</th><th>Tid</th><th>Status</th><th>Note</th>
+    </tr></thead><tbody>${list.map(b => {
+      const start = new Date(b.start_time);
+      const dateStr = start.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+      const timeStr = start.toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' }) + '–' +
+        new Date(b.end_time).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+      const noteCell = b.personal_note ? `<span style="color:var(--muted,#6b7280);font-style:italic">${b.personal_note}</span>` : '';
+      return `<tr>
+        <td style="white-space:nowrap">${dateStr}</td>
+        <td>${b.cars?.name || '–'}</td>
+        <td style="white-space:nowrap;font-size:11px">${timeStr}</td>
+        <td>${statusLabel(b)}</td>
+        <td>${noteCell}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  };
+
+  upcomingEl.innerHTML = renderList(upcoming, 'Ingen kommende bookinger.');
+  pastEl.innerHTML     = renderList(past, 'Ingen tidligere bookinger.');
+}
+
+document.getElementById('nav-mine-bookinger')?.addEventListener('click', openMineBookinger);
+document.getElementById('mb-close')?.addEventListener('click', () => {
+  document.getElementById('mine-bookinger-overlay').classList.add('hidden');
+  if (!['calendar', 'help', 'admin'].includes(state.currentView)) setView('calendar');
+});
+document.getElementById('mb-member')?.addEventListener('change', () => {
+  const sel = document.getElementById('mb-member');
+  const memberId = sel.value;
+  if (!memberId) { loadMineBookinger(''); return; }
+  requirePin(memberId, () => loadMineBookinger(mbCurrentNavn()));
+});
+document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#mine-bookinger-overlay .admin-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#mine-bookinger-overlay .admin-tab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById('mb-tab-' + btn.dataset.mbtab)?.classList.remove('hidden');
+  });
+});
+
+// =============================================
 // MIT REGNSKAB
 // =============================================
 async function openRegnskab() {

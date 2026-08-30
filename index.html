@@ -12,6 +12,7 @@
   <nav class="topnav">
     <div class="logo" id="logo-btn">&#128663; Delebilsklub</div>
     <div class="nav-links">
+      <button class="nav-btn" id="nav-mine-bookinger">🗓️ Mine bookinger</button>
       <button class="nav-btn" id="nav-regnskab">📊 Mit regnskab</button>
       <button class="nav-btn" id="nav-pin">🔐 PIN</button>
       <button class="nav-btn" data-view="help">Vejledning</button>
@@ -658,6 +659,34 @@
       </div>
     </div><!-- end htab-etik -->
 
+  </div>
+
+  <!-- ===================== MINE BOOKINGER ===================== -->
+  <div id="mine-bookinger-overlay" class="view hidden">
+    <div class="help-scroll">
+      <div class="help-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h2 style="margin:0">🗓️ Mine bookinger</h2>
+          <button class="modal-close" id="mb-close">&#10005;</button>
+        </div>
+        <div class="regnskab-member-row">
+          <label>Bruger:</label>
+          <select id="mb-member" style="flex:1">
+            <option value="">Vælg bruger...</option>
+          </select>
+        </div>
+        <div class="admin-tabs" style="margin-top:14px">
+          <button class="admin-tab active" data-mbtab="upcoming">Kommende bookinger</button>
+          <button class="admin-tab" data-mbtab="past">Tidligere bookinger</button>
+        </div>
+        <div id="mb-tab-upcoming" class="admin-tab-content">
+          <div id="mb-upcoming-list"></div>
+        </div>
+        <div id="mb-tab-past" class="admin-tab-content hidden">
+          <div id="mb-past-list"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===================== MIT REGNSKAB ===================== -->
