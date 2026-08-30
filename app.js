@@ -124,6 +124,7 @@ const SETTINGS_DEFAULTS = {
   watermark_enabled:        '0',
   watermark_text:           'PRØVEVERSION',
   watermark_size:           '12',   // % af skærmbredde (vw)
+  watermark_opacity:        '13',   // % gennemsigtighed (0–100)
   club_name:                'Delebilsklub',
   booking_max_days:         '14',
   contact_email:            '',
@@ -156,6 +157,8 @@ function applyWatermark() {
   wm.textContent = text;
   const size = getSettingNum('watermark_size') || 12;
   wm.style.fontSize = size + 'vw';
+  const opacity = getSettingNum('watermark_opacity');
+  wm.style.opacity = (opacity ? opacity : 13) / 100;
 }
 
 // Brugerens navn øverst ved menuen
@@ -2283,7 +2286,7 @@ const SETTINGS_TEXT_KEYS = [
   'price_hour','price_day','price_monthly_fee',
   'backup_frequency','backup_email',
   'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from',
-  'watermark_text','watermark_size','club_name','contact_email','booking_max_days',
+  'watermark_text','watermark_size','watermark_opacity','club_name','contact_email','booking_max_days',
 ];
 
 function renderSettingsForm() {

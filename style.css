@@ -647,7 +647,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   pointer-events: none; overflow: hidden;
   font-size: 12vw; font-weight: 900; letter-spacing: .05em;
-  color: rgba(220, 38, 38, 0.13);
+  color: rgb(220, 38, 38); opacity: 0.13;
   transform: rotate(-30deg); text-transform: uppercase;
   white-space: nowrap; user-select: none;
 }
