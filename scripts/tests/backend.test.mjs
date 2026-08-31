@@ -170,13 +170,29 @@ export async function runBackendTests() {
   const updPwRows = Array.isArray(updPw.data) ? updPw.data.length : 0;
   check(G.sec, 'blokerer UPDATE af admin_password', () => !updPw.ok || updPwRows === 0);
   if (updPw.ok && updPwRows > 0) finding(G.sec, 'KRITISK: kunne ændre admin_password', 'RLS-politik beskytter ikke admin_password mod UPDATE');
-  // en almindelig indstilling KAN skrives (upsert) og læses
-  const testKey = 'zz_selftest_' + RUN;
-  const upTest = await req('POST', 'settings', { key: testKey, value: '1' });
-  check(G.sec, 'kan indsætte almindelig indstilling', () => upTest.ok);
-  if (upTest.ok) created.settings.push(testKey);
-  const upTest2 = await req('PATCH', `settings?key=eq.${testKey}`, { value: '2' });
-  check(G.sec, 'kan opdatere almindelig indstilling', () => upTest2.ok);
+  // En almindelig indstilling KAN opdateres og læses. Vi tester på en
+  // EKSISTERENDE nøgle (club_name) og skriver den oprindelige værdi tilbage,
+  // så der ikke efterlades nye rækker (settings har ingen DELETE-politik, så
+  // en oprettet nøgle kan ikke fjernes igen med den offentlige nøgle).
+  const cnRead = await req('GET', 'settings?select=value&key=eq.club_name');
+  const cnOrig = (Array.isArray(cnRead.data) && cnRead.data[0]) ? cnRead.data[0].value : null;
+  if (cnOrig !== null) {
+    const tmp = cnOrig + ' ';
+    const w1 = await req('PATCH', 'settings?key=eq.club_name', { value: tmp });
+    check(G.sec, 'kan opdatere almindelig indstilling (club_name)', () => w1.ok);
+    const rb = await req('GET', 'settings?select=value&key=eq.club_name');
+    eq(G.sec, 'opdatering af indstilling blev gemt', (Array.isArray(rb.data) && rb.data[0]) ? rb.data[0].value : null, tmp);
+    const w2 = await req('PATCH', 'settings?key=eq.club_name', { value: cnOrig }); // gendan
+    check(G.sec, 'gendannede oprindelig club_name', () => w2.ok);
+  } else {
+    record(G.sec, 'club_name findes ikke — springer skrivetest over', 'PASS');
+  }
+  // Observation: settings mangler en DELETE-politik → DELETE med offentlig
+  // nøgle returnerer 200 men sletter 0 rækker (tavs no-op).
+  finding(G.sec, 'settings har ingen DELETE-politik (tavs no-op)',
+    'En DELETE mod settings med den offentlige nøgle returnerer HTTP 200, men fjerner ingen rækker ' +
+    '(RLS uden DELETE-politik = afvist, men PostgREST svarer alligevel 200). ' +
+    'Det er fint sikkerhedsmæssigt, men betyder at oprettede nøgler ikke kan ryddes op via API.');
   // Er admin_password overhovedet læsbar med offentlig nøgle? (observation)
   const pwRead = await req('GET', 'settings?select=key,value&key=eq.admin_password');
   if (pwRead.ok && Array.isArray(pwRead.data) && pwRead.data.length && pwRead.data[0].value) {
@@ -249,7 +265,7 @@ export async function verifyClean(RUN) {
   leftover.members = Array.isArray(m.data) ? m.data.length : '?';
   const b = await req('GET', `bookings?select=id&notes=eq.${RUN}`);
   leftover.bookings = Array.isArray(b.data) ? b.data.length : '?';
-  const s = await req('GET', `settings?select=key&key=like.zz_selftest_%`);
+  const s = await req('GET', `settings?select=key&key=like.zz_selftest_*`);
   leftover.settings = Array.isArray(s.data) ? s.data.length : '?';
   return leftover;
 }
