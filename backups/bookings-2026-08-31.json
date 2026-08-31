@@ -1,0 +1,1027 @@
+{
+  "generated_at": "2026-08-31T19:33:53.068Z",
+  "club": "Delebilsklub",
+  "count": 46,
+  "bookings": [
+    {
+      "id": "25492aa6-dfcc-4027-851b-44bd87cf3ddf",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 80,
+      "start_km": 100223,
+      "start_time": "2026-05-30T23:30:00+00:00",
+      "end_time": "2026-05-31T12:45:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T12:21:02.833317+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": [
+        {
+          "id": "8e5fc2a4-a1ac-4b3e-a849-66370fd7a4ae",
+          "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+          "end_km": 100321,
+          "comments": "",
+          "start_km": 100245,
+          "km_driven": 76,
+          "booking_id": "25492aa6-dfcc-4027-851b-44bd87cf3ddf",
+          "created_at": "2026-05-31T12:39:44.70543+00:00",
+          "duration_quarters": 53
+        }
+      ]
+    },
+    {
+      "id": "8554872a-d203-4b76-9cc3-919de144212c",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 125,
+      "start_km": 99,
+      "start_time": "2026-05-31T10:00:00+00:00",
+      "end_time": "2026-05-31T11:45:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T11:40:25.041672+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": [
+        {
+          "id": "0eecdae1-c798-4348-8461-b4fa7c280b49",
+          "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+          "end_km": 123,
+          "comments": "",
+          "start_km": 99,
+          "km_driven": 24,
+          "booking_id": "8554872a-d203-4b76-9cc3-919de144212c",
+          "created_at": "2026-05-31T11:40:53.276975+00:00",
+          "duration_quarters": 7
+        }
+      ]
+    },
+    {
+      "id": "1be7a3b9-f938-4827-923f-ddac430631f1",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 90,
+      "start_km": 112266,
+      "start_time": "2026-05-31T10:00:00+00:00",
+      "end_time": "2026-05-31T12:30:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T12:28:30.969746+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": [
+        {
+          "id": "62a60045-18ea-4e28-8193-447ce67bcb73",
+          "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+          "end_km": 112333,
+          "comments": "",
+          "start_km": 112266,
+          "km_driven": 67,
+          "booking_id": "1be7a3b9-f938-4827-923f-ddac430631f1",
+          "created_at": "2026-05-31T12:29:49.022339+00:00",
+          "duration_quarters": 10
+        }
+      ]
+    },
+    {
+      "id": "1c3a0fc2-2f8d-4f16-a655-954a905827b2",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 80,
+      "start_km": 88,
+      "start_time": "2026-05-31T11:00:00+00:00",
+      "end_time": "2026-05-31T11:15:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T11:13:40.200711+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": [
+        {
+          "id": "0fd5a2ff-22bd-4859-8f9a-74066ff33a83",
+          "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+          "end_km": 99,
+          "comments": "Fladt baghjul",
+          "start_km": 88,
+          "km_driven": 11,
+          "booking_id": "1c3a0fc2-2f8d-4f16-a655-954a905827b2",
+          "created_at": "2026-05-31T11:18:38.656316+00:00",
+          "duration_quarters": 1
+        }
+      ]
+    },
+    {
+      "id": "721a6eee-11f1-450b-94fd-aaca69980bfb",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 50,
+      "start_km": 212121,
+      "start_time": "2026-05-31T11:00:00+00:00",
+      "end_time": "2026-05-31T12:00:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T11:14:17.49266+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "1241ef99-a9ed-4af8-9399-d28a2fe2b70b",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212132,
+          "comments": "",
+          "start_km": 212121,
+          "km_driven": 11,
+          "booking_id": "721a6eee-11f1-450b-94fd-aaca69980bfb",
+          "created_at": "2026-05-31T11:19:14.71259+00:00",
+          "duration_quarters": 4
+        }
+      ]
+    },
+    {
+      "id": "5314b523-4ffc-4a1b-8ba6-f4fff5003394",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 30,
+      "start_km": 123,
+      "start_time": "2026-05-31T11:30:00+00:00",
+      "end_time": "2026-05-31T13:30:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T12:14:12.43222+00:00",
+      "personal_note": "Firma",
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": [
+        {
+          "id": "b1e07685-e242-4bbd-9c9c-eee44d29c77a",
+          "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+          "end_km": 257,
+          "comments": "",
+          "start_km": 123,
+          "km_driven": 134,
+          "booking_id": "5314b523-4ffc-4a1b-8ba6-f4fff5003394",
+          "created_at": "2026-05-31T12:16:21.9616+00:00",
+          "duration_quarters": 8
+        }
+      ]
+    },
+    {
+      "id": "0237f9be-769d-49d1-ab2c-dd4a27661151",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 200,
+      "start_km": 212132,
+      "start_time": "2026-05-31T12:00:00+00:00",
+      "end_time": "2026-05-31T13:30:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T13:18:36.803128+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "19ba75b9-96b2-4330-b690-10fe86842c45",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212345,
+          "comments": "",
+          "start_km": 212132,
+          "km_driven": 213,
+          "booking_id": "0237f9be-769d-49d1-ab2c-dd4a27661151",
+          "created_at": "2026-05-31T15:37:26.922281+00:00",
+          "duration_quarters": 6
+        }
+      ]
+    },
+    {
+      "id": "2f0b7046-8c8d-4388-a20a-a5723b74b011",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 125,
+      "start_km": 100223,
+      "start_time": "2026-05-31T12:00:00+00:00",
+      "end_time": "2026-05-31T13:00:00+00:00",
+      "status": "completed",
+      "notes": "Jeg kørte en struds mere ned",
+      "created_at": "2026-05-31T12:24:28.268131+00:00",
+      "personal_note": "Privat",
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": [
+        {
+          "id": "e840b2cf-05e1-4dfd-be77-c82c998549b6",
+          "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+          "end_km": 100245,
+          "comments": "",
+          "start_km": 100223,
+          "km_driven": 22,
+          "booking_id": "2f0b7046-8c8d-4388-a20a-a5723b74b011",
+          "created_at": "2026-05-31T12:24:47.853271+00:00",
+          "duration_quarters": 4
+        }
+      ]
+    },
+    {
+      "id": "fa00d9c6-4a71-4893-a62b-82dcdef36bb3",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 200,
+      "start_km": 112791,
+      "start_time": "2026-05-31T12:30:00+00:00",
+      "end_time": "2026-05-31T14:00:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T12:40:39.26712+00:00",
+      "personal_note": "Tur til Holstebro",
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": [
+        {
+          "id": "3c17f9e0-6bb5-403a-a9ef-ffd4b63bb93c",
+          "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+          "end_km": 112791,
+          "comments": "Der fløj en myg mod forruden",
+          "start_km": 112333,
+          "km_driven": 458,
+          "booking_id": "fa00d9c6-4a71-4893-a62b-82dcdef36bb3",
+          "created_at": "2026-05-31T12:41:33.537785+00:00",
+          "duration_quarters": 1
+        }
+      ]
+    },
+    {
+      "id": "34411b99-1aa8-4f95-a546-71e87b730178",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 7,
+      "start_km": 112791,
+      "start_time": "2026-05-31T13:30:00+00:00",
+      "end_time": "2026-05-31T15:00:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T13:31:30.467954+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": [
+        {
+          "id": "01ee53fc-4c4f-455a-9ebb-26709e49a8fa",
+          "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+          "end_km": 112880,
+          "comments": "",
+          "start_km": 112791,
+          "km_driven": 89,
+          "booking_id": "34411b99-1aa8-4f95-a546-71e87b730178",
+          "created_at": "2026-05-31T15:37:51.884614+00:00",
+          "duration_quarters": 6
+        }
+      ]
+    },
+    {
+      "id": "f0817dd4-c87c-4864-9c23-d66c188c48a0",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Henrik Hermind",
+      "phone": "23982538",
+      "expected_km": 10,
+      "start_km": 212132,
+      "start_time": "2026-05-31T15:30:00+00:00",
+      "end_time": "2026-05-31T16:30:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T15:48:01.348437+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "c2fe3e16-8abc-4ed7-9079-3e9fbd485ffa",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212135,
+          "comments": "",
+          "start_km": 212132,
+          "km_driven": 3,
+          "booking_id": "f0817dd4-c87c-4864-9c23-d66c188c48a0",
+          "created_at": "2026-05-31T16:00:47.580743+00:00",
+          "duration_quarters": 2
+        }
+      ]
+    },
+    {
+      "id": "2579d4e8-75fb-4f28-bd58-c7ba0abfa3f0",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Grethe Thomsen",
+      "phone": "40341558",
+      "expected_km": 10,
+      "start_km": 212135,
+      "start_time": "2026-05-31T15:45:00+00:00",
+      "end_time": "2026-05-31T16:30:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-05-31T16:20:50.021761+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "f26a1e74-bd04-4cce-a947-02425ebc7ed0",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212142,
+          "comments": "",
+          "start_km": 212135,
+          "km_driven": 7,
+          "booking_id": "2579d4e8-75fb-4f28-bd58-c7ba0abfa3f0",
+          "created_at": "2026-05-31T16:32:49.349475+00:00",
+          "duration_quarters": 3
+        }
+      ]
+    },
+    {
+      "id": "0dd5bb4d-bd0a-4885-8d0c-5c5e0675057f",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Henrik Hermind",
+      "phone": "23982538",
+      "expected_km": 30,
+      "start_km": 100321,
+      "start_time": "2026-06-01T10:30:00+00:00",
+      "end_time": "2026-06-01T11:45:00+00:00",
+      "status": "active",
+      "notes": "Aflyses måske",
+      "created_at": "2026-05-31T15:32:45.089578+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "be3292a9-f341-4864-9362-7c5ca95d78a6",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Henrik Hermind",
+      "phone": "23982538",
+      "expected_km": 20,
+      "start_km": 212132,
+      "start_time": "2026-06-01T11:30:00+00:00",
+      "end_time": "2026-06-03T12:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-05-31T15:40:02.935608+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "bca819e3-5dd6-4026-90e6-0dcdff00a60a",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Henrik Hermind",
+      "phone": "23982538",
+      "expected_km": 30,
+      "start_km": 100321,
+      "start_time": "2026-06-01T12:00:00+00:00",
+      "end_time": "2026-06-01T14:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-05-31T15:34:38.181731+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "af821cfb-0899-4236-8c7f-df729ff2c019",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Grethe Thomsen",
+      "phone": "40341558",
+      "expected_km": 10,
+      "start_km": 100321,
+      "start_time": "2026-06-01T14:45:00+00:00",
+      "end_time": "2026-06-01T15:45:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-05-31T16:39:20.719133+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "5e2bf5d2-4ce0-4818-9eca-57e9e9152288",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 50,
+      "start_km": 257,
+      "start_time": "2026-06-03T19:30:00+00:00",
+      "end_time": "2026-06-03T20:45:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-06-03T19:56:49.674208+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": [
+        {
+          "id": "c2ae8860-5576-47f9-9164-1c02897918ef",
+          "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+          "end_km": 269,
+          "comments": "",
+          "start_km": 257,
+          "km_driven": 12,
+          "booking_id": "5e2bf5d2-4ce0-4818-9eca-57e9e9152288",
+          "created_at": "2026-06-03T20:50:29.120236+00:00",
+          "duration_quarters": 5
+        }
+      ]
+    },
+    {
+      "id": "e9b326e5-cb1e-4a0c-951b-e87d9b3659c6",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 55,
+      "start_km": 257,
+      "start_time": "2026-06-03T23:15:00+00:00",
+      "end_time": "2026-06-04T00:15:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-06-03T20:08:50.164879+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "c2a47bb2-a517-40d2-bf89-a9a88cb1510d",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 234,
+      "start_km": 257,
+      "start_time": "2026-06-03T23:45:00+00:00",
+      "end_time": "2026-06-04T00:45:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-06-03T20:22:12.527158+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "571c9bf0-b2ce-44f7-9595-029493d0ffaf",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 22,
+      "start_km": 257,
+      "start_time": "2026-06-04T01:30:00+00:00",
+      "end_time": "2026-06-04T02:30:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-06-03T20:31:33.203274+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "fc44c2c1-6b6a-4ba2-b555-7dad2fd60d94",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 123,
+      "start_km": 212142,
+      "start_time": "2026-06-04T02:00:00+00:00",
+      "end_time": "2026-06-04T03:00:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-06-03T20:22:52.003211+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "d8e5af3f-f5e8-47c9-929a-7591e49fa636",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 212142,
+      "start_time": "2026-06-15T06:00:00+00:00",
+      "end_time": "2026-06-15T10:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-06-12T08:17:38.841396+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "a78e04ac-1ddb-49cf-b233-bd241c3ef3ea",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 222,
+      "start_km": 269,
+      "start_time": "2026-06-25T10:00:00+00:00",
+      "end_time": "2026-06-25T14:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-06-24T12:09:24.994542+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "5a25af81-5fe7-4b24-8612-76d908c795ff",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 112880,
+      "start_time": "2026-07-04T21:15:00+00:00",
+      "end_time": "2026-07-04T23:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-04T21:06:55.475577+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "c478f229-261b-43e7-9531-f64d9551e899",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 123,
+      "start_km": 269,
+      "start_time": "2026-07-06T15:15:00+00:00",
+      "end_time": "2026-07-06T17:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-04T21:07:29.417304+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "2bf14022-4659-4a7b-acb5-4ec78d421d5e",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 200,
+      "start_km": 112880,
+      "start_time": "2026-07-06T16:00:00+00:00",
+      "end_time": "2026-07-06T18:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-04T21:07:49.681523+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "8c43e9a9-0026-4798-9df1-658af3ec7c5f",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 99,
+      "start_km": 100321,
+      "start_time": "2026-07-08T15:00:00+00:00",
+      "end_time": "2026-07-08T17:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-05T12:06:55.877775+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "8e420607-27c6-42fb-bc36-3d80ac5c67c3",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 212142,
+      "start_time": "2026-07-24T03:00:00+00:00",
+      "end_time": "2026-07-24T04:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-22T08:45:52.62099+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "ab6ea84e-0c6f-47e2-af38-53ae3a15c6f3",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 147,
+      "start_km": 100321,
+      "start_time": "2026-07-30T13:00:00+00:00",
+      "end_time": "2026-07-30T16:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-07-25T08:25:47.153703+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "a5faa7db-af64-4d9c-b527-0499664f3702",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Aksel Striim",
+      "phone": "52444333",
+      "expected_km": 234,
+      "start_km": 212142,
+      "start_time": "2026-08-04T11:00:00+00:00",
+      "end_time": "2026-08-04T15:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-04T11:26:36.791087+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "8e1ff4a2-1c6f-4be2-bb4b-27dfd2d7c9f5",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 11,
+      "start_km": 212142,
+      "start_time": "2026-08-06T11:00:00+00:00",
+      "end_time": "2026-08-06T16:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-04T11:26:14.257054+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "27db1e53-5d5e-49d0-a20b-fbc23caba838",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 300,
+      "start_km": 212142,
+      "start_time": "2026-08-13T10:45:00+00:00",
+      "end_time": "2026-08-13T16:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-13T06:11:52.076367+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "aeb62425-0abf-4975-82f6-4930dc5cea07",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 20,
+      "start_km": 112880,
+      "start_time": "2026-08-14T11:30:00+00:00",
+      "end_time": "2026-08-14T12:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-13T06:12:09.54134+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "e4575dac-9c28-4fde-9888-8e3b1efb2769",
+      "car_id": "8d588d74-185f-4b18-9b33-59497d772731",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 50,
+      "start_km": 112880,
+      "start_time": "2026-08-19T14:30:00+00:00",
+      "end_time": "2026-08-19T16:30:00+00:00",
+      "status": "active",
+      "notes": null,
+      "created_at": "2026-08-30T18:43:55.542235+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Berlingo"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "2e55a4dc-5e5a-4c44-bc48-23c028e2d8b7",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 100,
+      "start_km": 100321,
+      "start_time": "2026-08-20T10:15:00+00:00",
+      "end_time": "2026-08-20T15:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-19T07:39:48.57156+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "2429fc24-e72e-47d1-bd01-8de70ed2f7f6",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 212142,
+      "start_time": "2026-08-21T10:00:00+00:00",
+      "end_time": "2026-08-21T12:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-19T12:05:28.003023+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "aa9fd734-f93d-4e06-ac15-b16e979d7944",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 45,
+      "start_km": 212142,
+      "start_time": "2026-08-29T06:30:00+00:00",
+      "end_time": "2026-08-29T07:15:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-08-29T07:07:59.966614+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "1a58529c-3bb3-4251-ba21-21775e70de35",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212158,
+          "comments": "",
+          "start_km": 212142,
+          "km_driven": 16,
+          "booking_id": "aa9fd734-f93d-4e06-ac15-b16e979d7944",
+          "created_at": "2026-08-29T07:08:38.379643+00:00",
+          "duration_quarters": 3
+        }
+      ]
+    },
+    {
+      "id": "b294c939-1b34-4133-a485-087c913d0260",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Gunnar Olesen",
+      "phone": "24269933",
+      "expected_km": 20,
+      "start_km": 100321,
+      "start_time": "2026-08-30T17:00:00+00:00",
+      "end_time": "2026-08-30T18:15:00+00:00",
+      "status": "completed",
+      "notes": "",
+      "created_at": "2026-08-30T18:22:00.796095+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": [
+        {
+          "id": "d04dfb3e-9ac4-4daf-891b-3209a884f692",
+          "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+          "end_km": 100333,
+          "comments": "",
+          "start_km": 100321,
+          "km_driven": 12,
+          "booking_id": "b294c939-1b34-4133-a485-087c913d0260",
+          "created_at": "2026-08-30T18:23:03.600519+00:00",
+          "duration_quarters": 5
+        }
+      ]
+    },
+    {
+      "id": "00a6fd56-6704-41e7-9ade-391d89ceec72",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 212158,
+      "start_time": "2026-08-30T17:45:00+00:00",
+      "end_time": "2026-08-30T18:15:00+00:00",
+      "status": "completed",
+      "notes": "Måske kommer jeg tidligere hjem.",
+      "created_at": "2026-08-30T16:41:39.929815+00:00",
+      "personal_note": "Husk at handle på vejen hjem.",
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": [
+        {
+          "id": "5a6beb3d-d3ad-47ca-8225-591ca09c4882",
+          "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+          "end_km": 212200,
+          "comments": "Der kom en bule i skærmen",
+          "start_km": 212158,
+          "km_driven": 42,
+          "booking_id": "00a6fd56-6704-41e7-9ade-391d89ceec72",
+          "created_at": "2026-08-30T18:11:17.456016+00:00",
+          "duration_quarters": 2
+        }
+      ]
+    },
+    {
+      "id": "5768c242-5aa5-4c80-b71b-f1b2ee436993",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 30,
+      "start_km": 212158,
+      "start_time": "2026-08-30T19:00:00+00:00",
+      "end_time": "2026-08-30T20:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-30T19:08:29.83739+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "99999771-3e9f-4a91-a501-f8462f5f5911",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 50,
+      "start_km": 212158,
+      "start_time": "2026-08-30T19:15:00+00:00",
+      "end_time": "2026-08-30T20:15:00+00:00",
+      "status": "cancelled",
+      "notes": "",
+      "created_at": "2026-08-30T17:39:33.837088+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "5b2c7f60-c4e0-4b8d-9a1f-ade1617fc0fc",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Randi Romvig",
+      "phone": "40626926",
+      "expected_km": 50,
+      "start_km": 269,
+      "start_time": "2026-08-30T19:30:00+00:00",
+      "end_time": "2026-08-30T20:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-30T17:39:57.688185+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "3a1f68b4-8e74-4890-acf8-beaedeb90062",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 25,
+      "start_km": 100321,
+      "start_time": "2026-08-30T20:00:00+00:00",
+      "end_time": "2026-08-31T20:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-30T17:42:00.67714+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "009b4a73-466a-4043-b65f-b5f2c3fb9f51",
+      "car_id": "04be4a35-4cb6-4552-beef-b82780cbeecc",
+      "user_name": "Gunnar Olesen",
+      "phone": "24269933",
+      "expected_km": 80,
+      "start_km": 212200,
+      "start_time": "2026-08-31T17:15:00+00:00",
+      "end_time": "2026-08-31T20:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-30T18:18:56.11134+00:00",
+      "personal_note": "OVE",
+      "cars": {
+        "name": "Renault Zoe"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "be768b22-8b89-497c-a17c-615fbc1ec48a",
+      "car_id": "d7657dfc-70d2-4123-9369-3872caff91fb",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 145,
+      "start_km": 269,
+      "start_time": "2026-09-02T06:00:00+00:00",
+      "end_time": "2026-09-02T12:00:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-28T12:27:39.431095+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "ID Buzz"
+      },
+      "deliveries": []
+    },
+    {
+      "id": "3554ab98-2ba6-4b4b-9ea1-65d886acf577",
+      "car_id": "97bd441a-c72a-4630-89b8-4c48354264b3",
+      "user_name": "Jørgen Holm",
+      "phone": "42520000",
+      "expected_km": 120,
+      "start_km": 100321,
+      "start_time": "2026-09-05T18:30:00+00:00",
+      "end_time": "2026-09-05T19:30:00+00:00",
+      "status": "active",
+      "notes": "",
+      "created_at": "2026-08-30T18:16:19.228856+00:00",
+      "personal_note": null,
+      "cars": {
+        "name": "VW ID3"
+      },
+      "deliveries": []
+    }
+  ]
+}
