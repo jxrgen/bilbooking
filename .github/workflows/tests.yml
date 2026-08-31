@@ -1,0 +1,37 @@
+name: Test af systemet
+
+on:
+  workflow_dispatch: # Kør manuelt fra Actions-fanen
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Hent repo
+        uses: actions/checkout@v4
+
+      - name: Opsæt Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Kør testsuite
+        env:
+          TZ: Europe/Copenhagen
+          SUPABASE_URL: https://fdwiooogkophykysbbrh.supabase.co
+          SUPABASE_KEY: sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4
+        run: node scripts/tests/run-all.mjs
+
+      - name: Commit testlog
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add TEST-LOG.md
+          if git diff --staged --quiet; then
+            echo "Ingen ændring i testlog."
+          else
+            git commit -m "Testlog fra automatisk systemtest [skip ci]"
+            git push
+          fi
