@@ -8,7 +8,7 @@
 - **Tests i alt:** 696
 - ✅ **Bestået:** 696
 - ❌ **Fejlet:** 0
-- 🔎 **Observationer (findings):** 5
+- 🔎 **Observationer (findings):** 6
 
 ### ❌ Fejlede tests
 
@@ -26,11 +26,17 @@ _Ingen fejlede tests._
   - SELECT-politikken tillader anon at læse alle settings, inkl. admin_password-hash/-værdi. Overvej at flytte admin-login til en Edge Function eller begrænse SELECT på den nøgle.
 - **[Backend — overlap & samtidighed] Ingen DB-constraint mod dobbeltbooking (race condition)**
   - To overlappende bookinger indsat samtidigt lykkedes begge. createBooking/updateBooking laver kun et forhåndstjek i JS før INSERT — mellem tjek og INSERT kan en anden bruger nå at booke samme bil. Anbefaling: tilføj en PostgreSQL EXCLUDE-constraint (btree_gist) på (car_id WITH =, tsrange(start,end) WITH &&) hvor status=active, så databasen selv afviser overlap.
+- **[Backend — settings & sikkerhed] settings-tabellen har ingen DELETE-politik (tavs no-op)**
+  - En DELETE mod `settings` med den offentlige nøgle returnerer HTTP 200, men fjerner 0 rækker (RLS uden DELETE-politik afviser sletningen, mens PostgREST alligevel svarer 200). Sikkerhedsmæssigt fint, men betyder at nøgler oprettet med den offentlige nøgle ikke kan ryddes op igen via API'et. Testsuiten er efterfølgende rettet til ikke at oprette nye nøgler.
 
 ## Oprydning af testdata
 
-- Slettede rækker: bookinger 5, medlemmer 5, leveringer 1, indstillinger 1
-- Efterladt testdata (skal være 0): medlemmer 0, bookinger 0, indstillinger ? ⚠️
+- Slettede rækker: bookinger 5, medlemmer 5, leveringer 1
+- Efterladt testdata: medlemmer 0 ✅, bookinger 0 ✅ (46 bookinger = uændret ift. før test)
+- ⚠️ **Én udestående oprydning:** testnøglen `zz_selftest_ZZTEST_1788208168843` (værdi `"2"`) i settings kunne IKKE slettes med den offentlige nøgle (se observation om manglende DELETE-politik). Den er harmløs (ukendt nøgle som hverken app eller backup læser), men fjernes helt ved at køre denne linje i Supabase → SQL Editor:
+  ```sql
+  DELETE FROM settings WHERE key LIKE 'zz_selftest_%';
+  ```
 
 ## Detaljeret log (grupperet efter type)
 
