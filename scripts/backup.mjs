@@ -41,7 +41,8 @@ const now  = new Date();
 const day  = now.getUTCDate();
 const week = isoWeek(now);
 let shouldRun;
-if (freq === 'weekly')        shouldRun = true;
+if (process.env.FORCE_BACKUP === 'true') shouldRun = true; // manuel kørsel
+else if (freq === 'weekly')        shouldRun = true;
 else if (freq === 'biweekly') shouldRun = week % 2 === 0;
 else                          shouldRun = day <= 7; // monthly: første kørsel i måneden
 
