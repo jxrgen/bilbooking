@@ -1,8 +1,8 @@
 // =============================================
 // CONFIG
 // =============================================
-const SUPABASE_URL = 'https://fdwiooogkophykysbbrh.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_TEUUw-SUTC_XyQ3aNK1VKg_s9A8WAf4';
+const SUPABASE_URL = location.origin;
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoid2ViX2Fub24iLCJleHAiOjE4OTM0NTYwMDB9.wBdcXw4miwMTDPZiAVtuT-927Q0DuLOasNW0r-gDa6w';
 const DAY_START_H  = 0;
 const DAY_END_H    = 24;
 const DAY_MINUTES  = (DAY_END_H - DAY_START_H) * 60; // 1440
@@ -116,7 +116,7 @@ const SETTINGS_DEFAULTS = {
   price_monthly_fee:        '75',
   backup_frequency:         'monthly',   // weekly | biweekly | monthly
   backup_email:             '',
-  smtp_host:                '',
+  smtp_host:                'smtp.gmail.com',
   smtp_port:                '587',
   smtp_user:                '',
   smtp_pass:                '',
@@ -129,7 +129,19 @@ const SETTINGS_DEFAULTS = {
   booking_max_days:         '14',
   contact_email:            '',
 };
-function getSetting(key)    { const v = window.appSettings[key]; return (v === undefined || v === null) ? (SETTINGS_DEFAULTS[key] ?? '') : v; }
+function getSetting(key)    { const v = window.appSettings[key]; return (v === undefined || v === null || v === '') ? (SETTINGS_DEFAULTS[key] ?? '') : v; }
+async function currentSmtp() {
+  await loadSettings();
+  const field = (id) => document.getElementById(id)?.value.trim() || '';
+  const pass = field('set-smtp_pass') || getSetting('smtp_pass');
+  return {
+    host: field('set-smtp_host') || getSetting('smtp_host'),
+    port: field('set-smtp_port') || getSetting('smtp_port') || '587',
+    user: field('set-smtp_user') || getSetting('smtp_user'),
+    pass: String(pass || '').replace(/\s+/g, ''),
+    from: field('set-smtp_from') || getSetting('smtp_from'),
+  };
+}
 function getSettingNum(key) { return parseFloat(getSetting(key)) || 0; }
 async function loadSettings() {
   const { data, error } = await db.from('settings').select('key, value');
@@ -199,20 +211,37 @@ function renderHelpCars() {
 // =============================================
 function getPrices() {
   return {
-    standard: { low: getSettingNum('price_standard_low'),  high: getSettingNum('price_standard_high'),  threshold: getSettingNum('price_standard_threshold') },
-    electric: { low: getSettingNum('price_electric_low'),  high: getSettingNum('price_electric_high'),  threshold: getSettingNum('price_electric_threshold') },
     hourRate: getSettingNum('price_hour'),
     dayRate:  getSettingNum('price_day'),
   };
 }
-function carPriceCategory(carName) {
-  const n = (carName || '').toLowerCase();
-  return (n.includes('zoe') || n.includes('buzz')) ? 'electric' : 'standard';
+function kmPriceOf(car) {
+  if (car && typeof car === 'object' && car.price_km_low != null && car.price_km_low !== '') {
+    return {
+      low: Number(car.price_km_low),
+      high: Number(car.price_km_high),
+      threshold: Number(car.price_km_threshold),
+    };
+  }
+  return {
+    low: getSettingNum('price_standard_low'),
+    high: getSettingNum('price_standard_high'),
+    threshold: getSettingNum('price_standard_threshold'),
+  };
 }
-function calcKmCost(km, carName) {
+function calcKmCost(km, car) {
   if (!km || km <= 0) return 0;
-  const p = getPrices()[carPriceCategory(carName)];
+  const source = (car && typeof car === 'object')
+    ? car
+    : (state.cars || []).find(c => c.name === car);
+  const p = kmPriceOf(source);
+  if (![p.low, p.high, p.threshold].every(Number.isFinite)) return 0;
   return km <= p.threshold ? km * p.low : p.threshold * p.low + (km - p.threshold) * p.high;
+}
+function carPriceText(car) {
+  const p = kmPriceOf(car);
+  const kr = n => n.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Standard km-pris: ${kr(p.low)} kr. op til ${p.threshold} km, derefter ${kr(p.high)} kr.`;
 }
 function calcTimeCost(durationMins) {
   const p = getPrices();
@@ -228,8 +257,11 @@ function priceFootnote() {
   const p = getPrices();
   const kr = n => n.toLocaleString('da-DK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fee = getSettingNum('price_monthly_fee');
-  return `Standard (Berlingo/ID.3): ${kr(p.standard.low)} kr./km (${kr(p.standard.high)} over ${p.standard.threshold} km) · ` +
-    `El (Zoe/ID Buzz): ${kr(p.electric.low)} kr./km (${kr(p.electric.high)} over ${p.electric.threshold} km) · ` +
+  const cars = (state.cars || []).map(c => {
+    const pr = kmPriceOf(c);
+    return `${c.name}: ${kr(pr.low)} kr./km (${kr(pr.high)} over ${pr.threshold} km)`;
+  }).join(' · ');
+  return (cars ? cars + ' · ' : '') +
     `${kr(p.hourRate)} kr./t · ${kr(p.dayRate)} kr./døgn` +
     (fee ? ` · Fast bidrag ${kr(fee)} kr./md (ikke inkluderet)` : '');
 }
@@ -864,6 +896,7 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
     }
     const selMember = (window.membersCache || []).find(m => m.id === memberSel.value);
     document.getElementById('bm-phone').value = selMember ? selMember.telefon : (editingBooking?.phone || '');
+    document.getElementById('bm-email').value = selMember?.email || '';
     document.getElementById('bm-remember').checked = !!prefs;
   }
 
@@ -937,6 +970,7 @@ function onStartChange() {
 document.getElementById('bm-member')?.addEventListener('change', function() {
   const m = (window.membersCache || []).find(mb => mb.id === this.value);
   document.getElementById('bm-phone').value = m ? m.telefon : '';
+  document.getElementById('bm-email').value = m?.email || '';
 });
 
 function closeBookingModal() {
@@ -950,6 +984,9 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
   const memberId = document.getElementById('bm-member')?.value;
   const member   = (window.membersCache || []).find(m => m.id === memberId);
   if (!member) return showError('bm-error', 'Vælg dit navn på listen.');
+  const email = document.getElementById('bm-email').value.trim();
+  if (!email) return showError('bm-error', 'Skriv mailadressen. Den gemmes på brugeren og bruges til kalenderen.');
+  if (!validEmail(email)) return showError('bm-error', 'Mailadressen er ikke gyldig.');
 
   requirePin(memberId, async () => {
     const carId        = document.getElementById('bm-car-id').value;
@@ -959,6 +996,9 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
     const startKm      = parseInt(document.getElementById('bm-start-km').value, 10);
     const notes        = document.getElementById('bm-notes').value.trim();
     const personalNote = document.getElementById('bm-personal-note').value.trim();
+
+    const emailError = await saveMemberEmail(member, email);
+    if (emailError) return showError('bm-error', emailError);
 
     if (!expKm || expKm < 0) return showError('bm-error', 'Forventet km skal være større end 0.');
 
@@ -1057,6 +1097,13 @@ async function openDetailModal(bookingId) {
   document.getElementById('dm-edit-btn').dataset.bookingId = bookingId;
   document.getElementById('dm-cancel-booking').dataset.bookingId = bookingId;
   document.getElementById('dm-deliver-btn').dataset.bookingId = bookingId;
+  document.getElementById('dm-calendar-btn').dataset.bookingId = bookingId;
+  ['dm-cal-google', 'dm-cal-outlook', 'dm-cal-other'].forEach(id => {
+    document.getElementById(id).dataset.bookingId = bookingId;
+  });
+  document.getElementById('dm-calendar-choices').classList.toggle('hidden', !isActive);
+  document.getElementById('dm-email-ask').classList.add('hidden');
+  showError('dm-email-error', '');
 
   const now        = new Date();
   const hasStarted = now >= new Date(b.start_time);
@@ -1132,6 +1179,199 @@ document.getElementById('dm-cancel-booking').addEventListener('click', async fun
 document.getElementById('dm-deliver-btn').addEventListener('click', function () {
   openDeliveryModal(this.dataset.bookingId);
 });
+
+document.getElementById('dm-cal-google').addEventListener('click', async function () {
+  const event = await bookingCalendarEvent(this.dataset.bookingId);
+  if (event) window.open(googleCalendarUrl(event), '_blank', 'noopener');
+});
+document.getElementById('dm-cal-outlook').addEventListener('click', async function () {
+  const event = await bookingCalendarEvent(this.dataset.bookingId);
+  if (event) window.open(outlookCalendarUrl(event), '_blank', 'noopener');
+});
+document.getElementById('dm-cal-other').addEventListener('click', async function () {
+  const event = await bookingCalendarEvent(this.dataset.bookingId);
+  if (event) openBookingIcs(event);
+});
+document.getElementById('dm-calendar-btn').addEventListener('click', function () {
+  sendBookingToCalendar(this.dataset.bookingId, this);
+});
+document.getElementById('dm-email-save').addEventListener('click', async () => {
+  const member = (window.membersCache || []).find(m => m.id === document.getElementById('dm-email-ask').dataset.memberId);
+  if (!member) return showError('dm-email-error', 'Brugeren blev ikke fundet.');
+  const emailError = await saveMemberEmail(member, document.getElementById('dm-email-input').value);
+  if (emailError) return showError('dm-email-error', emailError);
+  document.getElementById('dm-email-ask').classList.add('hidden');
+  sendBookingToCalendar(document.getElementById('dm-calendar-btn').dataset.bookingId, document.getElementById('dm-calendar-btn'));
+});
+
+function validEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+async function saveMemberEmail(member, email) {
+  const trimmed = String(email || '').trim();
+  if (!validEmail(trimmed)) return 'Mailadressen er ikke gyldig.';
+  if ((member.email || '').trim() === trimmed) return '';
+  const { error } = await db.from('members').update({ email: trimmed }).eq('id', member.id);
+  if (error) return 'Kunne ikke gemme mail: ' + error.message;
+  member.email = trimmed;
+  const cached = (window.membersCache || []).find(m => m.id === member.id);
+  if (cached) cached.email = trimmed;
+  return '';
+}
+function askMemberEmail(member) {
+  const box = document.getElementById('dm-email-ask');
+  const input = document.getElementById('dm-email-input');
+  if (!box || !input) return;
+  box.classList.remove('hidden');
+  box.dataset.memberId = member.id;
+  input.value = member.email || '';
+  showError('dm-email-error', 'Skriv mailadressen og tryk Gem og send.');
+  input.focus();
+}
+
+function calendarStamp(iso) {
+  const d = new Date(iso);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`;
+}
+function googleCalendarUrl({ summary, description, location, start, end }) {
+  return 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE',
+    text: summary || 'Booking',
+    dates: `${calendarStamp(start)}/${calendarStamp(end)}`,
+    details: description || '',
+    location: location || 'Stamplads',
+  }).toString();
+}
+function outlookCalendarUrl({ summary, description, location, start, end }) {
+  return 'https://outlook.live.com/calendar/0/deeplink/compose?' + new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: summary || 'Booking',
+    startdt: new Date(start).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    enddt: new Date(end).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+    body: description || '',
+    location: location || 'Stamplads',
+  }).toString();
+}
+function buildBookingIcs({ summary, description, location, start, end, uid }) {
+  const esc = (value) => String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n|\n|\r/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Delebilsklub//Booking//DA',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${esc(uid || 'booking@bilbooking')}`,
+    `DTSTAMP:${calendarStamp(new Date().toISOString())}`,
+    `DTSTART:${calendarStamp(start)}`,
+    `DTEND:${calendarStamp(end)}`,
+    `SUMMARY:${esc(summary || 'Booking')}`,
+    `DESCRIPTION:${esc(description || '')}`,
+    `LOCATION:${esc(location || 'Stamplads')}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+    '',
+  ].join('\r\n');
+}
+function openBookingIcs(event) {
+  const blob = new Blob([buildBookingIcs(event)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'booking.ics';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+async function bookingCalendarEvent(bookingId) {
+  let b = state.bookings.find(x => x.id === bookingId);
+  if (!b) {
+    const res = await db.from('bookings').select('*, cars(name)').eq('id', bookingId).single();
+    b = res.data;
+  }
+  if (!b) { toast('Booking blev ikke fundet', 'error'); return null; }
+  const carName = b.cars?.name || state.cars.find(c => c.id === b.car_id)?.name || 'Bil';
+  const club = getSetting('club_name') || 'Delebilsklub';
+  return {
+    summary: `${carName} — ${club}`,
+    description: [
+      `${b.user_name} har booket ${carName}.`,
+      `${fmtDateTime(b.start_time)} – ${fmtDateTime(b.end_time)}`,
+      b.notes ? `Bemærkning: ${b.notes}` : '',
+    ].filter(Boolean).join('\n'),
+    location: 'Stamplads',
+    start: b.start_time,
+    end: b.end_time,
+    uid: `${b.id}@bilbooking`,
+  };
+}
+
+async function sendBookingToCalendar(bookingId, btn) {
+  let b = state.bookings.find(x => x.id === bookingId);
+  if (!b) {
+    const res = await db.from('bookings').select('*, cars(name)').eq('id', bookingId).single();
+    b = res.data;
+  }
+  if (!b) return toast('Booking blev ikke fundet', 'error');
+
+  const member = findMemberByName(b.user_name);
+  if (!member) return toast('Brugeren står ikke på medlemslisten', 'error');
+
+  const email = (member.email || '').trim();
+  if (!email) return askMemberEmail(member);
+
+  const carName = b.cars?.name || state.cars.find(c => c.id === b.car_id)?.name || 'Bil';
+  const club = getSetting('club_name') || 'Delebilsklub';
+  const summary = `${carName} — ${club}`;
+  const description = [
+    `${b.user_name} har booket ${carName}.`,
+    `${fmtDateTime(b.start_time)} – ${fmtDateTime(b.end_time)}`,
+    b.notes ? `Bemærkning: ${b.notes}` : '',
+  ].filter(Boolean).join('\n');
+
+  const smtp = await currentSmtp();
+  if (!smtp.host || !smtp.from) {
+    return toast('SMTP er ikke udfyldt under Indstillinger. Udfyld SMTP-server og afsender, og gem.', 'error');
+  }
+
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sender...';
+  try {
+    const res = await fetch('/api/calendar-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: email,
+        bookingId: b.id,
+        summary,
+        description,
+        location: 'Stamplads',
+        start: b.start_time,
+        end: b.end_time,
+        status: b.status,
+        smtp,
+      }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || 'Kunne ikke sende mail');
+    toast(b.status === 'cancelled'
+      ? `Aflysning sendt til ${email}`
+      : `Links til Google, Outlook og andre kalendere er sendt til ${email}`, 'success');
+  } catch (err) {
+    toast('Fejl: ' + (err.message || 'Kunne ikke sende'), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
 
 // =============================================
 // DELIVERY MODAL
@@ -1591,9 +1831,22 @@ const TRASH_KEY = 'bilbooking_trash';
 function getTrash() { return JSON.parse(localStorage.getItem(TRASH_KEY) || '[]'); }
 function saveTrash(t) { localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
 
+function newTrashId() {
+  // randomUUID findes kun på HTTPS. Siden kan også køre på HTTP.
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 function addToTrash(type, data, label) {
   const trash = getTrash();
-  trash.unshift({ id: crypto.randomUUID(), type, data, label, deletedAt: new Date().toISOString() });
+  trash.unshift({ id: newTrashId(), type, data, label, deletedAt: new Date().toISOString() });
   saveTrash(trash);
 }
 
@@ -1695,6 +1948,7 @@ async function restoreFromTrash(trashId) {
       const { error } = await db.from('members').insert({
         id: m.id, navn: m.navn, adresse: m.adresse || null,
         bogruppe: m.bogruppe || null, telefon: m.telefon || null,
+        email: m.email || null,
         active: m.active !== undefined ? m.active : true,
         created_at: m.created_at,
       });
@@ -1889,7 +2143,7 @@ async function loadRegnskab(memberNavn) {
 
   // Fetch bookings with delivery data
   let q = db.from('bookings')
-    .select('*, cars(id,name), deliveries(booking_id, km_driven, end_km, start_km, duration_quarters, comments)')
+    .select('*, cars(id,name,price_km_low,price_km_high,price_km_threshold), deliveries(booking_id, km_driven, end_km, start_km, duration_quarters, comments)')
     .eq('user_name', memberNavn)
     .order('start_time', { ascending: false });
   if (fra)   q = q.gte('start_time', fra);
@@ -1917,7 +2171,7 @@ async function loadRegnskab(memberNavn) {
     const km = del ? (del.km_driven ?? (del.end_km - del.start_km)) : null;
     const durationMins = del ? (del.duration_quarters || 0) * 15 : dur;
     const carName = b.cars?.name || '';
-    const kmCost   = isDelivered && km != null ? calcKmCost(km, carName) : null;
+    const kmCost   = isDelivered && km != null ? calcKmCost(km, b.cars) : null;
     const timeCost = isDelivered ? calcTimeCost(durationMins) : null;
     if (km != null) totalKm += km;
     if (kmCost != null)   totalKmCost   += kmCost;
@@ -2004,7 +2258,7 @@ function renderMembers() {
   const esc = s => (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   let html = '<table class="admin-table"><thead><tr>';
   if (editMode) html += '<th style="width:32px"><input type="checkbox" id="mbr-check-all"></th>';
-  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Aktiv</th><th>PIN</th>';
+  html += '<th>Navn</th><th>Adresse</th><th>Bogruppe</th><th>Telefon</th><th>Kalender-mail</th><th>Aktiv</th><th>PIN</th>';
   if (editMode) html += '<th style="width:60px"></th>';
   html += '</tr></thead><tbody>';
   members.forEach(m => {
@@ -2018,11 +2272,12 @@ function renderMembers() {
       html += `<td><input class="mbr-inp" data-field="adresse"  value="${esc(m.adresse || '')}"  style="width:100%"></td>`;
       html += `<td><input class="mbr-inp" data-field="bogruppe" value="${esc(m.bogruppe || '')}" style="width:60px"></td>`;
       html += `<td><input class="mbr-inp" data-field="telefon"  value="${esc(m.telefon || '')}"  style="width:100%"></td>`;
+      html += `<td><input class="mbr-inp" data-field="email"    value="${esc(m.email || '')}"    style="width:100%"></td>`;
       html += `<td style="text-align:center"><input type="checkbox" class="mbr-inp-active" ${m.active ? 'checked' : ''}></td>`;
       html += `<td>${pinCell}</td>`;
       html += `<td><button class="btn-sm mbr-save-btn" data-id="${m.id}">Gem</button></td>`;
     } else {
-      html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td style="text-align:center">${m.active ? '✓' : '–'}</td><td>${pinCell}</td>`;
+      html += `<td>${m.navn}</td><td>${m.adresse || ''}</td><td>${m.bogruppe || ''}</td><td>${m.telefon || ''}</td><td>${m.email || ''}</td><td style="text-align:center">${m.active ? '✓' : '–'}</td><td>${pinCell}</td>`;
     }
     html += '</tr>';
   });
@@ -2212,7 +2467,7 @@ async function loadAdminRegnskab() {
 
   const periodVal = document.getElementById('ad-regnskab-period')?.value;
   let query = db.from('deliveries')
-    .select('*, cars(name), bookings(user_name, start_time)');
+    .select('*, cars(name,price_km_low,price_km_high,price_km_threshold), bookings(user_name, start_time)');
 
   if (periodVal) {
     const [y, q] = periodVal.split('-').map(Number);
@@ -2230,7 +2485,7 @@ async function loadAdminRegnskab() {
     const user = d.bookings?.user_name || 'Ukendt';
     const km   = d.km_driven ?? (d.end_km - d.start_km);
     const durationMins = (d.duration_quarters || 0) * 15;
-    const kmCost   = calcKmCost(km, d.cars?.name || '');
+    const kmCost   = calcKmCost(km, d.cars);
     const timeCost = calcTimeCost(durationMins);
     if (!members[user]) members[user] = { ture: 0, km: 0, kmCost: 0, timeCost: 0 };
     members[user].ture++;
@@ -2281,8 +2536,6 @@ async function loadAdminRegnskab() {
 // INDSTILLINGER-FANEN
 // =============================================
 const SETTINGS_TEXT_KEYS = [
-  'price_standard_low','price_standard_high','price_standard_threshold',
-  'price_electric_low','price_electric_high','price_electric_threshold',
   'price_hour','price_day','price_monthly_fee',
   'backup_frequency','backup_email',
   'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from',
@@ -2296,8 +2549,50 @@ function renderSettingsForm() {
   });
   const wm = document.getElementById('set-watermark_enabled');
   if (wm) wm.checked = getSetting('watermark_enabled') === '1';
+  renderCarPriceFields();
   const status = document.getElementById('set-status');
   if (status) status.textContent = '';
+}
+
+function renderCarPriceFields() {
+  const host = document.getElementById('car-price-list');
+  if (!host) return;
+  const cars = state.cars || [];
+  if (!cars.length) {
+    host.innerHTML = '<p class="muted">Ingen biler endnu. Opret en bil under Biler, så kommer den med her.</p>';
+    return;
+  }
+  host.innerHTML = cars.map(car => {
+    const p = kmPriceOf(car);
+    return `<div class="car-price-block">
+      <strong>${escHtml(car.name)}</strong>
+      <div class="settings-grid">
+        <label>Standard km-pris (op til grænsen)<input type="number" step="0.01" id="car-price-low-${car.id}" value="${p.low}"></label>
+        <label>Standard km-pris (over grænsen)<input type="number" step="0.01" id="car-price-high-${car.id}" value="${p.high}"></label>
+        <label>Km-grænse<input type="number" step="1" id="car-price-thr-${car.id}" value="${p.threshold}"></label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveCarPrices() {
+  for (const car of state.cars || []) {
+    const lowEl = document.getElementById('car-price-low-' + car.id);
+    const highEl = document.getElementById('car-price-high-' + car.id);
+    const thrEl = document.getElementById('car-price-thr-' + car.id);
+    if (!lowEl || !highEl || !thrEl) continue;
+    const patch = {
+      price_km_low: parseFloat(lowEl.value),
+      price_km_high: parseFloat(highEl.value),
+      price_km_threshold: parseInt(thrEl.value, 10),
+    };
+    if (![patch.price_km_low, patch.price_km_high, patch.price_km_threshold].every(Number.isFinite)) {
+      throw new Error('Udfyld km-pris og grænse for ' + car.name);
+    }
+    const { error } = await db.from('cars').update(patch).eq('id', car.id);
+    if (error) throw error;
+    Object.assign(car, patch);
+  }
 }
 
 async function saveSettingsForm() {
@@ -2310,6 +2605,8 @@ async function saveSettingsForm() {
       const el = document.getElementById('set-' + k);
       if (el) await saveSetting(k, el.value.trim());
     }
+    await saveCarPrices();
+    renderAdminCars();
     const wm = document.getElementById('set-watermark_enabled');
     await saveSetting('watermark_enabled', wm && wm.checked ? '1' : '0');
     applyWatermark();
@@ -2323,6 +2620,71 @@ async function saveSettingsForm() {
     btn.disabled = false;
   }
 }
+
+document.getElementById('set-smtp-test')?.addEventListener('click', async () => {
+  const status = document.getElementById('set-smtp-test-status');
+  const { host, port, user, pass, from } = await currentSmtp();
+  const to = document.getElementById('set-smtp-test-to').value.trim() || from;
+  if (!host || !from) {
+    if (status) status.textContent = 'Udfyld SMTP-server og afsender.';
+    return;
+  }
+  if (!validEmail(from) || !validEmail(to)) {
+    if (status) status.textContent = 'Mailadressen er ikke gyldig.';
+    return;
+  }
+  const btn = document.getElementById('set-smtp-test');
+  btn.disabled = true;
+  if (status) status.textContent = 'Sender...';
+  try {
+    const res = await fetch('/api/calendar-invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ test: true, to, smtp: { host, port, user, pass, from } }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(payload.error || 'Kunne ikke sende mail');
+    if (status) status.textContent = `Testmail sendt til ${to}`;
+    toast(`Testmail sendt til ${to}`, 'success');
+  } catch (err) {
+    if (status) status.textContent = '';
+    toast('Fejl: ' + (err.message || 'Kunne ikke sende'), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('set-admin-password-save')?.addEventListener('click', async () => {
+  const status = document.getElementById('set-admin-password-status');
+  const first = document.getElementById('set-admin-password-1').value;
+  const second = document.getElementById('set-admin-password-2').value;
+  if (!first.trim()) {
+    if (status) status.textContent = 'Skriv en ny adgangskode.';
+    return;
+  }
+  if (first !== second) {
+    if (status) status.textContent = 'De to adgangskoder er ikke ens.';
+    return;
+  }
+  if (!confirm('Er du sikker?')) return;
+  const btn = document.getElementById('set-admin-password-save');
+  btn.disabled = true;
+  if (status) status.textContent = 'Gemmer...';
+  try {
+    const { error } = await db.rpc('set_admin_password', { new_password: first });
+    if (error) throw error;
+    window.appSettings.admin_password = first;
+    document.getElementById('set-admin-password-1').value = '';
+    document.getElementById('set-admin-password-2').value = '';
+    if (status) status.textContent = 'Adgangskode ændret';
+    toast('Admin-adgangskode ændret', 'success');
+  } catch (err) {
+    if (status) status.textContent = '';
+    toast('Fejl: ' + (err.message || 'Kunne ikke gemme'), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 async function downloadBackupNow() {
   try {
@@ -2493,7 +2855,7 @@ function renderAdminCars() {
     <div class="car-admin-row">
       <div class="car-info">
         <span class="car-dot" style="background:${car.color}"></span>
-        <div><strong>${car.name}</strong><small style="display:block">${car.current_km.toLocaleString('da-DK')} km</small></div>
+        <div><strong>${escHtml(car.name)}</strong><small style="display:block">${car.current_km.toLocaleString('da-DK')} km</small><small class="car-price-readonly">${escHtml(carPriceText(car))}</small></div>
       </div>
       <div class="car-actions">
         <button class="btn-icon" data-action="edit" data-car-id="${car.id}">✏ Rediger</button>
@@ -2526,7 +2888,12 @@ document.getElementById('new-car-btn').addEventListener('click', async () => {
   const km    = parseInt(document.getElementById('new-car-km').value, 10) || 0;
   if (!name) return showError('new-car-error', 'Indtast et navn.');
   try {
-    const { data, error } = await db.from('cars').insert({ name, color, current_km: km }).select().single();
+    const { data, error } = await db.from('cars').insert({
+      name, color, current_km: km,
+      price_km_low: getSettingNum('price_standard_low'),
+      price_km_high: getSettingNum('price_standard_high'),
+      price_km_threshold: getSettingNum('price_standard_threshold'),
+    }).select().single();
     if (error) throw error;
     await logActivity('bil_oprettet', data.id, null, null, { name, color, km });
     toast(`${name} tilføjet`, 'success');
@@ -2696,6 +3063,9 @@ function updatePinWizardMember(memberId) {
   document.getElementById('pin-confirm-text').textContent = _pinWizardHasPin
     ? `${member?.navn || ''} har allerede en PIN-kode. Vil du ændre den?`
     : `Vil du oprette en PIN-kode til ${member?.navn || ''}?`;
+  document.getElementById('pin-email').value = member?.email || '';
+  document.getElementById('pin-email-save').disabled = false;
+  document.getElementById('pin-email-status').textContent = '';
   document.getElementById('pin-confirm-yes').disabled = false;
   document.getElementById('pin-delete-section').classList.toggle('hidden', !_pinWizardHasPin);
 }
@@ -2721,6 +3091,9 @@ function openPinWizard() {
   } else {
     document.getElementById('pin-confirm-text').textContent = 'Vælg dit navn for at fortsætte.';
     document.getElementById('pin-confirm-yes').disabled = true;
+    document.getElementById('pin-email').value = '';
+    document.getElementById('pin-email-save').disabled = true;
+    document.getElementById('pin-email-status').textContent = '';
   }
 
   document.getElementById('pin-step-confirm').classList.remove('hidden');
@@ -2750,7 +3123,21 @@ function initPinWizard() {
       _pinWizardMemberId = null;
       document.getElementById('pin-confirm-text').textContent = 'Vælg dit navn for at fortsætte.';
       document.getElementById('pin-confirm-yes').disabled = true;
+      document.getElementById('pin-email').value = '';
+      document.getElementById('pin-email-save').disabled = true;
+      document.getElementById('pin-email-status').textContent = '';
     }
+  });
+
+  document.getElementById('pin-email-save').addEventListener('click', async () => {
+    const status = document.getElementById('pin-email-status');
+    const member = (window.membersCache || []).find(m => m.id === _pinWizardMemberId);
+    if (!member) {
+      if (status) status.textContent = 'Vælg dit navn først.';
+      return;
+    }
+    const emailError = await saveMemberEmail(member, document.getElementById('pin-email').value);
+    if (status) status.textContent = emailError || 'Mail gemt';
   });
 
   document.getElementById('pin-wizard-close').addEventListener('click', () =>
@@ -3041,6 +3428,7 @@ async function loadChargingHistory() {
 
 async function generateDemoChargingSessions() {
   const evCars = state.cars.filter(c => c.name !== 'Berlingo');
+  if (!evCars.length || !chargingState.chargers.length) return;
   const demoSessions = [];
   const now = new Date();
 

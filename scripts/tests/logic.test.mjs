@@ -17,7 +17,7 @@ const blocks = [
   extractBlock(appSrc, 'function getSetting('),
   extractBlock(appSrc, 'function getSettingNum('),
   extractBlock(appSrc, 'function getPrices('),
-  extractBlock(appSrc, 'function carPriceCategory('),
+  extractBlock(appSrc, 'function kmPriceOf('),
   extractBlock(appSrc, 'function calcKmCost('),
   extractBlock(appSrc, 'function calcTimeCost('),
   extractBlock(appSrc, 'function getMonday('),
@@ -32,7 +32,7 @@ const blocks = [
 
 const sandbox = {
   window: { appSettings: {} },
-  state: { bookings: [] },
+  state: { bookings: [], cars: [] },
   console,
   Date,
   Math,
@@ -46,7 +46,7 @@ sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(
   blocks.join('\n') +
-  '\nglobalThis.__api = { getSetting, getSettingNum, getPrices, carPriceCategory,' +
+  '\nglobalThis.__api = { getSetting, getSettingNum, getPrices, kmPriceOf,' +
   ' calcKmCost, calcTimeCost, getMonday, addDays, roundTo15, getISOWeek, fmtDur,' +
   ' toLocal, bookingsOverlap, findConflictInfo, SETTINGS_DEFAULTS };',
   sandbox,
@@ -80,41 +80,41 @@ function expectedTime(mins) {
 export function runLogicTests() {
   setSettings({}); // brug defaults
 
-  // ---- GRUPPE: Bilkategori ----
-  const G0 = 'Bilkategori (el vs. standard)';
-  const catCases = [
-    ['ID3', 'standard'], ['Berlingo', 'standard'], ['Renault Zoe', 'electric'],
-    ['ID Buzz', 'electric'], ['zoe', 'electric'], ['BUZZ', 'electric'],
-    ['id buzz', 'electric'], ['Skoda', 'standard'], ['', 'standard'],
-    ['Zoe elbil', 'electric'], ['Buzz Cargo', 'electric'], ['Berlingo Van', 'standard'],
-  ];
-  for (const [name, exp] of catCases) eq(G0, `kategori("${name}") = ${exp}`, A.carPriceCategory(name), exp);
+  const STD = { price_km_low: P.sLow, price_km_high: P.sHigh, price_km_threshold: P.sThr };
+  const EL  = { price_km_low: P.eLow, price_km_high: P.eHigh, price_km_threshold: P.eThr };
 
-  // ---- GRUPPE: Km-pris (standard) ----
-  const G1 = 'Priser — km (standard)';
-  for (let km = 0; km <= 260; km += 2) {
-    eq(G1, `standard ${km} km`, A.calcKmCost(km, 'ID3'), expectedKm(km, 'standard'), 1e-9);
-  }
-  // Kanttilfælde
-  eq(G1, 'standard negativ km = 0', A.calcKmCost(-50, 'ID3'), 0);
-  eq(G1, 'standard km=null = 0', A.calcKmCost(null, 'ID3'), 0);
-  eq(G1, 'standard netop tærskel (100)', A.calcKmCost(P.sThr, 'ID3'), P.sThr * P.sLow, 1e-9);
-  eq(G1, 'standard 1 over tærskel', A.calcKmCost(P.sThr + 1, 'ID3'), P.sThr * P.sLow + P.sHigh, 1e-9);
+  // ---- GRUPPE: Individuelle bilpriser ----
+  const G0 = 'Individuelle km-priser';
+  eq(G0, 'samme km koster forskelligt på to biler', A.calcKmCost(40, STD) !== A.calcKmCost(40, EL), true);
+  eq(G0, 'bilens egne satser bruges', A.calcKmCost(40, EL), expectedKm(40, 'electric'), 1e-9);
+  sandbox.state.cars = [{ name: 'ID Buzz', ...EL }];
+  eq(G0, 'navn slår prisen op på bilen', A.calcKmCost(40, 'ID Buzz'), expectedKm(40, 'electric'), 1e-9);
+  sandbox.state.cars = [];
+  eq(G0, 'ukendt bil falder tilbage til standardsats', A.calcKmCost(40, 'Ukendt'), expectedKm(40, 'standard'), 1e-9);
 
-  // ---- GRUPPE: Km-pris (el) ----
-  const G2 = 'Priser — km (el)';
+  // ---- GRUPPE: Km-pris (bil A) ----
+  const G1 = 'Priser — km (bil med 3/2 kr.)';
   for (let km = 0; km <= 260; km += 2) {
-    eq(G2, `el ${km} km`, A.calcKmCost(km, 'Renault Zoe'), expectedKm(km, 'electric'), 1e-9);
+    eq(G1, `bil A ${km} km`, A.calcKmCost(km, STD), expectedKm(km, 'standard'), 1e-9);
   }
-  eq(G2, 'el netop tærskel', A.calcKmCost(P.eThr, 'ID Buzz'), P.eThr * P.eLow, 1e-9);
-  eq(G2, 'el 1 over tærskel', A.calcKmCost(P.eThr + 1, 'ID Buzz'), P.eThr * P.eLow + P.eHigh, 1e-9);
-  // Km-pris skal være monotont stigende
+  eq(G1, 'negativ km = 0', A.calcKmCost(-50, STD), 0);
+  eq(G1, 'km=null = 0', A.calcKmCost(null, STD), 0);
+  eq(G1, 'netop tærskel (100)', A.calcKmCost(P.sThr, STD), P.sThr * P.sLow, 1e-9);
+  eq(G1, '1 over tærskel', A.calcKmCost(P.sThr + 1, STD), P.sThr * P.sLow + P.sHigh, 1e-9);
+
+  // ---- GRUPPE: Km-pris (bil B) ----
+  const G2 = 'Priser — km (bil med 2,5/1,5 kr.)';
+  for (let km = 0; km <= 260; km += 2) {
+    eq(G2, `bil B ${km} km`, A.calcKmCost(km, EL), expectedKm(km, 'electric'), 1e-9);
+  }
+  eq(G2, 'netop tærskel', A.calcKmCost(P.eThr, EL), P.eThr * P.eLow, 1e-9);
+  eq(G2, '1 over tærskel', A.calcKmCost(P.eThr + 1, EL), P.eThr * P.eLow + P.eHigh, 1e-9);
   {
     let mono = true, bad = '';
     for (let km = 1; km <= 300; km++) {
-      if (A.calcKmCost(km, 'ID3') < A.calcKmCost(km - 1, 'ID3') - 1e-9) { mono = false; bad = `${km-1}->${km}`; break; }
+      if (A.calcKmCost(km, STD) < A.calcKmCost(km - 1, STD) - 1e-9) { mono = false; bad = `${km-1}->${km}`; break; }
     }
-    check(G2, 'km-pris monotont stigende (standard)' + (bad ? ` [brud ${bad}]` : ''), () => mono);
+    check(G2, 'km-pris monotont stigende' + (bad ? ` [brud ${bad}]` : ''), () => mono);
   }
 
   // ---- GRUPPE: Tidspris ----
@@ -149,9 +149,10 @@ export function runLogicTests() {
 
   // ---- GRUPPE: Priser med brugerdefinerede satser ----
   const G3b = 'Priser — brugerdefinerede satser';
-  setSettings({ price_standard_low: '5', price_standard_high: '4', price_standard_threshold: '50', price_hour: '20', price_day: '200' });
-  eq(G3b, 'custom: 40 km standard = 200', A.calcKmCost(40, 'ID3'), 200, 1e-9);
-  eq(G3b, 'custom: 60 km standard = 50*5+10*4=290', A.calcKmCost(60, 'ID3'), 290, 1e-9);
+  const customCar = { price_km_low: 5, price_km_high: 4, price_km_threshold: 50 };
+  setSettings({ price_hour: '20', price_day: '200' });
+  eq(G3b, 'custom: 40 km = 200', A.calcKmCost(40, customCar), 200, 1e-9);
+  eq(G3b, 'custom: 60 km = 50*5+10*4=290', A.calcKmCost(60, customCar), 290, 1e-9);
   eq(G3b, 'custom: 5 timer = 100', A.calcTimeCost(300), 100, 1e-9);
   eq(G3b, 'custom: 24 timer = 200', A.calcTimeCost(1440), 200, 1e-9);
   setSettings({}); // nulstil

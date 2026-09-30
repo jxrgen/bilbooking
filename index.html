@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffffff">
   <title>Delebilsklub — Booking</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -15,7 +18,7 @@
     <div class="nav-links">
       <button class="nav-btn" id="nav-mine-bookinger">🗓️ Mine bookinger</button>
       <button class="nav-btn" id="nav-regnskab">📊 Mit regnskab</button>
-      <button class="nav-btn" id="nav-pin">🔐 PIN</button>
+      <button class="nav-btn" id="nav-pin">🔐 PIN og mail</button>
       <button class="nav-btn" data-view="help">Vejledning</button>
     </div>
   </nav>
@@ -756,7 +759,7 @@
             <h3>Tilføj ny bil</h3>
             <div class="field">
               <label>Navn</label>
-              <input type="text" id="new-car-name" placeholder="f.eks. Model Y">
+              <input type="text" id="new-car-name" placeholder="f.eks. VW ID4">
             </div>
             <div class="field">
               <label>Farve</label>
@@ -978,14 +981,9 @@
 
           <div class="settings-card">
             <h2>💰 Priser</h2>
-            <p class="muted">Bruges i Mit regnskab og Komplet regnskab. Standard = Berlingo/ID.3-kategori, El = Zoe/ID Buzz-kategori.</p>
-            <div class="settings-grid">
-              <label>Standard km-pris (0–100 km)<input type="number" step="0.01" id="set-price_standard_low"></label>
-              <label>Standard km-pris (over 100 km)<input type="number" step="0.01" id="set-price_standard_high"></label>
-              <label>Standard km-grænse<input type="number" id="set-price_standard_threshold"></label>
-              <label>El km-pris (0–100 km)<input type="number" step="0.01" id="set-price_electric_low"></label>
-              <label>El km-pris (over 100 km)<input type="number" step="0.01" id="set-price_electric_high"></label>
-              <label>El km-grænse<input type="number" id="set-price_electric_threshold"></label>
+            <p class="muted">Hver bil har sin egen km-pris. Timepris, døgnpris og det månedlige bidrag gælder alle biler. En ny bil kommer med her, så snart den er oprettet under Biler.</p>
+            <div id="car-price-list"></div>
+            <div class="settings-grid" style="margin-top:14px">
               <label>Timepris (kr./t)<input type="number" step="0.01" id="set-price_hour"></label>
               <label>Døgnpris (kr./døgn)<input type="number" step="0.01" id="set-price_day"></label>
               <label>Fast månedligt bidrag (kr.)<input type="number" step="0.01" id="set-price_monthly_fee"></label>
@@ -1023,12 +1021,26 @@
             <h2>✉️ SMTP (afsendelse af email)</h2>
             <p class="muted" style="color:var(--danger)">⚠️ Adgangskoden gemmes i databasen og er læsbar med appens offentlige nøgle. Brug en dedikeret afsender-konto med begrænsede rettigheder — ikke din private mailadgangskode.</p>
             <div class="settings-grid">
-              <label>SMTP-server<input type="text" id="set-smtp_host" placeholder="smtp.gmail.com"></label>
+              <label>SMTP-server<input type="text" id="set-smtp_host"></label>
               <label>Port<input type="number" id="set-smtp_port" placeholder="587"></label>
               <label>Brugernavn<input type="text" id="set-smtp_user"></label>
               <label>Adgangskode<input type="password" id="set-smtp_pass" autocomplete="new-password"></label>
               <label>Afsender-adresse (From)<input type="email" id="set-smtp_from"></label>
+              <label>Send test til<input type="email" id="set-smtp-test-to" placeholder="Samme som afsender, hvis feltet er tomt"></label>
             </div>
+            <button id="set-smtp-test" class="btn-sm" type="button" style="margin-top:10px">Send testmail</button>
+            <span id="set-smtp-test-status" class="muted"></span>
+          </div>
+
+          <div class="settings-card">
+            <h2>🔐 Admin-adgangskode</h2>
+            <p class="muted">Skriv den nye adgangskode to gange. Den gemmes først, når du bekræfter.</p>
+            <div class="settings-grid">
+              <label>Ny adgangskode<input type="password" id="set-admin-password-1" autocomplete="new-password"></label>
+              <label>Gentag ny adgangskode<input type="password" id="set-admin-password-2" autocomplete="new-password"></label>
+            </div>
+            <button id="set-admin-password-save" class="btn-primary" style="margin-top:10px">Skift adgangskode</button>
+            <span id="set-admin-password-status" class="muted"></span>
           </div>
 
           <div class="settings-card">
@@ -1105,6 +1117,11 @@
         <label>Telefonnummer</label>
         <input type="tel" id="bm-phone" placeholder="Hentes automatisk" readonly>
       </div>
+      <div class="field">
+        <label>Mail til kalender <span class="required">*</span></label>
+        <input type="email" id="bm-email" placeholder="navn@mail.dk" autocomplete="email">
+        <div class="field-note">Gemmes på brugeren. Kan også ændres under PIN og mail.</div>
+      </div>
       <div class="remember-row">
         <label class="remember-label">
           <input type="checkbox" id="bm-remember">
@@ -1156,7 +1173,22 @@
       <button class="modal-close" id="dm-close">&#10005;</button>
       <h2>Booking</h2>
       <div id="dm-content"></div>
+      <div id="dm-email-ask" class="hidden" style="margin-top:12px">
+        <p style="font-size:13px;margin:0 0 8px">Skriv mailadressen, så linket kan sendes. Den gemmes på brugeren.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="email" id="dm-email-input" placeholder="navn@mail.dk" autocomplete="email" style="flex:1;min-width:180px">
+          <button type="button" id="dm-email-save" class="btn-primary">Gem og send</button>
+        </div>
+        <div id="dm-email-error" class="error-msg hidden" style="margin-top:8px"></div>
+      </div>
+      <div class="calendar-choices" id="dm-calendar-choices">
+        <span>Læg i kalender</span>
+        <button type="button" id="dm-cal-google" class="btn-secondary">Google Kalender</button>
+        <button type="button" id="dm-cal-outlook" class="btn-secondary">Outlook</button>
+        <button type="button" id="dm-cal-other" class="btn-secondary">Apple / anden kalender</button>
+      </div>
       <div class="modal-actions">
+        <button id="dm-calendar-btn" class="btn-secondary">Send links på mail</button>
         <button id="dm-cancel-booking" class="btn-danger">Annuller booking</button>
         <button id="dm-edit-btn" class="btn-secondary">Rediger</button>
         <button id="dm-deliver-btn" class="btn-primary">Aflever bil</button>
@@ -1241,7 +1273,7 @@
   <div id="pin-wizard-modal" class="modal-overlay hidden">
     <div class="modal" style="max-width:380px">
       <button class="modal-close" id="pin-wizard-close">&#10005;</button>
-      <h2>🔐 PIN-kode</h2>
+      <h2>🔐 PIN og mail</h2>
 
       <!-- Trin 1: Vælg bruger og bekræft -->
       <div id="pin-step-confirm">
@@ -1250,6 +1282,13 @@
           <select id="pin-member-select" style="width:100%">
             <option value="">Vælg dit navn...</option>
           </select>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;margin-bottom:6px;font-size:13px;font-weight:500">Mail til kalender</label>
+          <input type="email" id="pin-email" placeholder="navn@mail.dk" autocomplete="email" style="width:100%">
+          <div class="field-note">Bruges når bookingen sendes til din kalender.</div>
+          <button type="button" id="pin-email-save" class="btn-secondary" style="margin-top:8px" disabled>Gem mail</button>
+          <span id="pin-email-status" class="muted"></span>
         </div>
         <p id="pin-confirm-text" style="margin-bottom:16px;color:var(--muted);font-size:13px">Vælg dit navn for at fortsætte.</p>
         <div style="display:flex;gap:8px">
@@ -1316,6 +1355,6 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260930-7"></script>
 </body>
 </html>
