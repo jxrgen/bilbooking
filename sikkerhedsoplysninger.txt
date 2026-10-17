@@ -1,0 +1,140 @@
+Sikkerhedsoplysninger for bilklub.club
+Skrevet 1. oktober 2026
+
+Denne fil beskriver, hvordan serveren er sikret, og hvad der bevidst ikke er lavet.
+Der står ingen adgangskoder, nøglefiler eller databasehemmeligheder her.
+
+
+Server
+------
+Vært: bilklub.club
+Login: root med SSH-nøgle
+Webrod: /var/www/bilbooking
+Database: PostgreSQL på serveren, tilgået via PostgREST. Supabase bruges ikke.
+PostgREST lytter kun på 127.0.0.1:3000
+Mail-tjenesten lytter kun på 127.0.0.1:3001
+PostgreSQL lytter kun på localhost, port 5432
+
+
+SSH — sådan kommer man ind
+--------------------------
+Root kan kun logge ind med SSH-nøgle. Adgangskode-login er slået fra.
+Det gælder også efter en genstart af serveren.
+
+Der ligger to ed25519-nøgler i /root/.ssh/authorized_keys.
+En ny forbindelse med den eksisterende nøgle blev testet, efter ændringen,
+og den virkede. En prøve med adgangskode blev afvist.
+
+En computer, der kun har brugt adgangskode, kan ikke længere logge ind.
+Nødvejen er VNC-konsollen i Contabos kundepanel.
+
+Root-login med nøgle er beholdt med vilje. Havde root været lukket helt,
+ville den nuværende måde at lægge filer op på holde op med at virke.
+
+Gældende SSH-indstillinger:
+- PermitRootLogin without-password (samme som prohibit-password: nøgle ja, adgangskode nej)
+- PasswordAuthentication no
+- KbdInteractiveAuthentication no
+- PubkeyAuthentication yes
+
+Filer der styrer det:
+- /etc/ssh/sshd_config.d/00-bilbooking-hardening.conf
+- /etc/ssh/sshd_config.d/50-cloud-init.conf (PasswordAuthentication no)
+- /etc/cloud/cloud.cfg.d/99-ssh.cfg (ssh_pwauth: 0, så en genstart ikke slår adgangskode til igen)
+
+Der ligger en manuel fortrydelse i /root/ssh-revert.sh. Den skal ikke køres,
+medmindre SSH skal rulles tilbage til adgangskode-login.
+
+
+fail2ban
+--------
+fail2ban kører og overvåger SSH.
+Efter fem forkerte forsøg inden for 10 minutter blokeres adressen i en time.
+Lokalhost er undtaget. Et vellykket nøgle-login bliver ikke blokeret.
+Kort efter start var fire fremmede adresser allerede blokeret.
+
+
+Firewall og lyttere
+-------------------
+UFW er aktiv.
+Indgående trafik afvises, undtagen SSH (22), HTTP (80) og HTTPS (443).
+Database, PostgREST og mail-tjenesten er ikke åbne ud mod internettet.
+
+
+Opdateringer og TLS
+-------------------
+Automatiske sikkerhedsopdateringer er slået til (unattended-upgrades).
+Automatisk genstart om natten er ikke slået til.
+
+Let's Encrypt-certifikatet dækker bilklub.club og www.bilklub.club
+og var gyldigt til 28. december 2026.
+bilklub.club på port 80 sendes videre til HTTPS.
+TLS er 1.2 og 1.3.
+
+
+Nginx
+-----
+Versionsnummeret er skjult (server_tokens off). Svaret siger kun "nginx".
+
+Disse headere sendes med siderne:
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- Content-Security-Policy, som tillader sidens egne filer, jsDelivr
+  (Supabase-biblioteket) og de inline-styles og onclick-knapper siden bruger
+- Strict-Transport-Security i seks måneder, også for underdomæner, uden preload
+
+Headerne ligger i:
+- /etc/nginx/snippets/security-headers.conf
+- /etc/nginx/snippets/security-headers-https.conf
+
+De er inkluderet i location-blokkene. En header sat kun på server-niveau
+ville ikke komme med, fordi location-blokkene allerede har deres egne headere.
+
+
+Mail-kode og admin-kode
+-----------------------
+Før ændringen kunne den offentlige side læse både SMTP-adgangskoden og
+admin-adgangskoden direkte i indstillingerne.
+
+Nu kan den offentlige rolle ikke læse nøglerne smtp_pass og admin_password.
+Det er tjekket: den offentlige nøgle får de to rækker ikke med, men kan stadig
+læse smtp_host og de øvrige almindelige indstillinger.
+
+Mail-tjenesten læser SMTP-koden selv på serveren via en særskilt rolle, mailer.
+Nøglen til den rolle ligger kun i /etc/bilbooking/mailer.env, som ikke kan
+hentes fra websitet.
+
+Admin-login spørger en funktion, der kun svarer ja eller nej.
+Et forkert kodeord giver nej, og koden bliver ikke sendt til browseren.
+Skift af admin-kode kræver den nuværende kode. Man kan ikke længere sætte en
+ny kode uden at kende den gamle.
+
+SMTP-feltet i admin vises tomt. Lad det stå tomt for at beholde den gemte kode.
+Gem en ny SMTP-kode, før du sender en testmail. Testen bruger den gemte kode,
+ikke det der står i feltet, før der er trykket gem.
+
+Brug fortsat en særlig afsender-konto til mail, ikke en privat mailkonto.
+Koden ligger stadig i databasen, men kun serveren kan læse den.
+
+
+Det der bevidst ikke er lavet
+-----------------------------
+Bookinger, medlemmer, biler, afleveringer og de øvrige tabeller kan stadig
+læses og ændres med den offentlige nøgle i siden. Sådan er bookingsystemet
+bygget. At lukke det med det samme ville kunne lukke medlemmerne ude af
+selve bookingen. Det kræver et rigtigt login, før det kan strammes.
+
+PIN-koden er ikke en sikkerhedsgrænse. Ingen medlemmer havde en PIN, da det
+blev tjekket, og medlemslisten kan læses af siden.
+
+To-faktor på Contabo-kundepanelet er ikke slået til herfra. Det skal gøres
+i panelet. Ellers kan nogen med adgang til panelet bruge VNC eller
+geninstallere serveren, uanset hvor stram SSH er.
+
+Backup et andet sted end hos Contabo, og en prøve af at gendanne, er ikke
+sat op i denne omgang.
+
+Automatisk genstart kl. 04 efter kerneopdateringer er ikke slået til.
+Sikkerhedsopdateringer installeres stadig af sig selv.

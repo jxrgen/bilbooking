@@ -286,6 +286,24 @@ function sendIcs(res, params) {
   res.end(ics);
 }
 
+async function loadServerSmtp() {
+  const jwt = process.env.MAILER_JWT;
+  if (!jwt) return null;
+  const res = await fetch('http://127.0.0.1:3000/settings?select=key,value', {
+    headers: { Authorization: `Bearer ${jwt}`, Accept: 'application/json' },
+  });
+  if (!res.ok) throw new Error('Kunne ikke læse SMTP på serveren');
+  const rows = await res.json();
+  const get = (key) => String(rows.find((row) => row.key === key)?.value || '');
+  return {
+    host: get('smtp_host'),
+    port: get('smtp_port') || '587',
+    user: get('smtp_user'),
+    pass: get('smtp_pass').replace(/\s+/g, ''),
+    from: get('smtp_from'),
+  };
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://127.0.0.1');
   const pathName = url.pathname;
@@ -313,7 +331,15 @@ async function handle(req, res) {
     res.end(JSON.stringify({ error: 'Ugyldig forespørgsel' }));
     return;
   }
-  const smtp = body.smtp || {};
+  let smtp;
+  try {
+    smtp = await loadServerSmtp();
+  } catch (err) {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message || 'Kunne ikke læse SMTP' }));
+    return;
+  }
+  if (!smtp) smtp = body.smtp || {};
   const from = String(smtp.from || '').trim();
   const to = String(body.to || (body.test ? from : '')).trim();
   if (body.test) {

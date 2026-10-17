@@ -652,7 +652,7 @@
       <div class="callout-icon">⚠️</div>
       <div class="callout-body">
         <strong>Opbevar adgangskoden sikkert</strong>
-        <p>Del kun adgangskoden med klubadministratorer. Adgangskoden er gemt i systemets kode — kontakt den tekniske ansvarlige for at ændre den.</p>
+        <p>Del kun adgangskoden med klubadministratorer. Skift den under Admin → Indstillinger. Den nuværende adgangskode skal tastes med, og koden kan ikke læses fra siden.</p>
       </div>
     </div>
 
@@ -946,7 +946,7 @@
         <div class="step-num">4</div>
         <div class="step-body">
           <strong>Aflæs og indtast km-stand</strong>
-          Bilens aktuelle km-stand vises automatisk. Feltet "Kørte km" beregnes ud fra differencen.
+          Turens start-km er låst fra bookingen. Feltet "Kørte km" er forskellen op til den aflæste stand. Kun km, der ikke allerede er gemt på en tidligere aflevering, tælles med i regnskabet.
         </div>
       </div>
       <div class="step">
@@ -960,13 +960,13 @@
 
     <h3>Hvad sker i kalenderen efter aflevering?</h3>
     <p>Den afleverede booking forbliver synlig i kalenderen, men ændrer udseende: den vises i en lys/bleg udgave af bilens egen farve med en farvet venstrekant, så det er tydeligt hvilken bil det drejer sig om — men stadig klart markeret som afsluttet. Inde i blokken vises den faktiske varighed i format T:MM (f.eks. <strong>2:45</strong>). Klik på blokken for at se fulde afleveringsoplysninger (km kørt, km-stand ved aflevering, kommentarer) eller for at redigere bookingen.</p>
-    <p>En afleveret booking <strong>spærrer aldrig</strong> for nye bookinger — selv hvis der stadig er tid tilbage af den oprindelige bookingperiode, kan en anden bruger frit reservere bilen i det tidsrum.</p>
+    <p>En afleveret booking <strong>optager stadig sit tidsrum</strong>. En ny eller ændret booking, og en aflevering der rækker ind i det tidsrum, bliver afvist. Kun en annulleret booking frigiver tiden. To bookinger må gerne mødes præcis, så den ene slutter når den næste starter.</p>
 
     <h3>Hvad sker der ved registrering?</h3>
     <table>
       <thead><tr><th>Handling</th><th>Beskrivelse</th></tr></thead>
       <tbody>
-        <tr><td>Km-tæller opdateres</td><td>Bilens <em>aktuelle km</em> sættes til den aflæste km-stand</td></tr>
+        <tr><td>Km-tæller opdateres</td><td>Bilens <em>aktuelle km</em> sættes kun op, hvis aflæsningen er højere. En lavere, forsinket aflæsning ruller ikke tælleren tilbage</td></tr>
         <tr><td>Booking markeres færdig</td><td>Hvis en booking er tilknyttet, ændres status til "Afsluttet"</td></tr>
         <tr><td>Aflevering gemmes</td><td>Start km, slut km, kørte km, varighed og kommentarer logges</td></tr>
         <tr><td>Aktivitetslog opdateres</td><td>Handlingen skrives til systemets log med alle detaljer</td></tr>
@@ -976,8 +976,8 @@
     <div class="callout tip">
       <div class="callout-icon">🔑</div>
       <div class="callout-body">
-        <strong>Km-standen er altid bilens faktiske nuværende stand</strong>
-        <p>Systemet bruger bilens <em>aktuelle</em> km-tæller (ikke km-standen fra da bookingen blev oprettet) som startpunkt for beregning. Det sikrer korrekt optælling selv hvis bilen har kørt siden bookingen blev oprettet.</p>
+        <strong>Hver tur har sit eget km-interval</strong>
+        <p>Start-km låses, når bookingen gemmes, ud fra bilens km-stand i det øjeblik. Afleveringen bruger den låste start — ikke en senere turs stand. Den aflevering, der blev gemt først, beholder de km, der overlapper. En senere aflæsning ændrer ikke den første tur.</p>
       </div>
     </div>
 
@@ -985,7 +985,7 @@
       <div class="callout-icon">⚠️</div>
       <div class="callout-body">
         <strong>Aflæst km-stand skal være højere end eller lig med startværdien</strong>
-        <p>Systemet afviser en registrering hvor den aflæste km-stand er lavere end bilens aktuelle km-stand. Dobbelttjek altid aflæsningen inden du registrerer.</p>
+        <p>Systemet afviser en aflæsning, der er lavere end denne turs egen start-km. En aflæsning under bilens seneste km-tæller kan godt gemmes, hvis den hører til en ældre tur. De km, der allerede ligger på en gemt tur, tælles ikke med igen.</p>
       </div>
     </div>
   </div>
@@ -1018,7 +1018,7 @@
     </div>
 
     <h3>6.1 Biler — tilføj, rediger, slet</h3>
-    <p>Under fanen <strong>Biler</strong> ser du alle aktive biler med navn og aktuel km-stand. Til højre vises de næste kommende bookinger.</p>
+    <p>Under fanen <strong>Biler</strong> ser du alle aktive biler med navn, aktuel km-stand og bilens standard km-pris. Prisen kan kun ændres under Indstillinger → Priser. Alle biler er elbiler. Til højre vises de næste kommende bookinger.</p>
 
     <h4>Tilføj ny bil</h4>
     <div class="steps">
@@ -1109,7 +1109,7 @@
         <tr><td>Bruger</td><td>Navn på den der har kørt</td></tr>
         <tr><td>Ture</td><td>Antal afleveringer i perioden</td></tr>
         <tr><td>Km kørt</td><td>Samlet antal kørte km</td></tr>
-        <tr><td>Km-pris</td><td>Beregnet ud fra bilens priskategori og km-tærskel</td></tr>
+        <tr><td>Km-pris</td><td>Bilens egen standard km-pris. Alle biler er elbiler. Prisen sættes under Indstillinger → Priser og vises kun under Biler</td></tr>
         <tr><td>Tidspris</td><td>Beregnet som hele døgn × 150 kr. + resterende timer × 15 kr.</td></tr>
         <tr><td>Total</td><td>Km-pris + tidspris</td></tr>
       </tbody>
@@ -1200,7 +1200,7 @@
     <p class="section-lead">Korrekt km-tracking er vigtigt for at holde styr på bilernes brug og slid. Her er en forklaring af systemets logik.</p>
 
     <h3>Km-tæller pr. bil</h3>
-    <p>Hver bil har én aktuel km-stand (<em>current_km</em>) i databasen. Den opdateres automatisk ved hver aflevering til den aflæste slut-km-stand.</p>
+    <p>Hver bil har én aktuel km-stand (<em>current_km</em>). Den kan kun stige. En aflevering med en lavere aflæsning lader tælleren stå. Alle biler er elbiler, og hver bil har sin egen standard km-pris under Indstillinger → Priser.</p>
 
     <h3>Hvad vises hvornår?</h3>
     <table>
@@ -1208,8 +1208,8 @@
       <tbody>
         <tr>
           <td>Bookingformular</td>
-          <td>Bilens nuværende km-stand</td>
-          <td>Vejledende information til bookeren — kan ikke ændres</td>
+          <td>Bilens km-stand i det øjeblik bookingen gemmes</td>
+          <td>Låses som turens start-km og kan ikke ændres i formularen</td>
         </tr>
         <tr>
           <td>Booking­detaljer (klik i kalender)</td>
@@ -1218,8 +1218,8 @@
         </tr>
         <tr>
           <td>Afleveringsformular</td>
-          <td>Bilens aktuelle km-stand</td>
-          <td>Bruges som startpunkt for beregning af kørte km</td>
+          <td>Turens låste start-km</td>
+          <td>Udgangspunkt for denne tur. Senere ture på samme bil ændrer det ikke</td>
         </tr>
       </tbody>
     </table>
@@ -1227,11 +1227,11 @@
     <div class="callout tip no-break">
       <div class="callout-icon">📐</div>
       <div class="callout-body">
-        <strong>Eksempel: Bil booket en uge i forvejen</strong>
+        <strong>Eksempel: en glemt aflevering</strong>
         <p>
-          Mandag bookes ID3 til fredag. Km-standen er 12.000 ved booking.<br>
-          Tirsdag låner nogen bilen ad hoc og afleverer med km-stand 12.150.<br>
-          Fredag bruger bookingsystemet 12.150 (den faktiske aktuelle stand) som startpunkt for afleveringsberegningen — <em>ikke</em> 12.000 fra bookingstidspunktet.
+          Bruger A booker 12–14. Start-km låses til 1.000. A glemmer at aflevere.<br>
+          Bruger B booker 15–17, afleverer først og taster 1.100. B's tur beholder 1.000–1.100, og bilens tæller står på 1.100.<br>
+          A afleverer bagefter med 1.042, som var standen kl. 14. A's tid må ikke lægges ind over B. De km, der allerede ligger på B, tælles ikke med hos A, og B's booking og regnskab ændres ikke.
         </p>
       </div>
     </div>

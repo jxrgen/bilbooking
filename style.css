@@ -17,7 +17,15 @@
   --radius:   10px;
   --shadow:   0 1px 3px rgba(0,0,0,.08);
   --shadow-lg:0 12px 28px rgba(0,0,0,.14);
+  /* Personlig skriftstørrelse i kalenderen (styres under Visning). 1 = standard. */
+  --scale-week:    1;
+  --scale-hour:    1;
+  --scale-date:    1;
+  --scale-booking: 1;
 }
+
+/* Sollys-tilstand: vend alle farver om, så skærmen kan læses i skarpt lys */
+html.invert-mode { filter: invert(1) hue-rotate(180deg); }
 
 
 body {
@@ -98,6 +106,20 @@ body {
   transition: background .15s;
 }
 .icon-btn:hover { background: var(--bg); }
+.icon-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Visning-panel (skriftstørrelse + sollys-tilstand) */
+.disp-range { width: 100%; margin: 6px 0 2px; accent-color: var(--primary); cursor: pointer; }
+.disp-val {
+  float: right; font-weight: 700; color: var(--primary);
+  text-transform: none; letter-spacing: 0;
+}
+.disp-check {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; font-weight: 500; color: var(--text);
+  text-transform: none; letter-spacing: 0; cursor: pointer;
+}
+.disp-check input { width: 17px; height: 17px; accent-color: var(--primary); }
 
 .btn-sm {
   padding: 4px 11px; border: 1px solid var(--border); border-radius: 6px;
@@ -167,35 +189,35 @@ body {
   display: flex;
   position: sticky; top: 0; z-index: 10;
   background: var(--surface);
-  border-bottom: 2px solid var(--border2);
+  border-bottom: 2px solid #98A8BC;
 }
 .cal-time-spacer {
-  flex: 0 0 52px; border-right: 1px solid var(--border);
+  flex: 0 0 52px; border-right: 1px solid #BBC3CE;
   display: flex; align-items: center; justify-content: center;
 }
 .week-num-label {
-  font-size: 9px; font-weight: 700; color: var(--primary);
+  font-size: calc(9px * var(--scale-week)); font-weight: 700; color: var(--primary);
   text-align: center; line-height: 1.3; text-transform: uppercase; letter-spacing: .03em;
 }
 .cal-head-cells  { flex: 1; display: grid; grid-template-columns: repeat(var(--num-days), 1fr); }
 
 .cal-head-cell {
   padding: 6px 8px; text-align: center;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #BBC3CE;
   font-size: 12px;
 }
 .cal-head-cell:last-child { border-right: none; }
 .cal-head-cell.today { color: var(--primary); }
 
-.head-wd  { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.head-num { font-size: 18px; font-weight: 700; line-height: 1.1; }
+.head-wd  { font-size: calc(10px * var(--scale-date)); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.head-num { font-size: calc(18px * var(--scale-date)); font-weight: 700; line-height: 1.1; }
 .head-num.is-today {
   background: var(--primary); color: #fff;
   width: 30px; height: 30px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: calc(14px * var(--scale-date));
 }
-.head-mo { font-size: 10px; color: var(--muted); }
+.head-mo { font-size: calc(10px * var(--scale-date)); color: var(--muted); }
 
 /* ===================== TIMELINE BODY ===================== */
 .cal-body {
@@ -205,13 +227,13 @@ body {
 .cal-time-col {
   flex: 0 0 52px;
   position: relative;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #BBC3CE;
   height: 1440px; /* DAY_MINUTES × PX_PER_MIN */
 }
 .time-lbl {
   position: absolute;
   right: 8px;
-  font-size: 10px;
+  font-size: calc(10px * var(--scale-hour));
   color: var(--muted);
   transform: translateY(-50%);
   white-space: nowrap;
@@ -227,7 +249,7 @@ body {
 /* ===================== DAY COLUMN ===================== */
 .day-col {
   position: relative;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #BBC3CE;
   cursor: crosshair;
   overflow: hidden;
 }
@@ -236,12 +258,12 @@ body {
 
 .hour-line {
   position: absolute; left: 0; right: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #BBC3CE;
   pointer-events: none;
 }
 .half-line {
   position: absolute; left: 0; right: 0;
-  border-top: 1px dashed #EEF2F7;
+  border-top: 1px dashed #D3DBE4;
   pointer-events: none;
 }
 
@@ -303,10 +325,10 @@ body {
 .booking-block.span-open.span-closed {
   border-radius: 0;
 }
-.bb-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bb-time { font-size: 10px; opacity: .9; white-space: nowrap; }
-.bb-dur  { font-size: 10px; opacity: .75; white-space: nowrap; font-weight: 600; }
-.bb-car  { font-size: 10px; opacity: .8; font-style: italic; white-space: nowrap; }
+.bb-name { font-size: calc(11px * var(--scale-booking)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bb-time { font-size: calc(10px * var(--scale-booking)); opacity: .9; white-space: nowrap; }
+.bb-dur  { font-size: calc(10px * var(--scale-booking)); opacity: .75; white-space: nowrap; font-weight: 600; }
+.bb-car  { font-size: calc(10px * var(--scale-booking)); opacity: .8; font-style: italic; white-space: nowrap; }
 
 /* ===================== MONTH VIEW ===================== */
 .month-grid {
@@ -330,7 +352,7 @@ body {
 .month-week-num {
   padding: 4px 2px;
   text-align: center;
-  font-size: 10px;
+  font-size: calc(10px * var(--scale-week));
   font-weight: 700;
   color: var(--primary);
   border-right: 1px solid var(--border);
@@ -339,7 +361,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .month-week-num.head {
-  font-size: 9px; color: var(--muted);
+  font-size: calc(9px * var(--scale-week)); color: var(--muted);
   text-transform: uppercase; letter-spacing: .04em;
   border-bottom: 2px solid var(--border2);
 }
@@ -358,21 +380,21 @@ body {
 .month-cell.today { background: #EFF6FF; }
 
 .month-day-num {
-  font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  font-size: calc(13px * var(--scale-date)); font-weight: 600; margin-bottom: 4px;
 }
 .month-day-num.is-today {
   background: var(--primary); color: #fff;
   width: 22px; height: 22px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 12px;
+  font-size: calc(12px * var(--scale-date));
 }
 .month-events { display: flex; flex-direction: column; gap: 2px; }
 .month-event {
   border-radius: 3px; padding: 1px 5px;
-  font-size: 11px; font-weight: 600; color: #fff;
+  font-size: calc(11px * var(--scale-booking)); font-weight: 600; color: #fff;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.month-more { font-size: 10px; color: var(--muted); padding-left: 2px; }
+.month-more { font-size: calc(10px * var(--scale-booking)); color: var(--muted); padding-left: 2px; }
 
 /* ===================== FORM CARD ===================== */
 .form-card {

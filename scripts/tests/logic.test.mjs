@@ -26,7 +26,11 @@ const blocks = [
   extractBlock(appSrc, 'function getISOWeek('),
   extractBlock(appSrc, 'function fmtDur('),
   extractBlock(appSrc, 'function toLocal('),
+  extractBlock(appSrc, 'function bookingOccupiesTime('),
   extractBlock(appSrc, 'function bookingsOverlap('),
+  extractBlock(appSrc, 'function billableKm('),
+  extractBlock(appSrc, 'function deliveryClaimsFirst('),
+  extractBlock(appSrc, 'function billableKmForDelivery('),
   extractBlock(appSrc, 'function findConflictInfo('),
 ];
 
@@ -48,7 +52,8 @@ vm.runInContext(
   blocks.join('\n') +
   '\nglobalThis.__api = { getSetting, getSettingNum, getPrices, kmPriceOf,' +
   ' calcKmCost, calcTimeCost, getMonday, addDays, roundTo15, getISOWeek, fmtDur,' +
-  ' toLocal, bookingsOverlap, findConflictInfo, SETTINGS_DEFAULTS };',
+  ' toLocal, bookingOccupiesTime, bookingsOverlap, billableKm, deliveryClaimsFirst,' +
+  ' billableKmForDelivery, findConflictInfo, SETTINGS_DEFAULTS };',
   sandbox,
 );
 const A = sandbox.__api;
@@ -185,8 +190,8 @@ export function runLogicTests() {
   eq(G4, 'annulleret booking tæller ikke', A.bookingsOverlap(
     [{ id: '1', car_id: CAR, status: 'cancelled', start_time: T(10), end_time: T(12) }], CAR, T(10), T(12)), false);
   eq(G4, 'excludeId udelader egen booking', A.bookingsOverlap(base, CAR, T(10), T(12), '1'), false);
-  eq(G4, 'completed booking tæller ikke', A.bookingsOverlap(
-    [{ id: '9', car_id: CAR, status: 'completed', start_time: T(10), end_time: T(12) }], CAR, T(10), T(12)), false);
+  eq(G4, 'completed booking optager tiden', A.bookingsOverlap(
+    [{ id: '9', car_id: CAR, status: 'completed', start_time: T(10), end_time: T(12) }], CAR, T(10), T(12)), true);
   // Mange overlap-permutationer mod flere eksisterende bookinger
   const many = [
     { id: 'a', car_id: CAR, status: 'active', start_time: T(6), end_time: T(8) },
@@ -285,4 +290,17 @@ export function runLogicTests() {
   eq(G10, 'addDays -1 over årsskifte (år)', A.addDays(new Date(2026, 0, 1, 12), -1).getFullYear(), 2025);
   eq(G10, 'addDays +365 (skudår 2028 → 366)', A.addDays(new Date(2028, 0, 1, 12), 366).getFullYear(), 2029);
   eq(G10, 'addDays ændrer ikke original', (() => { const o = new Date(2026, 0, 1); A.addDays(o, 5); return o.getDate(); })(), 1);
+
+  const G11 = 'Km — ingen dobbeltregning';
+  eq(G11, 'interval uden krav', A.billableKm(1000, 1042, []), 42);
+  eq(G11, 'rører ved endepunkt', A.billableKm(1042, 1100, [[1000, 1042]]), 58);
+  const bFirst = { id: 'b', car_id: CAR, start_km: 1000, end_km: 1100, created_at: '2026-09-01T15:00:00Z' };
+  const aLate = { id: 'a', car_id: CAR, start_km: 1000, end_km: 1042, created_at: '2026-09-01T18:00:00Z' };
+  eq(G11, 'først gemte tur beholder km', A.billableKmForDelivery(bFirst, [bFirst, aLate]), 100);
+  eq(G11, 'forsinket aflæsning inden i intervallet tæller 0', A.billableKmForDelivery(aLate, [bFirst, aLate]), 0);
+  const aFirst = { id: 'a', car_id: CAR, start_km: 1000, end_km: 1042, created_at: '2026-09-01T14:00:00Z' };
+  const bLater = { id: 'b', car_id: CAR, start_km: 1000, end_km: 1100, created_at: '2026-09-01T17:00:00Z' };
+  eq(G11, 'tidlig tur beholder sit interval', A.billableKmForDelivery(aFirst, [aFirst, bLater]), 42);
+  eq(G11, 'senere tur får kun resten', A.billableKmForDelivery(bLater, [aFirst, bLater]), 58);
+  eq(G11, 'anden bil kræver ikke km', A.billableKmForDelivery(aLate, [{ ...bFirst, car_id: OTHER }, aLate]), 42);
 }

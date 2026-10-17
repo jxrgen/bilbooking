@@ -148,6 +148,8 @@ async function loadSettings() {
   if (error) { console.error('loadSettings', error); return; }
   window.appSettings = {};
   (data || []).forEach(r => { window.appSettings[r.key] = r.value; });
+  delete window.appSettings.smtp_pass;
+  delete window.appSettings.admin_password;
 }
 async function saveSetting(key, value) {
   const { error } = await db.from('settings').upsert({ key, value: String(value) }, { onConflict: 'key' });
@@ -282,6 +284,124 @@ function loadPrefs() { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'nul
 function savePrefs(memberId, navn, telefon) { localStorage.setItem(PREFS_KEY, JSON.stringify({ memberId, navn, telefon })); if (typeof renderUserBadge === 'function') renderUserBadge(); }
 function clearPrefs() { localStorage.removeItem(PREFS_KEY); if (typeof renderUserBadge === 'function') renderUserBadge(); }
 
+// =============================================
+// VISNING (skriftstørrelse + sollys-tilstand) — gemmes pr. enhed
+// =============================================
+const DISPLAY_KEY = 'bilbooking_display';
+const DISPLAY_DEFAULTS = { week: 1, hour: 1, date: 1, booking: 1, invert: false };
+const DISPLAY_PARTS = ['week', 'hour', 'date', 'booking'];
+
+function loadDisplay() {
+  try { return { ...DISPLAY_DEFAULTS, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) || '{}') }; }
+  catch { return { ...DISPLAY_DEFAULTS }; }
+}
+function saveDisplay(d) { localStorage.setItem(DISPLAY_KEY, JSON.stringify(d)); }
+
+// Sæt CSS-variabler og invert-klassen ud fra de gemte værdier
+function applyDisplay(d) {
+  d = d || loadDisplay();
+  const root = document.documentElement;
+  DISPLAY_PARTS.forEach(p => root.style.setProperty('--scale-' + p, d[p]));
+  root.classList.toggle('invert-mode', !!d.invert);
+  const invBtn = document.getElementById('invert-btn');
+  if (invBtn) {
+    invBtn.classList.toggle('active', !!d.invert);
+    invBtn.setAttribute('aria-pressed', d.invert ? 'true' : 'false');
+  }
+  const invChk = document.getElementById('disp-invert');
+  if (invChk) invChk.checked = !!d.invert;
+}
+
+// Sæt slider-positioner og %-labels fra de gemte værdier
+function syncDisplayControls(d) {
+  d = d || loadDisplay();
+  DISPLAY_PARTS.forEach(p => {
+    const slider = document.getElementById('disp-' + p);
+    const label  = document.getElementById('disp-' + p + '-val');
+    const pct = Math.round(d[p] * 100);
+    if (slider) slider.value = pct;
+    if (label)  label.textContent = pct + '%';
+  });
+  // Masterslideren viser fælles værdi, hvis alle dele er ens — ellers "Blandet"
+  const vals = DISPLAY_PARTS.map(p => d[p]);
+  const allEqual = vals.every(v => v === vals[0]);
+  const master = document.getElementById('disp-master');
+  const masterVal = document.getElementById('disp-master-val');
+  if (master) master.value = Math.round((allEqual ? vals[0] : 1) * 100);
+  if (masterVal) masterVal.textContent = allEqual ? Math.round(vals[0] * 100) + '%' : 'Blandet';
+}
+
+function initDisplayControls() {
+  const invBtn = document.getElementById('invert-btn');
+  const dispBtn = document.getElementById('display-btn');
+  const modal = document.getElementById('display-modal');
+  if (!modal) return;
+
+  // Sollys-knap på forsiden: slå invertering til/fra
+  invBtn?.addEventListener('click', () => {
+    const d = loadDisplay();
+    d.invert = !d.invert;
+    saveDisplay(d);
+    applyDisplay(d);
+    toast(d.invert ? 'Sollys-tilstand slået til' : 'Sollys-tilstand slået fra', 'info', 1500);
+  });
+
+  const openModal = () => { syncDisplayControls(); applyDisplay(); modal.classList.remove('hidden'); };
+  const closeModal = () => modal.classList.add('hidden');
+  dispBtn?.addEventListener('click', openModal);
+  document.getElementById('disp-close')?.addEventListener('click', closeModal);
+  document.getElementById('disp-done')?.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  // Masterslider: sætter alle fire dele til samme størrelse
+  document.getElementById('disp-master')?.addEventListener('input', e => {
+    const factor = Number(e.target.value) / 100;
+    const d = loadDisplay();
+    DISPLAY_PARTS.forEach(p => d[p] = factor);
+    saveDisplay(d);
+    applyDisplay(d);
+    syncDisplayControls(d);
+  });
+
+  // Individuelle slidere
+  DISPLAY_PARTS.forEach(p => {
+    document.getElementById('disp-' + p)?.addEventListener('input', e => {
+      const d = loadDisplay();
+      d[p] = Number(e.target.value) / 100;
+      saveDisplay(d);
+      applyDisplay(d);
+      syncDisplayControls(d);
+    });
+  });
+
+  // Checkboks for sollys-tilstand inde i panelet
+  document.getElementById('disp-invert')?.addEventListener('change', e => {
+    const d = loadDisplay();
+    d.invert = e.target.checked;
+    saveDisplay(d);
+    applyDisplay(d);
+  });
+
+  // "Tilpas hver del"
+  document.getElementById('disp-advanced-toggle')?.addEventListener('click', () => {
+    document.getElementById('disp-advanced')?.classList.toggle('hidden');
+  });
+
+  // Nulstil til standard
+  document.getElementById('disp-reset')?.addEventListener('click', () => {
+    const d = { ...DISPLAY_DEFAULTS };
+    saveDisplay(d);
+    applyDisplay(d);
+    syncDisplayControls(d);
+    toast('Visning nulstillet', 'info', 1500);
+  });
+
+  syncDisplayControls();
+}
+
+// Anvend straks, så der ikke blinker (scriptet kører nederst i body)
+applyDisplay();
+
 // Fyld et <select>-element med tidsintervaller á 15 min (00:00 – 23:45)
 function buildTimeSelect(id) {
   const sel = document.getElementById(id);
@@ -324,7 +444,7 @@ function findConflictInfo(carId, startTime, endTime, excludeId = null) {
 
   const conflicts = state.bookings
     .filter(b =>
-      b.car_id === carId && b.status === 'active' &&
+      b.car_id === carId && bookingOccupiesTime(b.status) &&
       (!excludeId || b.id !== excludeId) &&
       new Date(b.start_time) < e && new Date(b.end_time) > s
     )
@@ -340,7 +460,7 @@ function findConflictInfo(carId, startTime, endTime, excludeId = null) {
   while (changed) {
     changed = false;
     for (const b of state.bookings) {
-      if (b.car_id !== carId || b.status !== 'active') continue;
+      if (b.car_id !== carId || !bookingOccupiesTime(b.status)) continue;
       if (excludeId && b.id === excludeId) continue;
       const bs = new Date(b.start_time), be = new Date(b.end_time);
       if (bs <= nextFree && be > nextFree) { nextFree = be; changed = true; }
@@ -368,6 +488,14 @@ function toast(msg, type = 'info', duration = 3500) {
 // =============================================
 // DB FUNCTIONS
 // =============================================
+async function freshCar(carId) {
+  const { data, error } = await db.from('cars').select('*').eq('id', carId).single();
+  if (error) throw error;
+  const idx = state.cars.findIndex(c => c.id === carId);
+  if (idx >= 0) state.cars[idx] = { ...state.cars[idx], ...data };
+  return data;
+}
+
 async function loadCars() {
   const { data, error } = await db.from('cars').select('*').eq('active', true).order('name');
   if (error) throw error;
@@ -429,19 +557,73 @@ async function logActivity(actionType, carId, bookingId, userName, details) {
   if (error) console.error('Log error:', error);
 }
 
+function bookingOccupiesTime(status) {
+  return status !== 'cancelled';
+}
 function bookingsOverlap(existingBookings, carId, startTime, endTime, excludeId = null) {
   const s = new Date(startTime), e = new Date(endTime);
   return existingBookings.some(b => {
-    if (b.car_id !== carId || b.status !== 'active') return false;
+    if (b.car_id !== carId || !bookingOccupiesTime(b.status)) return false;
     if (excludeId && b.id === excludeId) return false;
     return s < new Date(b.end_time) && e > new Date(b.start_time);
   });
+}
+function billableKm(startKm, endKm, claimed) {
+  const start = Number(startKm), end = Number(endKm);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+  let segments = [[start, end]];
+  for (const range of claimed || []) {
+    const cs = Number(range[0]), ce = Number(range[1]);
+    if (!Number.isFinite(cs) || !Number.isFinite(ce) || ce <= cs) continue;
+    const next = [];
+    for (const [s, e] of segments) {
+      if (ce <= s || cs >= e) { next.push([s, e]); continue; }
+      if (cs > s) next.push([s, cs]);
+      if (ce < e) next.push([ce, e]);
+    }
+    segments = next;
+  }
+  return segments.reduce((sum, [s, e]) => sum + (e - s), 0);
+}
+function deliveryClaimsFirst(a, b) {
+  const ta = new Date(a.created_at || 0).getTime();
+  const tb = new Date(b.created_at || 0).getTime();
+  if (ta !== tb) return ta < tb;
+  return String(a.id || '') < String(b.id || '');
+}
+function billableKmForDelivery(delivery, deliveries) {
+  const earlier = (deliveries || []).filter(d =>
+    d && d.car_id === delivery.car_id && d.id !== delivery.id && deliveryClaimsFirst(d, delivery)
+  );
+  return billableKm(delivery.start_km, delivery.end_km, earlier.map(d => [d.start_km, d.end_km]));
+}
+
+async function findDbBookingOverlap(carId, startTime, endTime, excludeId = null) {
+  let q = db.from('bookings').select('id,user_name,start_time,end_time,status')
+    .eq('car_id', carId)
+    .neq('status', 'cancelled')
+    .lt('start_time', new Date(endTime).toISOString())
+    .gt('end_time', new Date(startTime).toISOString());
+  if (excludeId) q = q.neq('id', excludeId);
+  const { data, error } = await q.limit(1);
+  if (error) throw error;
+  return data?.[0] || null;
+}
+
+async function deliveriesForCars(carIds) {
+  const ids = [...new Set((carIds || []).filter(Boolean))];
+  if (!ids.length) return [];
+  const { data, error } = await db.from('deliveries')
+    .select('id,car_id,start_km,end_km,created_at,booking_id')
+    .in('car_id', ids);
+  if (error) return [];
+  return data || [];
 }
 
 async function createBooking(data) {
   const { data: existing } = await db
     .from('bookings').select('id')
-    .eq('car_id', data.car_id).eq('status', 'active')
+    .eq('car_id', data.car_id).neq('status', 'cancelled')
     .lt('start_time', data.end_time).gt('end_time', data.start_time);
 
   if (existing && existing.length > 0)
@@ -460,7 +642,7 @@ async function createBooking(data) {
 async function updateBooking(bookingId, data) {
   const { data: existing } = await db
     .from('bookings').select('id')
-    .eq('car_id', data.car_id).eq('status', 'active')
+    .eq('car_id', data.car_id).neq('status', 'cancelled')
     .neq('id', bookingId)
     .lt('start_time', data.end_time).gt('end_time', data.start_time);
 
@@ -993,7 +1175,14 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
     const name         = member.navn  || '';
     const phone        = member.telefon || '';
     const expKm        = parseInt(document.getElementById('bm-exp-km').value, 10);
-    const startKm      = parseInt(document.getElementById('bm-start-km').value, 10);
+    const freshCarRow  = await freshCar(carId);
+    const existingBooking = state.editingBookingId
+      ? state.bookings.find(x => x.id === state.editingBookingId)
+      : null;
+    const startKm = existingBooking
+      ? (existingBooking.start_km ?? freshCarRow.current_km ?? 0)
+      : (freshCarRow.current_km ?? 0);
+    document.getElementById('bm-start-km').value = startKm;
     const notes        = document.getElementById('bm-notes').value.trim();
     const personalNote = document.getElementById('bm-personal-note').value.trim();
 
@@ -1357,7 +1546,6 @@ async function sendBookingToCalendar(bookingId, btn) {
         start: b.start_time,
         end: b.end_time,
         status: b.status,
-        smtp,
       }),
     });
     const payload = await res.json().catch(() => ({}));
@@ -1378,10 +1566,11 @@ async function sendBookingToCalendar(bookingId, btn) {
 // =============================================
 let deliveryBookingId = null;
 
-function openDeliveryModal(bookingId) {
+async function openDeliveryModal(bookingId) {
   const b   = state.bookings.find(x => x.id === bookingId);
   if (!b) return;
-  const car = state.cars.find(c => c.id === b.car_id);
+  let car = state.cars.find(c => c.id === b.car_id);
+  try { car = await freshCar(b.car_id); } catch { /* vis den km-stand, vi allerede har */ }
 
   deliveryBookingId = bookingId;
 
@@ -1396,7 +1585,7 @@ function openDeliveryModal(bookingId) {
 
   // Default end time: now rounded to 15 min
   setDT('dlm-end-date', 'dlm-end-time', roundTo15(new Date()));
-  document.getElementById('dlm-start-km').value = car?.current_km || 0;
+  document.getElementById('dlm-start-km').value = b.start_km ?? car?.current_km ?? 0;
   document.getElementById('dlm-end-km').value   = '';
   document.getElementById('dlm-km-driven').value = '';
   document.getElementById('dlm-comments').value  = '';
@@ -1425,8 +1614,8 @@ document.getElementById('dlm-cancel').addEventListener('click', closeDeliveryMod
 document.getElementById('dlm-submit').addEventListener('click', async () => {
   const b       = state.bookings.find(x => x.id === deliveryBookingId);
   if (!b) return;
-  const car     = state.cars.find(c => c.id === b.car_id);
-  const startKm = car?.current_km || 0;
+  const car     = await freshCar(b.car_id).catch(() => state.cars.find(c => c.id === b.car_id));
+  const startKm = b.start_km ?? car?.current_km ?? 0;
   const endKm   = parseInt(document.getElementById('dlm-end-km').value, 10);
   const endTime = getDT('dlm-end-date', 'dlm-end-time');
   const comments   = document.getElementById('dlm-comments').value.trim();
@@ -1434,7 +1623,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
 
   if (!endTime)               return showError('dlm-error', 'Vælg afleveringstidspunkt.');
   if (isNaN(endKm) || endKm < 0) return showError('dlm-error', 'Indtast en gyldig km-stand.');
-  if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end bilens aktuelle km (${startKm}).`);
+  if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end denne turs start-km (${startKm}).`);
   const startTime = new Date(b.start_time);
   if (!state.adminUnlocked && endTime <= startTime)
     return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
@@ -1448,6 +1637,16 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   btn.disabled = true; btn.textContent = 'Registrerer…';
 
   try {
+    const overlap = await findDbBookingOverlap(b.car_id, b.start_time, safeEndTime.toISOString(), b.id);
+    if (overlap) {
+      return showError('dlm-error', `Afleveringstidspunktet overlapper ${overlap.user_name}s booking, som starter ${fmtDateTime(overlap.start_time)}. Vælg et tidspunkt senest dér.`);
+    }
+
+    const { data: earlier } = await db.from('deliveries')
+      .select('id,car_id,start_km,end_km,created_at')
+      .eq('car_id', b.car_id);
+    const billedKm = billableKm(startKm, endKm, (earlier || []).map(d => [d.start_km, d.end_km]));
+
     const { error: delErr } = await db.from('deliveries').insert({
       booking_id: b.id, car_id: b.car_id,
       start_km: startKm, end_km: endKm,
@@ -1455,7 +1654,9 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
     });
     if (delErr) throw delErr;
 
-    await db.from('cars').update({ current_km: endKm }).eq('id', b.car_id);
+    if (endKm > (car?.current_km || 0)) {
+      await db.from('cars').update({ current_km: endKm }).eq('id', b.car_id).lt('current_km', endKm);
+    }
     await db.from('bookings').update({ status: 'completed', end_time: safeEndTime.toISOString(), personal_note: personalNote || null }).eq('id', b.id);
 
     await logActivity('aflevering', b.car_id, b.id, b.user_name, {
@@ -1463,7 +1664,11 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
       duration_quarters: durationQuarters, duration_text: durTxt, comments,
     });
 
-    toast(`${car?.name} afleveret — ${endKm - startKm} km kørt.`, 'success');
+    const rawKm = endKm - startKm;
+    const note = billedKm < rawKm
+      ? ` ${billedKm} km tælles med. Resten ligger allerede på en tur, der blev afleveret først, og den tur er ikke ændret.`
+      : '';
+    toast(`${car?.name} afleveret — ${rawKm} km aflæst.${note}`, 'success');
     closeDeliveryModal();
     await loadCars();
     await loadBookingsForCurrentView();
@@ -1912,10 +2117,9 @@ async function restoreFromTrash(trashId) {
       const b = item.data;
       // Reload state.bookings for accurate conflict detection
       await loadBookingsForCurrentView();
-      const conflict = findConflictInfo(b.car_id, b.start_time, b.end_time, null);
+      const conflict = await findDbBookingOverlap(b.car_id, b.start_time, b.end_time, b.id);
       if (conflict) {
-        const { first, nextFree } = conflict;
-        alert(`Kan ikke gendanne — konflikt med booking af ${first.user_name}\n(${fmtDateTime(first.start_time)} – ${fmtTime(first.end_time)})\n\nLedig fra: ${fmtDateTime(nextFree)}`);
+        alert(`Kan ikke gendanne — konflikt med booking af ${conflict.user_name}\n(${fmtDateTime(conflict.start_time)} – ${fmtTime(conflict.end_time)})`);
         return;
       }
       const { error } = await db.from('bookings').insert({
@@ -1928,6 +2132,13 @@ async function restoreFromTrash(trashId) {
       await loadBookingsForCurrentView(); renderCalendarGrid();
     } else if (item.type === 'delivery') {
       const d = item.data;
+      const existing = await deliveriesForCars([d.car_id]);
+      const rawKm = Number(d.end_km) - Number(d.start_km);
+      const freeKm = billableKm(d.start_km, d.end_km, existing.map(x => [x.start_km, x.end_km]));
+      if (rawKm > 0 && freeKm < rawKm) {
+        alert('Kan ikke gendanne — km-intervallet overlapper en aflevering, der allerede er gemt. Den eksisterende tur ændres ikke.');
+        return;
+      }
       const { error } = await db.from('deliveries').insert({
         id: d.id, booking_id: d.booking_id || null, car_id: d.car_id,
         start_km: d.start_km, end_km: d.end_km,
@@ -2151,6 +2362,7 @@ async function loadRegnskab(memberNavn) {
   if (carId) q = q.eq('car_id', carId);
 
   const { data: bookings } = await q;
+  const carDeliveries = await deliveriesForCars((bookings || []).map(b => b.car_id));
 
   if (!bookings || bookings.length === 0) {
     document.getElementById('rsk-summary').innerHTML = '';
@@ -2168,7 +2380,7 @@ async function loadRegnskab(memberNavn) {
     totalMins += dur;
     const del = b.deliveries?.[0];
     const isDelivered = !!del;
-    const km = del ? (del.km_driven ?? (del.end_km - del.start_km)) : null;
+    const km = del ? billableKmForDelivery({ ...del, car_id: b.car_id }, carDeliveries) : null;
     const durationMins = del ? (del.duration_quarters || 0) * 15 : dur;
     const carName = b.cars?.name || '';
     const kmCost   = isDelivered && km != null ? calcKmCost(km, b.cars) : null;
@@ -2480,10 +2692,11 @@ async function loadAdminRegnskab() {
   if (error) { content.innerHTML = `<p style="color:var(--danger)">Fejl: ${error.message}</p>`; return; }
   if (!data?.length) { content.innerHTML = '<p style="color:var(--muted)">Ingen afleveringer i den valgte periode.</p>'; return; }
 
+  const allDeliveries = await deliveriesForCars(data.map(d => d.car_id));
   const members = {};
   data.forEach(d => {
     const user = d.bookings?.user_name || 'Ukendt';
-    const km   = d.km_driven ?? (d.end_km - d.start_km);
+    const km   = billableKmForDelivery(d, allDeliveries.length ? allDeliveries : data);
     const durationMins = (d.duration_quarters || 0) * 15;
     const kmCost   = calcKmCost(km, d.cars);
     const timeCost = calcTimeCost(durationMins);
@@ -2545,7 +2758,8 @@ const SETTINGS_TEXT_KEYS = [
 function renderSettingsForm() {
   SETTINGS_TEXT_KEYS.forEach(k => {
     const el = document.getElementById('set-' + k);
-    if (el) el.value = getSetting(k);
+    if (!el) return;
+    el.value = k === 'smtp_pass' ? '' : getSetting(k);
   });
   const wm = document.getElementById('set-watermark_enabled');
   if (wm) wm.checked = getSetting('watermark_enabled') === '1';
@@ -2603,7 +2817,9 @@ async function saveSettingsForm() {
   try {
     for (const k of SETTINGS_TEXT_KEYS) {
       const el = document.getElementById('set-' + k);
-      if (el) await saveSetting(k, el.value.trim());
+      if (!el) continue;
+      if (k === 'smtp_pass' && !el.value.trim()) continue;
+      await saveSetting(k, el.value.trim());
     }
     await saveCarPrices();
     renderAdminCars();
@@ -2623,7 +2839,7 @@ async function saveSettingsForm() {
 
 document.getElementById('set-smtp-test')?.addEventListener('click', async () => {
   const status = document.getElementById('set-smtp-test-status');
-  const { host, port, user, pass, from } = await currentSmtp();
+  const { host, from } = await currentSmtp();
   const to = document.getElementById('set-smtp-test-to').value.trim() || from;
   if (!host || !from) {
     if (status) status.textContent = 'Udfyld SMTP-server og afsender.';
@@ -2640,7 +2856,7 @@ document.getElementById('set-smtp-test')?.addEventListener('click', async () => 
     const res = await fetch('/api/calendar-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: true, to, smtp: { host, port, user, pass, from } }),
+      body: JSON.stringify({ test: true, to }),
     });
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(payload.error || 'Kunne ikke sende mail');
@@ -2656,8 +2872,13 @@ document.getElementById('set-smtp-test')?.addEventListener('click', async () => 
 
 document.getElementById('set-admin-password-save')?.addEventListener('click', async () => {
   const status = document.getElementById('set-admin-password-status');
+  const current = document.getElementById('set-admin-password-current').value;
   const first = document.getElementById('set-admin-password-1').value;
   const second = document.getElementById('set-admin-password-2').value;
+  if (!current.trim()) {
+    if (status) status.textContent = 'Skriv den nuværende adgangskode.';
+    return;
+  }
   if (!first.trim()) {
     if (status) status.textContent = 'Skriv en ny adgangskode.';
     return;
@@ -2671,9 +2892,9 @@ document.getElementById('set-admin-password-save')?.addEventListener('click', as
   btn.disabled = true;
   if (status) status.textContent = 'Gemmer...';
   try {
-    const { error } = await db.rpc('set_admin_password', { new_password: first });
+    const { error } = await db.rpc('set_admin_password', { current_password: current, new_password: first });
     if (error) throw error;
-    window.appSettings.admin_password = first;
+    document.getElementById('set-admin-password-current').value = '';
     document.getElementById('set-admin-password-1').value = '';
     document.getElementById('set-admin-password-2').value = '';
     if (status) status.textContent = 'Adgangskode ændret';
@@ -2830,8 +3051,8 @@ document.getElementById('admin-pw-btn').addEventListener('click', async () => {
   const input = document.getElementById('admin-pw').value;
   const errorEl = document.getElementById('admin-pw-error');
   errorEl.classList.add('hidden');
-  const { data } = await db.from('settings').select('value').eq('key', 'admin_password').single();
-  if (data && input === data.value) {
+  const { data, error } = await db.rpc('check_admin_password', { password: input });
+  if (!error && data === true) {
     unlockAdminPanel();
   } else {
     errorEl.classList.remove('hidden');
@@ -3685,6 +3906,7 @@ async function init() {
   try {
     initPinLock();
     initPinWizard();
+    initDisplayControls();
 
     await loadSettings();
     applyWatermark();

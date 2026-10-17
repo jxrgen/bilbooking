@@ -7,7 +7,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#ffffff">
   <title>Delebilsklub — Booking</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261017-1">
 </head>
 <body>
 
@@ -50,6 +50,8 @@
         <span id="week-label"></span>
         <button id="today-btn" class="btn-sm">I dag</button>
         <button id="next-week" class="icon-btn">&#8594;</button>
+        <button id="invert-btn" class="icon-btn" title="Sollys-tilstand — vend farverne om" aria-pressed="false">&#9728;</button>
+        <button id="display-btn" class="icon-btn" title="Skriftstørrelse og visning">&#128289;</button>
       </div>
     </div>
     <!-- Visningsknapper i egen række — altid synlig inkl. mobil -->
@@ -119,6 +121,42 @@
           </div>
           <div class="help-tip" style="margin-top:8px">
             På mobil: træk ned i datoerne i toppen af kalenderen for at opdatere bookingerne.
+          </div>
+        </div>
+
+        <!-- VISNING / SKRIFTSTØRRELSE -->
+        <div class="help-section">
+          <div class="help-section-header">
+            <div class="help-icon-wrap" style="background:#FEF9C3;color:#CA8A04">&#128289;</div>
+            <div>
+              <h2>Visning og skriftstørrelse</h2>
+              <p class="help-lead">Gør teksten større og læs skærmen i skarpt sollys</p>
+            </div>
+          </div>
+          <div class="help-steps">
+            <div class="help-step">
+              <div class="help-step-dot">1</div>
+              <div>Klik på <strong>&#128289;-knappen</strong> øverst i kalenderen for at åbne <strong>Visning</strong></div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">2</div>
+              <div>Træk i <strong>Skriftstørrelse i kalender</strong> for at gøre ugenumre, timetal, datoer og bookingtekst større på én gang</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">3</div>
+              <div>Klik <strong>Tilpas hver del</strong>, hvis du vil justere ugenumre, timetal, datoer og bookingtekst hver for sig</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-dot">4</div>
+              <div>Klik <strong>Nulstil</strong> for at gå tilbage til standardstørrelsen</div>
+            </div>
+          </div>
+          <div class="help-tip">
+            <span class="help-tip-icon">&#9728;</span>
+            <strong>Sollys-tilstand:</strong> klik på &#9728;-knappen øverst i kalenderen for at vende alle farver om med ét tryk — nyttigt når solen skinner og skærmen er svær at læse. Tryk igen for at vende tilbage. Den kan også slås til og fra inde i Visning.
+          </div>
+          <div class="help-tip" style="margin-top:8px">
+            Indstillingerne gemmes kun på den enhed, du bruger — så hver telefon, tablet og computer kan have sin egen størrelse.
           </div>
         </div>
 
@@ -209,7 +247,10 @@
             Glemt at aflevere til tiden? Ingen fare — "Aflever bil"-knappen er stadig aktiv, selv efter bookingperioden er udløbet.
           </div>
           <div class="help-tip" style="margin-top:8px">
-            Har du glemt at registrere afleveringen af bilen? Opret en booking med det tidspunkt du faktisk afleverede bilen og registrér afleveringen derfra.
+            Start-km låses på bookingen, når den gemmes, og hentes fra bilens km-stand i det øjeblik. Ved aflevering tælles kun de km, som ikke allerede ligger på en tur, der blev afleveret først. En forsinket aflæsning ændrer hverken den anden tur eller bilens km-tæller, hvis tælleren allerede er højere.
+          </div>
+          <div class="help-tip" style="margin-top:8px">
+            Afleveringstidspunktet må ikke overlappe en anden booking på samme bil — heller ikke en, der allerede er afleveret. Rører de hinanden præcis, er det i orden.
           </div>
         </div>
 
@@ -237,7 +278,7 @@
             </div>
           </div>
           <div class="help-tip">
-            En afleveret booking vises i en lys udgave af bilens farve — så du stadig kan se hvilken bil det drejer sig om. Den spærrer aldrig for nye bookinger.
+            En afleveret booking vises i en lys udgave af bilens farve. Den optager stadig sit tidsrum, så en ny booking ikke kan lægges oven i den. Annullerede bookinger optager ikke tid.
           </div>
           <div class="help-tip" style="margin-top:8px">
             Når du redigerer en allerede afleveret booking, vises en advarsel. Ændringerne påvirker kun bookingsdata (navn, tidspunkt, km-estimat, bemærkninger og personlig note) — ikke selve afleveringsregistreringen (faktisk km-tal og varighed).
@@ -268,7 +309,7 @@
             </div>
           </div>
           <div class="help-tip">
-            For afleverede ture vises beregnet km-pris og tids-pris. Sammentællingen i toppen viser totalt km kørt og samlet beløb for den valgte periode.
+            For afleverede ture vises km-pris og tids-pris. Km-prisen bruger de km, der ikke allerede er talt med på en tidligere aflevering af samme bil. Alle biler er elbiler, og hver bil har sin egen standard km-pris.
           </div>
           <div class="help-tip" style="margin-top:8px">
             Din <strong>Personlige note</strong> fra bookingen (fx "Erhvervskørsel") vises i den sidste kolonne — kun synlig for dig.
@@ -394,10 +435,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Km-pris op til 100 km (Berlingo / ID.3)</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>3,00 kr./km</strong></td></tr>
-                <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Km-pris op til 100 km (elbil / Zoe)</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>2,50 kr./km</strong></td></tr>
-                <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Km-pris over 100 km pr. tur (Berlingo)</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)">2,00 kr./km</td></tr>
-                <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Km-pris over 100 km pr. tur (elbil)</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)">1,50 kr./km</td></tr>
+                <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Standard km-pris</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>Pr. bil</strong></td></tr>
                 <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Timepris</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>15 kr./time</strong></td></tr>
                 <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Døgnpris</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>150 kr./døgn</strong></td></tr>
                 <tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">Fast månedligt bidrag</td><td style="text-align:right;padding:7px 10px;border-bottom:1px solid var(--border)"><strong>25 kr./md.</strong> (75 kr./kvartal)</td></tr>
@@ -410,7 +448,7 @@
             </table>
             <div class="help-tip" style="margin-top:12px">
               <span class="help-tip-icon">💡</span>
-              Km-prisen er inkl. brændstof/el og øvrige forbrugsstoffer. Du betaler kun for faktisk kørt tid og km — ikke for reserveret tid du ikke bruger.
+              Alle biler er elbiler. Hver bil har sin egen standard km-pris, med én sats op til en km-grænse og en lavere sats over grænsen. Priserne sættes under Admin → Indstillinger → Priser. Timepris, døgnpris og månedligt bidrag gælder alle biler. Du betaler for kørt tid og for de km, der ikke allerede er talt med på en anden tur.
             </div>
           </div>
 
@@ -499,10 +537,10 @@
 
           <div class="help-section">
             <h2>Biler og tilbehør</h2>
-            <p>Bilklubben råder over en Citroen Berlingo (diesel) og en Renault Zoe (el-bil) — begge med plads til 5 passagerer. Berlingo har trækkrog til trailer, cykelholder o.l. Der findes autostole, børnesæder og cykelstativ i BG2's cykelskur ved p-pladsen — nøglen hænger sammen med Berlingos nøgle.</p>
+            <p>Alle biler i bookingsystemet er elbiler. Hver bil har sin egen standard km-pris. Autostole, børnesæder og cykelstativ findes i BG2's cykelskur ved p-pladsen.</p>
             <div class="help-tip">
               <span class="help-tip-icon">🌱</span>
-              Elbilen er billigst pr. km. fordi klubben ønsker at fremme brug af miljøvenlig transport.
+              Klubben kører kun elbiler. Km-prisen dækker el og sættes pr. bil.
             </div>
           </div>
 
@@ -511,7 +549,7 @@
             <ul>
               <li>Mulighed for kun at betale, når du kører</li>
               <li>Adgang til nye og dermed sikre biler</li>
-              <li>Adgang til en grøn elbil og en allround bil med anhængertræk</li>
+              <li>Adgang til klubbens elbiler</li>
               <li>Ingen uforudsete værkstedsregninger, dækskifte, forsikring eller ejerafgift</li>
               <li>Mulighed for at støtte et godt initiativ i Andelssamfundet</li>
             </ul>
@@ -539,8 +577,7 @@
             <h2>Kørelister, brændstof og el</h2>
             <ul>
               <li>Udfyld køreseddel i bilen ved hver kørsel med dato, start- og slut-km samt tidspunkter.</li>
-              <li>I bilerne ligger en mappe med telefonliste, vejhjælpsnummer, dieselkort/ladekort m.m.</li>
-              <li><strong>Berlingo (diesel):</strong> Brug foreningens Statoil/Circle-K/OK-kort i handskerummet. Kode fås hos bestyrelsen. Tanken skal ved aflevering være minimum 1/3 fyldt. Start langsomt — sæt tændingen til og afvent at kontrollamper slukker, inden du starter.</li>
+              <li>I bilerne ligger en mappe med telefonliste, vejhjælpsnummer og ladekort.</li>
               <li><strong>Elbiler:</strong> Brug Eon/Clever-kort (i mappe i handskerum) — virker også på Shell m.fl. (noget dyrere). Slut altid strøm til bilen ved aflevering. Langsom lader og forlængerledning ligger i bagagerummet til nødopladning fra stikkontakt.</li>
             </ul>
           </div>
@@ -548,9 +585,8 @@
           <div class="help-section">
             <h2>Dæktryk, sprinklervæske og aircondition</h2>
             <ul>
-              <li><strong>Berlingo:</strong> Anbefalet dæktryk 3 bar på alle hjul.</li>
-              <li><strong>Elbil:</strong> Anbefalet dæktryk står i dørkarmen ved venstre fordør.</li>
-              <li>Aircondition tændes mindst én gang om måneden (grønt lys ved A/C-knappen i Berlingo).</li>
+              <li>Anbefalet dæktryk står i dørkarmen ved venstre fordør.</li>
+              <li>Aircondition tændes mindst én gang om måneden.</li>
               <li>Olie og kølervæske kontrolleres ved langture.</li>
               <li>Skriv i kørebogen, når dæktryk eller sprinklervæske er tjekket/påfyldt.</li>
             </ul>
@@ -1019,12 +1055,12 @@
 
           <div class="settings-card">
             <h2>✉️ SMTP (afsendelse af email)</h2>
-            <p class="muted" style="color:var(--danger)">⚠️ Adgangskoden gemmes i databasen og er læsbar med appens offentlige nøgle. Brug en dedikeret afsender-konto med begrænsede rettigheder — ikke din private mailadgangskode.</p>
+            <p class="muted">Adgangskoden gemmes på serveren og vises ikke igen. Lad feltet stå tomt for at beholde den. Brug en dedikeret afsender-konto.</p>
             <div class="settings-grid">
               <label>SMTP-server<input type="text" id="set-smtp_host"></label>
               <label>Port<input type="number" id="set-smtp_port" placeholder="587"></label>
               <label>Brugernavn<input type="text" id="set-smtp_user"></label>
-              <label>Adgangskode<input type="password" id="set-smtp_pass" autocomplete="new-password"></label>
+              <label>Adgangskode<input type="password" id="set-smtp_pass" autocomplete="new-password" placeholder="Uændret, hvis feltet er tomt"></label>
               <label>Afsender-adresse (From)<input type="email" id="set-smtp_from"></label>
               <label>Send test til<input type="email" id="set-smtp-test-to" placeholder="Samme som afsender, hvis feltet er tomt"></label>
             </div>
@@ -1034,8 +1070,9 @@
 
           <div class="settings-card">
             <h2>🔐 Admin-adgangskode</h2>
-            <p class="muted">Skriv den nye adgangskode to gange. Den gemmes først, når du bekræfter.</p>
+            <p class="muted">Skriv den nuværende adgangskode og den nye to gange. Den gemmes først, når du bekræfter.</p>
             <div class="settings-grid">
+              <label>Nuværende adgangskode<input type="password" id="set-admin-password-current" autocomplete="current-password"></label>
               <label>Ny adgangskode<input type="password" id="set-admin-password-1" autocomplete="new-password"></label>
               <label>Gentag ny adgangskode<input type="password" id="set-admin-password-2" autocomplete="new-password"></label>
             </div>
@@ -1105,7 +1142,7 @@
       <div class="field">
         <label>Nuværende km-stand</label>
         <input type="number" id="bm-start-km" readonly>
-        <div class="field-note">Km-standen er vejledende — ved aflevering bruges bilens aktuelle stand på det tidspunkt.</div>
+        <div class="field-note">Km-standen hentes fra bilen, når bookingen gemmes, og låses på denne tur. En senere tur kan ikke ændre den.</div>
       </div>
       <div class="field">
         <label>Dit navn <span class="required">*</span></label>
@@ -1214,7 +1251,7 @@
         </div>
       </div>
       <div class="field">
-        <label>Start km <span class="muted">(bilens aktuelle stand)</span></label>
+        <label>Start km <span class="muted">(låst på bookingen)</span></label>
         <input type="number" id="dlm-start-km" readonly>
       </div>
       <div class="field-row">
@@ -1350,11 +1387,59 @@
     </div>
   </div>
 
+  <!-- ===================== VISNING (skriftstørrelse + sollys) ===================== -->
+  <div id="display-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:440px">
+      <button class="modal-close" id="disp-close">&#10005;</button>
+      <h2>&#128289; Visning</h2>
+      <p class="muted" style="font-size:13px;margin:-6px 0 18px">Gør teksten i kalenderen større og mere synlig. Indstillingerne gemmes kun på denne enhed.</p>
+
+      <div class="field">
+        <label>Skriftstørrelse i kalender <span class="disp-val" id="disp-master-val">100%</span></label>
+        <input type="range" id="disp-master" class="disp-range" min="80" max="240" step="10" value="100">
+        <div class="field-note">Justerer ugenumre, timetal, datoer og bookingtekst på én gang.</div>
+      </div>
+
+      <button type="button" id="disp-advanced-toggle" class="btn-sm" style="margin:6px 0 4px">&#9881;&#65039; Tilpas hver del</button>
+
+      <div id="disp-advanced" class="hidden" style="margin-top:8px">
+        <div class="field">
+          <label>Ugenumre <span class="disp-val" id="disp-week-val">100%</span></label>
+          <input type="range" id="disp-week" class="disp-range" min="80" max="320" step="10" value="100">
+        </div>
+        <div class="field">
+          <label>Timetal (klokkeslæt) <span class="disp-val" id="disp-hour-val">100%</span></label>
+          <input type="range" id="disp-hour" class="disp-range" min="80" max="320" step="10" value="100">
+        </div>
+        <div class="field">
+          <label>Datoer og ugedage <span class="disp-val" id="disp-date-val">100%</span></label>
+          <input type="range" id="disp-date" class="disp-range" min="80" max="320" step="10" value="100">
+        </div>
+        <div class="field">
+          <label>Tekst i bookinger <span class="disp-val" id="disp-booking-val">100%</span></label>
+          <input type="range" id="disp-booking" class="disp-range" min="80" max="320" step="10" value="100">
+        </div>
+      </div>
+
+      <div class="field" style="border-top:1px solid var(--border);padding-top:16px;margin-top:10px">
+        <label class="disp-check">
+          <input type="checkbox" id="disp-invert"> &#9728; Sollys-tilstand (inverterede farver)
+        </label>
+        <div class="field-note">Vender alle farver om, så skærmen er lettere at læse i skarpt sollys. Kan også slås til og fra med &#9728;-knappen på forsiden.</div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="disp-reset" class="btn-secondary">Nulstil</button>
+        <button id="disp-done" class="btn-primary">Færdig</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast notifications -->
   <div id="toast-container"></div>
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=20260930-7"></script>
+  <script src="app.js?v=20261017-1"></script>
 </body>
 </html>
