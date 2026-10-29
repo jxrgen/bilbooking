@@ -108,6 +108,18 @@ body {
 .icon-btn:hover { background: var(--bg); }
 .icon-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
+/* Instruktionsvideo-link øverst i Vejledningen */
+.help-video-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 2px auto 20px; padding: 10px 18px;
+  background: var(--primary); color: #fff;
+  border-radius: 8px; font-weight: 600; font-size: 14px;
+  text-decoration: none; box-shadow: var(--shadow);
+  transition: background .15s, transform .1s;
+}
+.help-video-link:hover { background: var(--primary-d); transform: translateY(-1px); }
+.help-video-icon { font-size: 18px; line-height: 1; }
+
 /* Visning-panel (skriftstørrelse + sollys-tilstand) */
 .disp-range { width: 100%; margin: 6px 0 2px; accent-color: var(--primary); cursor: pointer; }
 .disp-val {
