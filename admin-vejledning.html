@@ -444,14 +444,13 @@
   <p class="cover-subtitle">Bookingsystem — komplet guide til administratorer</p>
 
   <div class="cover-cars">
-    <div class="cover-car-chip" style="background:#1D4ED8">ID3</div>
-    <div class="cover-car-chip" style="background:#047857">Renault Zoe</div>
-    <div class="cover-car-chip" style="background:#B45309">Berlingo</div>
-    <div class="cover-car-chip" style="background:#6D28D9">ID Buzz</div>
+    <div class="cover-car-chip" style="background:#1d4ed8">VW ID3</div>
+    <div class="cover-car-chip" style="background:#e00000">Renault Zoe</div>
+    <div class="cover-car-chip" style="background:#0d9600">ID Buzz</div>
   </div>
 
   <div class="cover-badge">🔒 Kun for administratorer</div>
-  <div class="cover-footer">Delebilsklub · Bookingsystem · 2025</div>
+  <div class="cover-footer">Delebilsklub · Bookingsystem · 2026</div>
 </div>
 
 
@@ -563,23 +562,20 @@
     <p class="section-lead">Delebilsklubens bookingsystem giver alle medlemmer mulighed for at reservere og aflevere klub­bens biler via en simpel webapp — ingen installation, ingen login for brugere.</p>
 
     <div class="cars-grid">
-      <div class="car-card" style="background:#1D4ED8">
+      <div class="car-card" style="background:#1d4ed8">
         <div class="car-card-dot"></div>
-        <div><div class="car-card-name">ID3</div><div class="car-card-sub">Blå</div></div>
+        <div><div class="car-card-name">VW ID3</div><div class="car-card-sub">Blå</div></div>
       </div>
-      <div class="car-card" style="background:#047857">
+      <div class="car-card" style="background:#e00000">
         <div class="car-card-dot"></div>
-        <div><div class="car-card-name">Renault Zoe</div><div class="car-card-sub">Grøn</div></div>
+        <div><div class="car-card-name">Renault Zoe</div><div class="car-card-sub">Rød</div></div>
       </div>
-      <div class="car-card" style="background:#B45309">
+      <div class="car-card" style="background:#0d9600">
         <div class="car-card-dot"></div>
-        <div><div class="car-card-name">Berlingo</div><div class="car-card-sub">Amber</div></div>
-      </div>
-      <div class="car-card" style="background:#6D28D9">
-        <div class="car-card-dot"></div>
-        <div><div class="car-card-name">ID Buzz</div><div class="car-card-sub">Lilla</div></div>
+        <div><div class="car-card-name">ID Buzz</div><div class="car-card-sub">Grøn</div></div>
       </div>
     </div>
+    <p style="font-size:10pt;color:#6B7280;margin-top:4px">Aktuelt er tre elbiler aktive (listen her opdateres manuelt). Den fulde, altid-opdaterede liste med farver og km-priser ses under <strong>Admin → Biler</strong> og i brugervejledningens afsnit "Klubbens biler", der hentes direkte fra systemet.</p>
 
     <h3>Hvad kan systemet?</h3>
     <table>
@@ -597,7 +593,7 @@
     </table>
 
     <h3>Teknisk platform</h3>
-    <p>Systemet kører som en statisk webside hostet på <strong>GitHub Pages</strong> (gratis). Databasen er <strong>Supabase</strong> (gratis tier). Der kræves ingen server, ingen installation og ingen vedligeholdelse af infrastruktur.</p>
+    <p>Systemet er en statisk webside, der hostes med <strong>nginx</strong> på klubbens egen server (<strong>bilklub.club</strong> hos Contabo). Databasen er <strong>PostgreSQL</strong>, som webappen tilgår via <strong>PostgREST</strong>, og en lille mailtjeneste sender kalender-links. Serveren holder sig selv opdateret med automatiske sikkerhedsopdateringer. Brugere skal intet installere — de åbner blot linket i en browser.</p>
 
     <div class="callout tip">
       <div class="callout-icon">💡</div>
@@ -676,17 +672,14 @@
       </div>
       <div class="mockup-body">
         <div class="mockup-toolbar">
-          <div class="mockup-chip" style="border-color:#1D4ED8;color:#1D4ED8">
-            <div class="dot" style="background:#1D4ED8"></div>ID3
+          <div class="mockup-chip" style="border-color:#1d4ed8;color:#1d4ed8">
+            <div class="dot" style="background:#1d4ed8"></div>VW ID3
           </div>
-          <div class="mockup-chip" style="border-color:#047857;color:#047857">
-            <div class="dot" style="background:#047857"></div>Renault Zoe
+          <div class="mockup-chip" style="border-color:#e00000;color:#e00000">
+            <div class="dot" style="background:#e00000"></div>Renault Zoe
           </div>
-          <div class="mockup-chip" style="border-color:#B45309;color:#B45309;opacity:.35">
-            <div class="dot" style="background:#B45309"></div>Berlingo
-          </div>
-          <div class="mockup-chip" style="border-color:#6D28D9;color:#6D28D9">
-            <div class="dot" style="background:#6D28D9"></div>ID Buzz
+          <div class="mockup-chip" style="border-color:#0d9600;color:#0d9600;opacity:.35">
+            <div class="dot" style="background:#0d9600"></div>ID Buzz
           </div>
           <div style="margin-left:auto;display:flex;gap:5px;align-items:center;font-size:9pt;color:var(--muted)">
             ← &nbsp; 26 maj – 1 jun 2025 &nbsp; I dag &nbsp; →
@@ -1306,7 +1299,7 @@
     </table>
 
     <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:9pt">
-      Delebilsklub — Bookingsystem · Administratorvejledning · 2025 &nbsp;·&nbsp; 🔒 Fortrolig
+      Delebilsklub — Bookingsystem · Administratorvejledning · 2026 &nbsp;·&nbsp; 🔒 Fortrolig
     </div>
   </div>
 
