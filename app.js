@@ -1576,6 +1576,8 @@ async function sendBookingToCalendar(bookingId, btn) {
 // DELIVERY MODAL
 // =============================================
 let deliveryBookingId = null;
+let deliveryKmConfirmed = false;   // sat når brugeren har bekræftet et usædvanligt km-tal
+const DELIVERY_KM_ABSURD = 2000;   // enkelttur over dette antal km kræver bekræftelse
 
 async function openDeliveryModal(bookingId) {
   const b   = state.bookings.find(x => x.id === bookingId);
@@ -1602,10 +1604,19 @@ async function openDeliveryModal(bookingId) {
   document.getElementById('dlm-comments').value  = '';
   document.getElementById('dlm-personal-note').value = b.personal_note || '';
   showError('dlm-error', '');
+  resetDeliveryKmWarn();
 
   document.getElementById('detail-modal').classList.add('hidden');
   document.getElementById('delivery-modal').classList.remove('hidden');
   document.getElementById('dlm-end-km').focus();
+}
+
+function resetDeliveryKmWarn() {
+  deliveryKmConfirmed = false;
+  const warn = document.getElementById('dlm-km-warn');
+  if (warn) warn.classList.add('hidden');
+  const btn = document.getElementById('dlm-submit');
+  if (btn) btn.innerHTML = '&#10003; Registrer aflevering';
 }
 
 document.getElementById('dlm-end-km').addEventListener('input', function () {
@@ -1613,6 +1624,8 @@ document.getElementById('dlm-end-km').addEventListener('input', function () {
   const endKm   = parseInt(this.value, 10);
   document.getElementById('dlm-km-driven').value =
     (!isNaN(startKm) && !isNaN(endKm) && endKm >= startKm) ? endKm - startKm : '';
+  // Ændrer brugeren tallet, skal det bekræftes på ny
+  resetDeliveryKmWarn();
 });
 
 function closeDeliveryModal() {
@@ -1635,6 +1648,25 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   if (!endTime)               return showError('dlm-error', 'Vælg afleveringstidspunkt.');
   if (isNaN(endKm) || endKm < 0) return showError('dlm-error', 'Indtast en gyldig km-stand.');
   if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end bilens aktuelle km-stand (${startKm}). Skriv det som en note på bookingen og kontakt en administrator.`);
+
+  // Advarsel ved usædvanligt mange km — kræv bekræftelse før aflevering
+  const kmDriven = endKm - startKm;
+  const expected = Number(b.expected_km) || 0;
+  const over50   = expected > 0 && kmDriven > expected * 1.5;
+  const absurd   = kmDriven > DELIVERY_KM_ABSURD;
+  if ((over50 || absurd) && !deliveryKmConfirmed) {
+    deliveryKmConfirmed = true;
+    const warn = document.getElementById('dlm-km-warn');
+    const pct  = expected > 0 ? Math.round((kmDriven / expected - 1) * 100) : null;
+    warn.innerHTML = `&#9888; Du har aflæst <strong>${endKm.toLocaleString('da-DK')} km</strong>, dvs. <strong>${kmDriven.toLocaleString('da-DK')} kørte km</strong>.` +
+      (over50 && pct != null ? ` Det er <strong>${pct}% mere</strong> end de ${expected} km, du forventede ved bookingen.` : '') +
+      (absurd ? ` Det er usædvanligt mange km for én tur.` : '') +
+      ` Tjek at km-standen er skrevet korrekt — klik "Bekræft aflevering" for at fortsætte alligevel.`;
+    warn.classList.remove('hidden');
+    document.getElementById('dlm-submit').innerHTML = 'Bekræft aflevering';
+    return;
+  }
+
   const startTime = new Date(b.start_time);
   if (!state.adminUnlocked && endTime <= startTime)
     return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
