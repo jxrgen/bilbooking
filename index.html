@@ -7,7 +7,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#ffffff">
   <title>Delebilsklub — Booking</title>
-  <link rel="stylesheet" href="style.css?v=20261029-1">
+  <link rel="stylesheet" href="style.css?v=20261031-2">
 </head>
 <body>
 
@@ -254,7 +254,7 @@
             Glemt at aflevere til tiden? Ingen fare — "Aflever bil"-knappen er stadig aktiv, selv efter bookingperioden er udløbet.
           </div>
           <div class="help-tip" style="margin-top:8px">
-            Start-km låses på bookingen, når den gemmes, og hentes fra bilens km-stand i det øjeblik. Ved aflevering tælles kun de km, som ikke allerede ligger på en tur, der blev afleveret først. En forsinket aflæsning ændrer hverken den anden tur eller bilens km-tæller, hvis tælleren allerede er højere.
+            Km-standen vises altid som bilens <strong>aktuelle</strong> km-stand — den hentes direkte fra bilen og kan ikke ændres manuelt. Aflæs bilens km-tæller, når du starter turen: passer den ikke med det viste tal, så skriv det i en note på bookingen og kontakt en administrator. Ved aflevering betaler du for forskellen mellem den aktuelle km-stand og din aflæsning.
           </div>
           <div class="help-tip" style="margin-top:8px">
             Afleveringstidspunktet må ikke overlappe en anden booking på samme bil — heller ikke en, der allerede er afleveret. Rører de hinanden præcis, er det i orden.
@@ -277,7 +277,7 @@
             </div>
             <div class="help-step">
               <div class="help-step-dot">2</div>
-              <div>Klik <strong>Rediger</strong> for at ændre tidspunkt, km eller bemærkninger — også på afleverede bookinger</div>
+              <div>Klik <strong>Rediger</strong> for at ændre <strong>bil</strong>, tidspunkt eller bemærkninger — også på afleverede bookinger</div>
             </div>
             <div class="help-step">
               <div class="help-step-dot">3</div>
@@ -1147,9 +1147,10 @@
       <input type="hidden" id="bm-car-id">
 
       <div class="field">
-        <label>Nuværende km-stand</label>
+        <label>Bilens km-stand nu</label>
         <input type="number" id="bm-start-km" readonly>
-        <div class="field-note">Km-standen hentes fra bilen, når bookingen gemmes, og låses på denne tur. En senere tur kan ikke ændre den.</div>
+        <div class="field-note">Hentes direkte fra bilen lige nu og kan ikke ændres her.</div>
+        <div class="km-note-red">Aflæs bilens km-stand, når du starter turen. Passer den ikke med tallet her, så skriv det i en note på bookingen og kontakt en administrator.</div>
       </div>
       <div class="field">
         <label>Dit navn <span class="required">*</span></label>
@@ -1258,8 +1259,9 @@
         </div>
       </div>
       <div class="field">
-        <label>Start km <span class="muted">(låst på bookingen)</span></label>
+        <label>Start km <span class="muted">(bilens aktuelle km-stand)</span></label>
         <input type="number" id="dlm-start-km" readonly>
+        <div class="km-note-red">Aflæs bilens km-stand, når du starter turen. Passer den ikke med tallet her, så skriv det i en note på bookingen og kontakt en administrator.</div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -1447,6 +1449,6 @@
 
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="app.js?v=20261017-1"></script>
+  <script src="app.js?v=20261031-2"></script>
 </body>
 </html>

@@ -1012,49 +1012,48 @@ function openBookingModal(carId, suggestedStart, editingBooking = null) {
   const selectorWrap  = document.getElementById('bm-car-selector-wrap');
   const badgeWrap     = document.getElementById('bm-car-badge-wrap');
 
-  if (editingBooking) {
-    // Ved redigering: vis fast badge, ingen vælger
-    selectorWrap.classList.add('hidden');
-    badgeWrap.classList.remove('hidden');
-    document.getElementById('bm-car-badge').textContent = car.name;
-    document.getElementById('bm-car-badge').style.background = car.color;
-    document.getElementById('bm-car-id').value = carId;
-  } else {
-    // Ny booking: vis vælger med alle aktiverede biler
-    selectorWrap.classList.remove('hidden');
-    badgeWrap.classList.add('hidden');
+  // Bilvælgeren vises altid — også ved redigering, så man kan skifte bil
+  selectorWrap.classList.remove('hidden');
+  badgeWrap.classList.add('hidden');
 
-    const enabledCars = state.cars.filter(c => state.enabledCars.has(c.id));
-    const selector = document.getElementById('bm-car-selector');
-    selector.innerHTML = enabledCars.map(c => `
-      <button type="button" class="car-select-btn${c.id === carId ? ' selected' : ''}"
-        data-car-id="${c.id}" style="background:${c.color}">
-        ${c.name}
-      </button>`).join('');
-
-    document.getElementById('bm-car-id').value = carId;
-
-    selector.querySelectorAll('.car-select-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        selector.querySelectorAll('.car-select-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        const selectedId  = btn.dataset.carId;
-        const selectedCar = state.cars.find(c => c.id === selectedId);
-        document.getElementById('bm-car-id').value = selectedId;
-        if (selectedCar) {
-          document.getElementById('bm-start-km').value = selectedCar.current_km || 0;
-        }
-      });
-    });
-
-    refreshCarButtons();
+  let listCars = state.cars.filter(c => state.enabledCars.has(c.id));
+  // Sørg for at bookingens egen bil altid er med (også hvis den er fravalgt i kalenderen)
+  if (!listCars.some(c => c.id === carId)) {
+    const ownCar = state.cars.find(c => c.id === carId);
+    if (ownCar) listCars = [ownCar, ...listCars];
   }
+  const selector = document.getElementById('bm-car-selector');
+  selector.innerHTML = listCars.map(c => `
+    <button type="button" class="car-select-btn${c.id === carId ? ' selected' : ''}"
+      data-car-id="${c.id}" style="background:${c.color}">
+      ${c.name}
+    </button>`).join('');
 
-  // Ved redigering: vis km-stand på det bookede tidspunkt (bookingens start_km),
-  // ikke bilens aktuelle km-stand.
-  document.getElementById('bm-start-km').value = editingBooking
-    ? (editingBooking.start_km ?? 0)
-    : (car.current_km || 0);
+  document.getElementById('bm-car-id').value = carId;
+
+  // Hent og vis bilens aktuelle km-stand live (aldrig en frossen værdi)
+  const showLiveKm = (cId) => {
+    const stateCar = state.cars.find(c => c.id === cId);
+    document.getElementById('bm-start-km').value = stateCar?.current_km ?? 0;
+    freshCar(cId).then(fc => {
+      if (document.getElementById('bm-car-id').value === cId)
+        document.getElementById('bm-start-km').value = fc?.current_km ?? 0;
+    }).catch(() => {});
+  };
+
+  selector.querySelectorAll('.car-select-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selector.querySelectorAll('.car-select-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const selectedId = btn.dataset.carId;
+      document.getElementById('bm-car-id').value = selectedId;
+      showLiveKm(selectedId);
+      refreshCarButtons();
+    });
+  });
+
+  refreshCarButtons();
+  showLiveKm(carId);
 
   setDT('bm-start-date', 'bm-start-time', editingBooking ? new Date(editingBooking.start_time) : roundTo15(suggestedStart));
   setDT('bm-end-date',   'bm-end-time',   editingBooking ? new Date(editingBooking.end_time)   : roundTo15(suggestedEnd));
@@ -1179,9 +1178,8 @@ document.getElementById('bm-submit').addEventListener('click', async () => {
     const existingBooking = state.editingBookingId
       ? state.bookings.find(x => x.id === state.editingBookingId)
       : null;
-    const startKm = existingBooking
-      ? (existingBooking.start_km ?? freshCarRow.current_km ?? 0)
-      : (freshCarRow.current_km ?? 0);
+    // Start-km er altid bilens aktuelle (live) km-stand — aldrig frosset ved booking
+    const startKm = freshCarRow.current_km ?? 0;
     document.getElementById('bm-start-km').value = startKm;
     const notes        = document.getElementById('bm-notes').value.trim();
     const personalNote = document.getElementById('bm-personal-note').value.trim();
@@ -1269,10 +1267,23 @@ async function openDetailModal(bookingId) {
     }
   }
 
+  // Vis bilens aktuelle (live) km-stand øverst for bookinger, der endnu ikke er afsluttet
+  let kmTopHtml = '';
+  if (isActive) {
+    let liveKm = car?.current_km;
+    try { const fc = await freshCar(b.car_id); liveKm = fc?.current_km ?? liveKm; } catch {}
+    if (liveKm != null) {
+      kmTopHtml =
+        `<div class="dm-row"><label>Bilens km-stand nu</label><span>${Number(liveKm).toLocaleString('da-DK')} km</span></div>` +
+        `<div class="km-note-red" style="margin:0 0 10px">Aflæs bilens km-stand, når du starter turen. Passer den ikke med tallet her, så skriv det i en note på bookingen og kontakt en administrator.</div>`;
+    }
+  }
+
   document.getElementById('dm-content').innerHTML = `
     <div style="margin-bottom:14px">
       <span class="car-badge" style="background:${car?.color}">${car?.name}</span>
     </div>
+    ${kmTopHtml}
     <div class="dm-row"><label>Booket af</label><span>${b.user_name}</span></div>
     <div class="dm-row"><label>Telefon</label><span>${b.phone}</span></div>
     <div class="dm-row"><label>Periode</label><span>${fmtDateTime(b.start_time)} → ${fmtDateTime(b.end_time)}</span></div>
@@ -1585,7 +1596,7 @@ async function openDeliveryModal(bookingId) {
 
   // Default end time: now rounded to 15 min
   setDT('dlm-end-date', 'dlm-end-time', roundTo15(new Date()));
-  document.getElementById('dlm-start-km').value = b.start_km ?? car?.current_km ?? 0;
+  document.getElementById('dlm-start-km').value = car?.current_km ?? 0;
   document.getElementById('dlm-end-km').value   = '';
   document.getElementById('dlm-km-driven').value = '';
   document.getElementById('dlm-comments').value  = '';
@@ -1615,7 +1626,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   const b       = state.bookings.find(x => x.id === deliveryBookingId);
   if (!b) return;
   const car     = await freshCar(b.car_id).catch(() => state.cars.find(c => c.id === b.car_id));
-  const startKm = b.start_km ?? car?.current_km ?? 0;
+  const startKm = car?.current_km ?? 0;
   const endKm   = parseInt(document.getElementById('dlm-end-km').value, 10);
   const endTime = getDT('dlm-end-date', 'dlm-end-time');
   const comments   = document.getElementById('dlm-comments').value.trim();
@@ -1623,7 +1634,7 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
 
   if (!endTime)               return showError('dlm-error', 'Vælg afleveringstidspunkt.');
   if (isNaN(endKm) || endKm < 0) return showError('dlm-error', 'Indtast en gyldig km-stand.');
-  if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end denne turs start-km (${startKm}).`);
+  if (endKm < startKm) return showError('dlm-error', `Aflæst km (${endKm}) er lavere end bilens aktuelle km-stand (${startKm}). Skriv det som en note på bookingen og kontakt en administrator.`);
   const startTime = new Date(b.start_time);
   if (!state.adminUnlocked && endTime <= startTime)
     return showError('dlm-error', 'Afleveringstidspunktet skal være efter starttidspunktet.');
