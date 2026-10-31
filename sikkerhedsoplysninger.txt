@@ -78,7 +78,9 @@ Versionsnummeret er skjult (server_tokens off). Svaret siger kun "nginx".
 
 Disse headere sendes med siderne:
 - X-Content-Type-Options: nosniff
-- X-Frame-Options: DENY
+- X-Frame-Options: SAMEORIGIN (var DENY; ændret 31-10-2026, så admin-panelets
+  egen Vejledning-iframe kan vises. Fremmede sites kan stadig ikke indramme siden.
+  CSP'ens frame-ancestors blev samtidig ændret fra 'none' til 'self' af samme grund.)
 - Referrer-Policy: strict-origin-when-cross-origin
 - Permissions-Policy: camera=(), microphone=(), geolocation=()
 - Content-Security-Policy, som tillader sidens egne filer, jsDelivr
