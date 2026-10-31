@@ -128,6 +128,7 @@ const SETTINGS_DEFAULTS = {
   club_name:                'Delebilsklub',
   booking_max_days:         '14',
   contact_email:            '',
+  delivery_km_absurd:       '1000',  // enkelttur over dette antal km kræver bekræftelse ved aflevering
 };
 function getSetting(key)    { const v = window.appSettings[key]; return (v === undefined || v === null || v === '') ? (SETTINGS_DEFAULTS[key] ?? '') : v; }
 async function currentSmtp() {
@@ -1577,7 +1578,6 @@ async function sendBookingToCalendar(bookingId, btn) {
 // =============================================
 let deliveryBookingId = null;
 let deliveryKmConfirmed = false;   // sat når brugeren har bekræftet et usædvanligt km-tal
-const DELIVERY_KM_ABSURD = 2000;   // enkelttur over dette antal km kræver bekræftelse
 
 async function openDeliveryModal(bookingId) {
   const b   = state.bookings.find(x => x.id === bookingId);
@@ -1653,7 +1653,8 @@ document.getElementById('dlm-submit').addEventListener('click', async () => {
   const kmDriven = endKm - startKm;
   const expected = Number(b.expected_km) || 0;
   const over50   = expected > 0 && kmDriven > expected * 1.5;
-  const absurd   = kmDriven > DELIVERY_KM_ABSURD;
+  const absurdCap = getSettingNum('delivery_km_absurd') || 1000;
+  const absurd   = kmDriven > absurdCap;
   if ((over50 || absurd) && !deliveryKmConfirmed) {
     deliveryKmConfirmed = true;
     const warn = document.getElementById('dlm-km-warn');
@@ -2796,6 +2797,7 @@ const SETTINGS_TEXT_KEYS = [
   'backup_frequency','backup_email',
   'smtp_host','smtp_port','smtp_user','smtp_pass','smtp_from',
   'watermark_text','watermark_size','watermark_opacity','club_name','contact_email','booking_max_days',
+  'delivery_km_absurd',
 ];
 
 function renderSettingsForm() {
